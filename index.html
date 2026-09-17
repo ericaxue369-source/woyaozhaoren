@@ -52081,7 +52081,7 @@ function RecruitmentScreen({
         paused: false,
         hasAiInterviewer: false,
         aiStatus: "待训练",
-        listed: false,
+        listed: true,
         createdAt: Date.now(),
         summary: demandSummaryOf(newJob),
         duties: newJob.description || newJob.projectIntro || newJob.learningGoal || newJob.expectedPerson || "",
@@ -52097,7 +52097,6 @@ function RecruitmentScreen({
       setJobs(updated);
       if (onJobsUpdate) onJobsUpdate(updated);
       setShowPublish(false);
-      setAiConfigJob(created);
     },
     __self: this,
     __source: {
@@ -52962,7 +52961,7 @@ function JobPublishScreen({
       marginBottom: 12,
       lineHeight: 1.6
     }
-  }, "填写开放的找人需求，有助于 AI 更准确地理解和匹配。报名截止时间不填则默认长期有效。发布后将进入训练找人助手页面。"), React.createElement('div', {
+  }, "填写开放的找人需求，有助于 AI 更准确地理解和匹配。报名截止时间不填则默认长期有效。发布后将直接上架，可稍后自由训练找人助手。"), React.createElement('div', {
     style: {
       background: T.bgCard,
       borderRadius: T.radius,
@@ -67589,8 +67588,8 @@ function mountOwoDevRequirementNotes() {
               <li>“我要找人”开放给所有用户；个人信息沿用用户名片，“关于我”仅补充公司、社会组织、社团、创业社群、创业项目、活动等组织信息。</li>
               <li>需求类型顺序为：连接人才、找合伙人、找搭子、发布活动、找场地、遇见心动、其它需求。</li>
               <li>“关于我”不展示发布者类型；身份场景选择“自定义”后，原选择框直接切换为可编辑输入框。</li>
-              <li>发布需求填完开放式找人信息并提交后，进入训练找人助手页面。</li>
-              <li>找人助手根据对话完整度判断训练完成，自动保存并发布；训练页底部始终保留通讯录同款消息栏，语音入口置于输入框内、不展示附件入口，发布后仍可继续补充训练要求。</li>
+              <li>发布需求填完开放式找人信息并提交后，需求直接上架为进行中，并返回“我要找人”主页。</li>
+              <li>训练找人助手不是发布前置条件；用户可在需求卡片中自由进入训练，完成后自动保存，后续仍可继续补充和优化训练要求。</li>
               <li>报名截止时间为选填，不设置则默认长期有效。</li>
               <li>需求状态统一为：进行中、待发布、已暂停。</li>
             </ul>
@@ -67610,7 +67609,7 @@ function mountOwoDevRequirementNotes() {
               <li>需求卡片主体点击进入需求详情页。</li>
               <li>需求卡片底部主操作为查看报名、优化找人助手。</li>
               <li>查看报名为白色胶囊、紫色文字；优化找人助手为紫色胶囊、白色文字。</li>
-              <li>未训练完成的需求展示为待发布。</li>
+              <li>未训练的需求仍保持进行中，并展示“训练找人助手”入口；训练完成后入口变为“优化找人助手”。</li>
               <li>“大脑”在存在未查看的新周报或新需求报名时展示紫色提醒点；对应内容查看后清除，全部已读后提醒点消失。</li>
             </ul>
           </section>

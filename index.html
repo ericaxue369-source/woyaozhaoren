@@ -35200,7 +35200,8 @@ const formatChatTime = timestamp => {
   return sameDay ? `今天 ${time}` : `${date.getMonth() + 1}月${date.getDate()}日 ${time}`;
 };
 function ChatTimeDivider({
-  timestamp
+  timestamp,
+  label
 }) {
   return React.createElement("div", {
     style: {
@@ -35212,8 +35213,21 @@ function ChatTimeDivider({
       fontWeight: 400,
       padding: "3px 0 1px"
     }
-  }, formatChatTime(timestamp));
+  }, label || formatChatTime(timestamp));
 }
+const chatClockMinutes = value => {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || ""));
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+};
+const shouldShowChatClock = (messages, index) => {
+  const current = chatClockMinutes(messages[index]?.time);
+  if (current == null) return index === 0;
+  for (let i = index - 1; i >= 0; i--) {
+    const previous = chatClockMinutes(messages[i]?.time);
+    if (previous != null) return current - previous >= 5;
+  }
+  return true;
+};
 function FounderAvChat({
   size = 30
 }) {
@@ -39612,7 +39626,7 @@ function AutoPublishAuthModal({
     stroke: T.text2,
     strokeWidth: "2.2",
     strokeLinecap: "round"
-  }))), React.createElement("div", {
+  })))), React.createElement("div", {
     style: {
       fontSize: 13.5,
       color: T.text2,
@@ -39629,7 +39643,7 @@ function AutoPublishAuthModal({
     style: {
       flex: 1,
       padding: "13px 0",
-      borderRadius: 12,
+      borderRadius: 14,
       background: T._theme === "dark" ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.04)",
       color: T.text2,
       fontWeight: 700,
@@ -39651,7 +39665,7 @@ function AutoPublishAuthModal({
       cursor: "pointer",
       boxShadow: "0 8px 24px rgba(159,151,235,.25)"
     }
-  }, "\u5141\u8BB8\u81EA\u52A8\u53D1\u5E03")))));
+  }, "\u5141\u8BB8\u81EA\u52A8\u53D1\u5E03"))));
 }
 function CheckRow({
   checked,
@@ -44760,39 +44774,39 @@ function ChatScreen({
   };
   const BUBBLE = {
     me_real: {
-      bg: "#EAE5FF",
-      color: "#29243B",
+      bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+      color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
       br: "18px 4px 18px 18px",
-      shadow: "0 1px 2px rgba(42,35,70,.05)",
-      border: "1px solid rgba(102,87,170,.09)"
+      shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
+      border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     },
     them_ai: {
-      bg: "#FFFFFF",
-      color: "#24232A",
+      bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
+      color: T.text1,
       br: "4px 18px 18px 18px",
-      shadow: "0 1px 3px rgba(24,24,28,.045)",
-      border: "1px solid rgba(24,24,28,.055)"
+      shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
+      border: `1px solid ${T.border}`
     },
     them_real: {
-      bg: "#FFFFFF",
-      color: "#24232A",
+      bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
+      color: T.text1,
       br: "4px 18px 18px 18px",
-      shadow: "0 1px 3px rgba(24,24,28,.045)",
-      border: "1px solid rgba(24,24,28,.055)"
+      shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
+      border: `1px solid ${T.border}`
     },
     interview_q: {
-      bg: "#F5F2FF",
-      color: "#29243B",
+      bg: T._theme === "dark" ? T.bgCardMuted : "#F5F2FF",
+      color: T.text1,
       br: "4px 18px 18px 18px",
-      shadow: "0 1px 3px rgba(24,24,28,.04)",
-      border: "1px solid rgba(102,87,170,.08)"
+      shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.04)",
+      border: `1px solid ${T.border}`
     },
     interview_a: {
-      bg: "#EAE5FF",
-      color: "#29243B",
+      bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+      color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
       br: "18px 4px 18px 18px",
-      shadow: "0 1px 2px rgba(42,35,70,.05)",
-      border: "1px solid rgba(102,87,170,.09)"
+      shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
+      border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     }
   };
   let displayMsgs;
@@ -46162,30 +46176,32 @@ function CandidateChatScreen({
   };
   const BUBBLE = {
     me_real: {
-      bg: T.grad,
-      color: "#fff",
-      br: "20px 20px 4px 20px",
-      shadow: "0 6px 18px rgba(159,151,235,.22)"
+      bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+      color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
+      br: "18px 4px 18px 18px",
+      shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
+      border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     },
     them_real: {
-      bg: T._theme === "dark" ? T.bgCardMuted : "rgba(255,255,255,.65)",
+      bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
       color: T.text1,
-      br: "20px 20px 20px 4px",
-      shadow: "0 4px 16px rgba(30,25,60,.06)",
+      br: "4px 18px 18px 18px",
+      shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
       border: `1px solid ${T.border}`
     },
     them_ai: {
-      bg: T._theme === "dark" ? "rgba(159,151,235,.14)" : "rgba(233,228,249,.62)",
+      bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
       color: T.text1,
-      br: "20px 20px 20px 4px",
-      shadow: "0 4px 16px rgba(30,25,60,.07)",
+      br: "4px 18px 18px 18px",
+      shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
       border: `1px solid ${T.border}`
     },
     interviewer: {
-      bg: T._theme === "dark" ? "rgba(159,151,235,.16)" : "rgba(233,228,249,.72)",
-      color: T.text1,
-      br: "20px 20px 4px 20px",
-      shadow: "0 4px 16px rgba(30,25,60,.07)"
+      bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+      color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
+      br: "18px 4px 18px 18px",
+      shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
+      border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     }
   };
   const body = [];
@@ -46600,7 +46616,7 @@ function CandidateChatScreen({
       gap: 14,
       position: "relative"
     }
-  }, body.map(msg => {
+  }, body.map((msg, msgIndex) => {
     if (msg.__logCard) return React.createElement("div", {
       key: msg.id,
       onClick: () => setLogCollapsed(false),
@@ -46687,25 +46703,22 @@ function CandidateChatScreen({
       footerLabel: "\u6536\u8D77\u62A5\u544A"
     }));
     if (msg.type === "ceoReport") return renderCeoReport(msg.id);
-    let onRight, label, avatar, bs;
+    let onRight, avatar, bs;
     if (interviewerView) {
       if (msg.who === "ai") {
         onRight = true;
-        label = `${ceoName} · 找人助手`;
         avatar = React.createElement(MyAvatarWithBadge, {
           size: 30
         });
         bs = BUBBLE.interviewer;
       } else if (msg.who === "ceo") {
         onRight = true;
-        label = "我（CEO）";
         avatar = React.createElement(MyAv, {
           size: 30
         });
         bs = BUBBLE.me_real;
       } else if (msg.who === "cand_ai") {
         onRight = false;
-        label = `${candidate.name} · AI分身`;
         avatar = React.createElement(AvWithAI, {
           seed: candidate.seed,
           bg: candidate.bg,
@@ -46714,7 +46727,6 @@ function CandidateChatScreen({
         bs = BUBBLE.them_ai;
       } else {
         onRight = false;
-        label = candidate.name;
         avatar = React.createElement(CeoAvPlain, {
           seed: candidate.seed,
           bg: candidate.bg,
@@ -46726,13 +46738,11 @@ function CandidateChatScreen({
       const isMyMsg = msg.side === "me" && msg.who !== "ai";
       onRight = isMyMsg;
       if (isMyMsg) {
-        label = "我";
         avatar = React.createElement(MyAv, {
           size: 30
         });
         bs = BUBBLE.me_real;
       } else if (msg.who === "ai") {
-        label = "找人助手";
         avatar = React.createElement(AvWithAI, {
           seed: candidate.seed,
           bg: candidate.bg,
@@ -46740,7 +46750,6 @@ function CandidateChatScreen({
         });
         bs = BUBBLE.them_ai;
       } else {
-        label = interviewerView ? candidate.name : ceoName;
         avatar = React.createElement(CeoAvPlain, {
           seed: candidate.seed,
           bg: candidate.bg,
@@ -46749,41 +46758,49 @@ function CandidateChatScreen({
         bs = BUBBLE.them_real;
       }
     }
-    return React.createElement("div", {
-      key: msg.id,
+    const hasEarlierChatMessage = body.slice(0, msgIndex).some(item => !item.__logCard && !item.__logToggle && item.type !== "interviewReport" && item.type !== "ceoReport");
+    const showMessageTime = !hasEarlierChatMessage || shouldShowChatTime(body, msgIndex);
+    const sentAt = messageSentAt(msg);
+    return React.createElement(React.Fragment, {
+      key: msg.id
+    }, showMessageTime && React.createElement(ChatTimeDivider, {
+      timestamp: sentAt || Date.now(),
+      label: sentAt ? null : candidate.time
+    }), React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
         alignItems: onRight ? "flex-end" : "flex-start",
-        gap: 3
+        position: "relative"
       }
-    }, React.createElement("span", {
-      style: {
-        fontSize: 10,
-        color: T.text3,
-        paddingLeft: onRight ? 0 : 38,
-        paddingRight: onRight ? 38 : 0
-      }
-    }, label), React.createElement("div", {
+    }, React.createElement("div", {
       style: {
         display: "flex",
-        alignItems: "flex-end",
+        width: "100%",
+        alignItems: "flex-start",
         gap: 8,
         flexDirection: onRight ? "row-reverse" : "row"
       }
     }, avatar, React.createElement("div", {
       style: {
-        maxWidth: "68%",
-        padding: "11px 15px",
-        fontSize: 14,
-        lineHeight: 1.65,
+        maxWidth: "calc(100% - 76px)",
+        width: "fit-content",
+        minWidth: 0,
+        boxSizing: "border-box",
+        flex: "0 1 auto",
+        padding: "10px 14px",
+        fontSize: 13.5,
+        lineHeight: 1.5,
+        letterSpacing: 0,
+        wordBreak: "break-word",
+        overflowWrap: "anywhere",
         background: bs.bg,
         color: bs.color,
         borderRadius: bs.br,
         boxShadow: bs.shadow,
         border: bs.border || "none"
       }
-    }, msg.text)));
+    }, msg.text))));
   }), React.createElement("div", {
     ref: bottomRef
   })), React.createElement("div", {
@@ -46828,9 +46845,10 @@ function CandidateChatScreen({
         cursor: "pointer",
         fontSize: 11.5,
         fontWeight: 600,
-        background: on ? T.bgCard : "transparent",
-        boxShadow: on ? "0 1px 3px rgba(24,24,28,.08)" : "none",
-        color: on ? T.text1 : T.text3
+        background: on ? T.grad : "transparent",
+        boxShadow: on ? "0 2px 5px rgba(138,43,226,.20)" : "none",
+        color: on ? "#FFFFFF" : T.text3,
+        transition: "background .18s,color .18s,box-shadow .18s"
       }
     }, m.label);
   }))), React.createElement("div", {
@@ -47941,32 +47959,34 @@ function AvatarScreen({
       gap: 14,
       position: "relative"
     }
-  }, feed.map(item => {
+  }, feed.map((item, itemIndex) => {
     const isMe = item.side === "me";
     const isSystem = item.side === "system";
     const isLastAI = !isMe && item.id === feed.filter(f => f.side === "ai").slice(-1)[0]?.id;
     const bs = isMe ? {
-      bg: "rgba(138,43,226,.15)",
-      color: "#1A0A2E",
-      br: "18px 18px 4px 18px",
-      shadow: "0 4px 20px rgba(138,43,226,.12),0 1px 0 rgba(255,255,255,.6) inset",
-      border: "1px solid rgba(255,255,255,.35)"
+      bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+      color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
+      br: "18px 4px 18px 18px",
+      shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
+      border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     } : isSystem ? {
       bg: T._theme === "dark" ? "rgba(159,151,235,.16)" : "rgba(159,151,235,.10)",
       color: T.text1,
-      br: "18px 18px 18px 4px",
+      br: "4px 18px 18px 18px",
       shadow: T._theme === "dark" ? "none" : "0 6px 22px rgba(92,75,170,.10)",
       border: "1px solid rgba(159,151,235,.24)"
     } : {
-      bg: "rgba(255,255,255,.5)",
-      color: "#111111",
-      br: "18px 18px 18px 4px",
-      shadow: "0 4px 20px rgba(0,0,0,.06),0 1px 0 rgba(255,255,255,.8) inset",
-      border: "1px solid rgba(255,255,255,.6)"
+      bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
+      color: T.text1,
+      br: "4px 18px 18px 18px",
+      shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
+      border: `1px solid ${T.border}`
     };
-    return React.createElement("div", {
+    return React.createElement(React.Fragment, {
       key: item.id
-    }, React.createElement("div", {
+    }, shouldShowChatClock(feed, itemIndex) && React.createElement(ChatTimeDivider, {
+      label: `今天 ${item.time}`
+    }), React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -47975,6 +47995,7 @@ function AvatarScreen({
     }, React.createElement("div", {
       style: {
         display: "flex",
+        width: "100%",
         alignItems: "flex-start",
         gap: 8,
         flexDirection: isMe ? "row-reverse" : "row"
@@ -47985,19 +48006,23 @@ function AvatarScreen({
       size: 30
     }), React.createElement("div", {
       style: {
-        maxWidth: "68%",
-        padding: "11px 15px",
-        fontSize: 14,
-        lineHeight: 1.65,
+        maxWidth: "calc(100% - 76px)",
+        width: "fit-content",
+        minWidth: 0,
+        boxSizing: "border-box",
+        flex: "0 1 auto",
+        padding: "10px 14px",
+        fontSize: 13.5,
+        lineHeight: 1.5,
+        letterSpacing: 0,
         whiteSpace: "pre-line",
         wordBreak: "break-word",
+        overflowWrap: "anywhere",
         borderRadius: bs.br,
         background: bs.bg,
         color: bs.color,
         boxShadow: bs.shadow,
         border: bs.border,
-        backdropFilter: "blur(20px) saturate(200%)",
-        WebkitBackdropFilter: "blur(20px) saturate(200%)",
         position: "relative"
       }
     }, isSystem ? React.createElement(React.Fragment, null, React.createElement("div", {
@@ -48058,8 +48083,8 @@ function AvatarScreen({
       style: {
         padding: "6px 10px",
         borderRadius: 999,
-        background: "rgba(255,255,255,.76)",
-        border: "1px solid rgba(24,24,28,.10)",
+        background: T._theme === "dark" ? T.bgCardMuted : "rgba(255,255,255,.76)",
+        border: `1px solid ${T.border}`,
         fontSize: 11,
         color: T.text2,
         fontWeight: 500,
@@ -48070,8 +48095,8 @@ function AvatarScreen({
     style: {
       margin: "2px 0 4px 38px",
       maxWidth: "calc(100% - 38px)",
-      background: "#F6F3FF",
-      border: "1px solid rgba(159,151,235,.22)",
+      background: T._theme === "dark" ? T.bgCardMuted : "#F6F3FF",
+      border: `1px solid ${T.border}`,
       borderRadius: 14,
       padding: "12px 13px"
     }
@@ -48142,8 +48167,8 @@ function AvatarScreen({
       flexShrink: 0,
       padding: "6px 10px",
       borderRadius: 999,
-      background: "rgba(255,255,255,.76)",
-      border: "1px solid rgba(24,24,28,.10)",
+      background: T._theme === "dark" ? T.bgCardMuted : "rgba(255,255,255,.76)",
+      border: `1px solid ${T.border}`,
       fontSize: 11,
       color: T.text2,
       fontWeight: 500,
@@ -48162,10 +48187,10 @@ function AvatarScreen({
       flex: 1,
       minHeight: 40,
       boxSizing: "border-box",
-      background: "rgba(255,255,255,.82)",
+      background: T.inputBg,
       borderRadius: 999,
-      border: "1px solid rgba(24,24,28,.09)",
-      boxShadow: "0 1px 3px rgba(24,24,28,.035)",
+      border: `1px solid ${T.border}`,
+      boxShadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.035)",
       padding: "4px 10px 4px 5px",
       display: "flex",
       alignItems: "center",
@@ -54288,7 +54313,7 @@ function ExpertiseScreen({
         setLiveMsgs(prev => [...prev, reply]);
       }, 700);
     };
-    const renderMsg = m => {
+    const renderMsg = (m, msgIndex, msgList) => {
       const onRight = m.side === "me";
       const avatar = onRight ? React.createElement(MyAv, {
         size: 30
@@ -54301,60 +54326,66 @@ function ExpertiseScreen({
         bg: order.bg,
         size: 30
       });
-      const label = onRight ? "我" : m.who === "buyer_ai" ? `${order.buyer} · AI分身` : order.buyer;
       const bs = onRight ? {
-        bg: T.grad,
-        color: "#fff",
-        br: "20px 20px 4px 20px",
-        shadow: "0 6px 18px rgba(159,151,235,.22)"
+        bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+        color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
+        br: "18px 4px 18px 18px",
+        shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
+        border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
       } : m.who === "buyer_ai" ? {
-        bg: "rgba(233,228,249,.62)",
-        color: "#3b0764",
-        br: "20px 20px 20px 4px",
-        shadow: "0 4px 16px rgba(30,25,60,.07)",
-        border: "1px solid rgba(255,255,255,.7)"
-      } : {
-        bg: "rgba(255,255,255,.65)",
+        bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
         color: T.text1,
-        br: "20px 20px 20px 4px",
-        shadow: "0 4px 16px rgba(30,25,60,.06)",
-        border: "1px solid rgba(255,255,255,.8)"
+        br: "4px 18px 18px 18px",
+        shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
+        border: `1px solid ${T.border}`
+      } : {
+        bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
+        color: T.text1,
+        br: "4px 18px 18px 18px",
+        shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
+        border: `1px solid ${T.border}`
       };
-      return React.createElement("div", {
+      const sentAt = messageSentAt(m);
+      return React.createElement(React.Fragment, {
         key: m.id,
+      }, (msgIndex === 0 || shouldShowChatTime(msgList, msgIndex)) && React.createElement(ChatTimeDivider, {
+        timestamp: sentAt || Date.now(),
+        label: sentAt ? null : order.time
+      }), React.createElement("div", {
         style: {
           display: "flex",
           flexDirection: "column",
           alignItems: onRight ? "flex-end" : "flex-start",
-          gap: 3
+          position: "relative"
         }
-      }, React.createElement("span", {
-        style: {
-          fontSize: 10,
-          color: T.text3,
-          paddingLeft: onRight ? 0 : 38,
-          paddingRight: onRight ? 38 : 0
-        }
-      }, label), React.createElement("div", {
+      }, React.createElement("div", {
         style: {
           display: "flex",
-          alignItems: "flex-end",
+          width: "100%",
+          alignItems: "flex-start",
           gap: 8,
           flexDirection: onRight ? "row-reverse" : "row"
         }
       }, avatar, React.createElement("div", {
         style: {
-          maxWidth: "68%",
-          padding: "11px 15px",
-          fontSize: 14,
-          lineHeight: 1.65,
+          maxWidth: "calc(100% - 76px)",
+          width: "fit-content",
+          minWidth: 0,
+          boxSizing: "border-box",
+          flex: "0 1 auto",
+          padding: "10px 14px",
+          fontSize: 13.5,
+          lineHeight: 1.5,
+          letterSpacing: 0,
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
           background: bs.bg,
           color: bs.color,
           borderRadius: bs.br,
           boxShadow: bs.shadow,
           border: bs.border || "none"
         }
-      }, m.text)));
+      }, m.text))));
     };
     return React.createElement("div", {
       style: {
@@ -54586,8 +54617,8 @@ function ExpertiseScreen({
         height: 28,
         boxSizing: "border-box",
         borderRadius: 999,
-        background: "rgba(24,24,28,.045)",
-        border: "1px solid rgba(24,24,28,.06)"
+        background: T._theme === "dark" ? "rgba(255,255,255,.055)" : "rgba(24,24,28,.045)",
+        border: `1px solid ${T.hairline}`
       }
     }, [{
       id: "ai",
@@ -54608,9 +54639,10 @@ function ExpertiseScreen({
           cursor: "pointer",
           fontSize: 11.5,
           fontWeight: 600,
-          background: on ? "#FFFFFF" : "transparent",
-          boxShadow: on ? "0 1px 3px rgba(24,24,28,.08)" : "none",
-          color: on ? T.text1 : T.text3
+          background: on ? T.grad : "transparent",
+          boxShadow: on ? "0 2px 5px rgba(138,43,226,.20)" : "none",
+          color: on ? "#FFFFFF" : T.text3,
+          transition: "background .18s,color .18s,box-shadow .18s"
         }
       }, m.label);
     }))), React.createElement("div", {
@@ -60263,134 +60295,109 @@ const formatMEBookCoverDate = (startDate, endDate) => {
   if (start.year === end.year) return `${monthName(start.date)} ${start.day}\u2013${monthName(end.date)} ${end.day}, ${start.year}`;
   return `${monthName(start.date)} ${start.day}, ${start.year}\u2013${monthName(end.date)} ${end.day}, ${end.year}`;
 };
-let meBookCoverInstanceId = 0;
 function MEBookCover({
   username,
   startDate,
   endDate,
+  avatarSeed,
+  avatarBg,
   opening = false
 }) {
   const dateLabel = formatMEBookCoverDate(startDate, endDate);
-  const rawDisplayName = String(username || "用户").trim() || "用户";
-  const rawNameCharacters = Array.from(rawDisplayName);
-  const isCjkName = /^[\u3400-\u9fff\u3000-\u303f\s]+$/.test(rawDisplayName);
-  const maxNameCharacters = isCjkName ? 6 : 12;
-  const displayName = rawNameCharacters.length > maxNameCharacters ? `${rawNameCharacters.slice(0, maxNameCharacters - 1).join("")}…` : rawDisplayName;
+  const displayName = String(username || "用户").trim() || "用户";
   const displayNameCharacters = Array.from(displayName);
-  const dateFontSize = Math.max(32, Math.min(44, 850 / Math.max(dateLabel.length, 1)));
-  const dateLetterSpacing = dateLabel.length > 22 ? 2.4 : 4.2;
-  const usernameFontSize = isCjkName ? displayNameCharacters.length <= 2 ? 68 : displayNameCharacters.length === 3 ? 56 : Math.max(40, 190 / Math.max(displayNameCharacters.length, 1)) : Math.max(34, Math.min(46, 310 / Math.max(displayNameCharacters.length, 5)));
-  const usernameLineHeight = usernameFontSize * 1.3;
-  const usernameCenterY = 500;
-  const metadataFontFamily = "'Helvetica Neue', Arial, 'PingFang SC', sans-serif";
-  const gradientIdRef = useRef(null);
-  if (gradientIdRef.current == null) gradientIdRef.current = `me-cover-purple-${++meBookCoverInstanceId}`;
-  const gradientId = gradientIdRef.current;
-  const sharedSvgStyle = {
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
-    display: "block"
-  };
+  const coverName = displayNameCharacters.length > 8 ? `${displayNameCharacters.slice(0, 7).join("")}…` : displayName;
   return React.createElement("div", {
     "data-component": "MEBookCover",
+    "aria-label": `${dateLabel}，${displayName}的人生之书`,
     style: {
       position: "relative",
       width: "100%",
-      aspectRatio: "790 / 1000",
-      borderRadius: "8px 6px 6px 8px",
+      aspectRatio: "1051 / 1496",
+      containerType: "inline-size",
       overflow: "hidden",
-      background: "repeating-linear-gradient(7deg, rgba(255,255,255,.012) 0, rgba(255,255,255,.012) 1px, transparent 1px, transparent 4px), linear-gradient(180deg, #0C0C0E 0%, #010102 50%, #09090B 100%)",
-      border: "1px solid rgba(0,0,0,.92)",
-      boxShadow: "inset 8px 0 10px rgba(255,255,255,.065), inset 2px 0 rgba(255,255,255,.14), inset -2px 0 rgba(255,255,255,.07), inset 0 2px rgba(255,255,255,.1), inset 0 -2px rgba(0,0,0,.8)",
       transformOrigin: "left center",
       transform: opening ? "translate(20px,-28px) scale(1.3) rotateY(-72deg)" : "translateY(0) scale(1) rotateY(0deg)",
       opacity: opening ? .72 : 1,
       transition: "transform .58s cubic-bezier(.18,.88,.22,1), opacity .48s ease",
       willChange: "transform"
     }
-  }, React.createElement("div", {
-    "aria-hidden": "true",
-    style: {
-      position: "absolute",
-      inset: 0
-    }
-  }, React.createElement("svg", {
-    viewBox: "0 0 790 1000",
-    preserveAspectRatio: "xMidYMid meet",
-    style: sharedSvgStyle
-  }, React.createElement("defs", null, React.createElement("linearGradient", {
-    id: gradientId,
-    x1: "0",
-    y1: "0",
-    x2: "1",
-    y2: "1"
-  }, React.createElement("stop", {
-    offset: "0%",
-    stopColor: "#BE83F6"
-  }), React.createElement("stop", {
-    offset: "52%",
-    stopColor: "#B477ED"
-  }), React.createElement("stop", {
-    offset: "100%",
-    stopColor: "#A96DE3"
-  }))), React.createElement("path", {
-    d: "M44 40H188L243 568L294 40H435V942H344V326L276 942H208L139 326V942H44Z",
-    fill: `url(#${gradientId})`
-  }), React.createElement("path", {
-    d: "M458 40H755V197H603V417H737V562H603V795H755V942H458Z",
-    fill: `url(#${gradientId})`
-  }))), React.createElement("div", {
+  }, React.createElement("img", {
+    src: "assets/weekly-life-book-cover.png",
+    alt: "",
     style: {
       position: "absolute",
       inset: 0,
-      pointerEvents: "none",
-      background: "linear-gradient(112deg, rgba(255,255,255,.13) 0%, transparent 13%, transparent 64%, rgba(255,255,255,.035) 78%, transparent 100%)",
-      boxShadow: "inset 0 0 18px rgba(255,255,255,.025)"
+      width: "100%",
+      height: "100%",
+      display: "block",
+      objectFit: "cover"
     }
-  }), React.createElement("svg", {
-    "aria-label": `${dateLabel}，${displayName}`,
-    viewBox: "0 0 790 1000",
-    preserveAspectRatio: "xMidYMid meet",
+  }), React.createElement("div", {
+    "aria-hidden": "true",
     style: {
-      ...sharedSvgStyle,
-      zIndex: 2,
+      position: "absolute",
+      left: "12.8%",
+      top: "12.8%",
+      width: "55%",
+      height: "37%",
+      background: "#050505",
       pointerEvents: "none"
     }
-  }, React.createElement("text", {
-    x: "160",
-    y: "286",
-    transform: "rotate(84 160 286)",
-    fill: "#030303",
-    fontFamily: metadataFontFamily,
-    fontSize: dateFontSize,
-    fontWeight: "650",
-    letterSpacing: dateLetterSpacing
-  }, dateLabel), isCjkName ? React.createElement("text", {
-    x: "526",
-    y: usernameCenterY,
-    fill: "#030303",
-    fontFamily: metadataFontFamily,
-    fontSize: usernameFontSize,
-    fontWeight: "650",
-    letterSpacing: "0",
-    textAnchor: "middle",
-    dominantBaseline: "middle"
-  }, displayNameCharacters.map((character, index) => React.createElement("tspan", {
-    key: `${character}-${index}`,
-    x: "526",
-    y: usernameCenterY + (index - (displayNameCharacters.length - 1) / 2) * usernameLineHeight
-  }, character))) : React.createElement("text", {
-    x: "526",
-    y: "360",
-    transform: "rotate(90 526 360)",
-    fill: "#030303",
-    fontFamily: metadataFontFamily,
-    fontSize: usernameFontSize,
-    fontWeight: "650",
-    letterSpacing: "3.2"
-  }, displayName)));
+  }), React.createElement("img", {
+    src: avUrl(avatarSeed || "owo-me", avatarBg),
+    alt: "",
+    style: {
+      position: "absolute",
+      left: "40.5%",
+      top: "31.3%",
+      width: "34%",
+      aspectRatio: "1",
+      transform: "translate(-50%,-50%)",
+      borderRadius: "50%",
+      objectFit: "cover",
+      border: "none",
+      zIndex: 2
+    }
+  }), React.createElement("div", {
+    "aria-hidden": "true",
+    style: {
+      position: "absolute",
+      left: "48%",
+      top: "61%",
+      width: "48%",
+      height: "26%",
+      background: "#050505",
+      pointerEvents: "none",
+      zIndex: 2
+    }
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: "51%",
+      top: "64%",
+      width: "43%",
+      color: "#FFFFFF",
+      fontFamily: "Georgia, 'Songti SC', 'STSong', serif",
+      fontSize: displayNameCharacters.length <= 4 ? "8.5cqw" : displayNameCharacters.length <= 6 ? "7cqw" : "5.8cqw",
+      fontWeight: 500,
+      lineHeight: 1.06,
+      letterSpacing: 0,
+      zIndex: 3,
+      whiteSpace: "nowrap"
+    }
+  }, React.createElement("div", {
+    style: {
+      whiteSpace: "nowrap"
+    }
+  }, coverName, "\u7684"), React.createElement("div", {
+    style: {
+      fontSize: "9.5cqw",
+      lineHeight: 1.08,
+      marginTop: "2.2cqw",
+      whiteSpace: "nowrap"
+    }
+  }, "\u4EBA\u751F\u4E4B\u4E66")));
 }
 const buildWeeklyReflection = (report, style, username) => {
   const summary = report?.summary || "这一周的经历被整理成了人生章节。";
@@ -60407,8 +60414,8 @@ function WeeklySelfChatScreen({
   onBack
 }) {
   const weekLabel = report?.week || "本周";
-  const AISeed = avatar?.seed || profile?.name || "user";
-  const AIBg = avatar?.bg || "d1d4f9";
+  const AISeed = "owo-me";
+  const AIBg = "d1d4f9";
   const AIName = avatar?.name || (profile?.name ? profile.name + "的分身" : "我的AI分身");
   const writingStyle = reportStyle || WEEKLY_REPORT_STYLE_OPTIONS[0];
   const chapterText = buildWeeklyChapter(report, writingStyle);
@@ -60619,7 +60626,7 @@ function WeeklySelfChatScreen({
       const frameWidth = phoneRect?.width || window.innerWidth;
       const frameHeight = phoneRect?.height || window.innerHeight;
       const targetWidth = Math.min(320, frameWidth * .68);
-      const targetHeight = targetWidth * 1000 / 790;
+      const targetHeight = targetWidth * 1496 / 1051;
       setBookLaunchRect({
         left: rect.left - frameLeft,
         top: rect.top - frameTop,
@@ -60642,8 +60649,8 @@ function WeeklySelfChatScreen({
       }, 820);
     },
     style: {
-      width: 174,
-      height: 224,
+      width: 158,
+      aspectRatio: "1051 / 1496",
       border: "none",
       padding: 0,
       cursor: "pointer",
@@ -60654,34 +60661,13 @@ function WeeklySelfChatScreen({
       transformOrigin: "left center",
       willChange: "transform"
     }
-  }, React.createElement("div", {
-    style: {
-      position: "absolute",
-      left: 4,
-      top: 3,
-      width: 162,
-      height: 205,
-      borderRadius: "6px 8px 8px 6px",
-      background: "linear-gradient(90deg, #050506 0%, #17171A 45%, #050506 100%)",
-      boxShadow: "2px 4px 8px rgba(0,0,0,.32)",
-      transform: "translateZ(-8px)"
-    }
-  }, React.createElement("div", {
-    style: {
-      position: "absolute",
-      left: -4,
-      top: -3,
-      width: 162,
-      transformOrigin: "left center",
-      transform: bookCoverOpening ? "rotateY(-14deg) translateX(8px)" : "none",
-      transition: "transform .76s cubic-bezier(.18,.88,.22,1)",
-    }
   }, React.createElement(MEBookCover, {
     username: bookUserName,
     startDate: bookStartDate,
     endDate: bookEndDate,
+    avatarSeed: "owo-me",
     opening: bookCoverOpening
-  }))));
+  }));
   const dragRatio = Math.max(-1, Math.min(1, bookDragX / Math.max(280, bookGestureRef.current.width * .92)));
   const previewDirection = bookTurn?.direction || bookGestureRef.current.direction;
   const previewPage = previewDirection === "next" ? bookPage + 1 : bookPage - 1;
@@ -60782,6 +60768,7 @@ function WeeklySelfChatScreen({
     username: bookUserName,
     startDate: bookStartDate,
     endDate: bookEndDate,
+    avatarSeed: "owo-me",
     opening: false
   }))), React.createElement("div", {
     style: {
@@ -60923,24 +60910,27 @@ function WeeklySelfChatScreen({
       gap: 14,
       position: "relative"
     }
-  }, msgs.map(m => {
+  }, msgs.map((m, msgIndex) => {
     const isMe = m.side === "me";
     const isBook = m.type === "weeklyBook";
     const bs = isMe ? {
-      bg: T._theme === "dark" ? "#E9DDFF" : "#EDE8FF",
-      color: T._theme === "dark" ? "#211A33" : "#29243B",
-      br: "18px 18px 4px 18px",
+      bg: T._theme === "dark" ? "rgba(159,151,235,.24)" : "#EAE5FF",
+      color: T._theme === "dark" ? "#F7F5FF" : "#29243B",
+      br: "18px 4px 18px 18px",
       shadow: T._theme === "dark" ? "none" : "0 1px 2px rgba(42,35,70,.05)",
-      border: T._theme === "dark" ? "1px solid rgba(255,255,255,.12)" : "1px solid rgba(102,87,170,.09)"
+      border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     } : {
-      bg: T._theme === "dark" ? "#1E1D28" : "#FFFFFF",
-      color: T._theme === "dark" ? "#F5F3FF" : "#24232A",
-      br: "18px 18px 18px 4px",
+      bg: T._theme === "dark" ? T.bgCardMuted : "#FFFFFF",
+      color: T.text1,
+      br: "4px 18px 18px 18px",
       shadow: T._theme === "dark" ? "none" : "0 1px 3px rgba(24,24,28,.045)",
-      border: T._theme === "dark" ? "1px solid rgba(255,255,255,.08)" : "1px solid rgba(24,24,28,.055)"
+      border: `1px solid ${T.border}`
     };
-    return React.createElement("div", {
-      key: m.id,
+    return React.createElement(React.Fragment, {
+      key: m.id
+    }, (msgIndex === 0 || shouldShowChatTime(msgs, msgIndex)) && React.createElement(ChatTimeDivider, {
+      timestamp: messageSentAt(m) || Date.now()
+    }), React.createElement("div", {
       ref: el => {
         msgRefs.current[m.id] = el;
       },
@@ -61076,7 +61066,7 @@ function WeeklySelfChatScreen({
         borderRight: "1px solid #f2f2f2",
         whiteSpace: "nowrap"
       }
-    }, label))));
+    }, label)))));
   }), React.createElement("div", {
     ref: bottomRef
   })), React.createElement("div", {
@@ -65369,16 +65359,11 @@ function ProfileScreen({
   }))), brainTab === "知识" && React.createElement(React.Fragment, null, React.createElement("div", {
     style: {
       display: "flex",
-      justifyContent: "space-between",
+      justifyContent: "flex-end",
       alignItems: "center",
       marginBottom: 12
     }
-  }, React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: T.text2
-    }
-  }, "\u77E5\u8BC6\u7BA1\u7406\u4E0E\u8BAD\u7EC3\uFF0C\u7EC4\u5408\u540E\u53EF\u5728\u300C\u54A8\u8BE2\u670D\u52A1\u300D\u4E0A\u67B6\u54A8\u8BE2"), React.createElement("button", {
+  }, React.createElement("button", {
     onClick: () => {
       const id = knowledgeIdRef.current++;
       setKnowledgeItems(prev => [...prev, {
@@ -65611,17 +65596,7 @@ function ProfileScreen({
       color: T.text3,
       fontSize: 13
     }
-  }, "\u8FD8\u6CA1\u6709\u77E5\u8BC6\uFF0C\u70B9\u51FB\u53F3\u4E0A\u89D2\u521B\u5EFA\u4E00\u4E2A"), React.createElement("div", {
-    style: {
-      marginTop: 8,
-      padding: "12px 14px",
-      background: "#ede9fe",
-      borderRadius: 12,
-      fontSize: 12,
-      color: "#6d28d9",
-      lineHeight: 1.6
-    }
-  }, "\uD83D\uDCA1 \u77E5\u8BC6\u53EA\u8D1F\u8D23\u7BA1\u7406\u4E0E\u8BAD\u7EC3\uFF1B\u53BB\u300C\u6211\u7684\u5916\u8868 \xB7 \u54A8\u8BE2\u670D\u52A1\u300D\u628A\u77E5\u8BC6\u7EC4\u5408\u4E0A\u67B6\u4E3A\u54A8\u8BE2\u670D\u52A1"))), React.createElement(BottomNav, {
+  }, "\u8FD8\u6CA1\u6709\u77E5\u8BC6\uFF0C\u70B9\u51FB\u53F3\u4E0A\u89D2\u521B\u5EFA\u4E00\u4E2A"))), React.createElement(BottomNav, {
     active: navActive,
     onChange: onNav,
     contactsUnread: contactsUnread,

@@ -34358,23 +34358,6 @@ function StandardToast({
     className: "owo-toast"
   }, children);
 }
-const AV_BASE = "../../assets/avatars/";
-const AV_POOL = Array.from({
-  length: 27
-}, (_, i) => AV_BASE + "av" + String(i + 1).padStart(2, "0") + ".png");
-const SEED_FACE = {
-  "owo-me": "av05",
-  "Tracy": "av03",
-  "Sabrina": "av20",
-  "LindaCeo": "av21",
-  "Kevin": "av09",
-  "MarcusCeo": "av08",
-  "AlexCeo": "av01",
-  "FounderLeo": "av27",
-  "zhangming": "av24",
-  "chenxiaoyu": "av03",
-  "liyuhang": "av23"
-};
 const AV_PALS = [["#9F97EB", "#9F97EB"], ["#9F97EB", "#9F97EB"], ["#C3B2FF", "#9F97EB"], ["#B5A6F5", "#5B43C4"], ["#D9CEFF", "#9F97EB"]];
 const avUrl = s => {
   const key = String(s || "owo");
@@ -36465,11 +36448,23 @@ const HOME_CARD_POLICY = {
     summary: "人生发生变化时，成果记录和真诚连接会陪你继续往前。"
   }
 };
+const HOME_COVER_SCENES = {
+  study: ["#4F46A5", "#E9E7FF", "学习"],
+  campus: ["#176B65", "#DDF4EC", "校园"],
+  career: ["#A4472D", "#FBE7D8", "职场"],
+  startup: ["#A13E62", "#F9DFE9", "创业"],
+  life: ["#2870A8", "#DDEFFD", "生活"],
+  science: ["#246B54", "#DDF3E8", "科学"],
+  future: ["#5A4B9B", "#E9E5FA", "未来"],
+  fantasy: ["#8B4A35", "#F7E5DA", "想象"]
+};
 function HomeCoverArtwork({
   scene
 }) {
+  const config = HOME_COVER_SCENES[scene] || HOME_COVER_SCENES.study;
+  const artwork = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420"><rect width="720" height="420" fill="${config[1]}"/><path d="M0 318C128 250 221 352 347 286c115-60 214-25 373 39v95H0z" fill="${config[0]}" opacity=".18"/><path d="M455 62h184v184H455z" fill="none" stroke="${config[0]}" stroke-width="18" opacity=".28"/><path d="M84 96h260M84 138h198M84 180h228" stroke="${config[0]}" stroke-width="14" stroke-linecap="round" opacity=".22"/><circle cx="547" cy="154" r="58" fill="${config[0]}" opacity=".86"/><text x="84" y="302" fill="${config[0]}" font-family="-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif" font-size="56" font-weight="700">${config[2]}</text></svg>`;
   return React.createElement("img", {
-    src: `./home-covers/cover-${scene || "study"}.jpg`,
+    src: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(artwork),
     alt: "",
     style: {
       position: "absolute",
@@ -41610,6 +41605,7 @@ function ExploreScreen({
   onNav,
   followedMap,
   onToggleFollow,
+  onRecruitment,
   contactsUnread = 0,
   profileUnread = 0
 }) {
@@ -41675,7 +41671,7 @@ function ExploreScreen({
   }];
   const activePkuCircle = pkuCircleTabs.find(c => c.id === pkuCircleTab) || pkuCircleTabs[0];
   const allUsers = [...EXPLORE_USERS, ...PKU_ALUMNI_USERS, ...CEO_USERS];
-  const list = tab === "ceo" ? CEO_USERS : tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : allUsers;
+  const list = tab === "ceo" ? allUsers.filter(u => (CEO_JOBS[u.id] || []).some(job => job.listed !== false && !job.paused)) : tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : allUsers;
   const visibleList = list.filter(u => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -42054,7 +42050,7 @@ function ExploreScreen({
       color: "#0E7A58",
       letterSpacing: "-.01em"
     }
-  }, "\u5BFB\u4EBA\u4E2D", count ? ` · ${count}` : ""));
+  }, "找人中", count ? ` · ${count}` : ""));
   const CardLike = ({
     u
   }) => {
@@ -42131,7 +42127,7 @@ function ExploreScreen({
   const PersonCard = ({
     u
   }) => {
-    const jobCount = u.isCeo ? CEO_JOBS[u.id] ? CEO_JOBS[u.id].length : 0 : 0;
+    const jobCount = CEO_JOBS[u.id] ? CEO_JOBS[u.id].filter(job => job.listed !== false && !job.paused).length : 0;
     const isPkuTab = tab === "pku";
     const isPkuMimi = u.id === "pku-mimi";
     const isPkuAlumni = u.school === "北京大学" && u.schoolVerified && u.service && !u.schoolOfficial;
@@ -42225,10 +42221,10 @@ function ExploreScreen({
       official: u.schoolOfficial
     })), React.createElement("div", {
       style: {
-        marginTop: u.isCeo || u.schoolOfficial || isPkuTab && isPkuAlumni && schoolMeta.length > 0 ? 4 : 0,
+        marginTop: u.schoolOfficial || isPkuTab && isPkuAlumni && schoolMeta.length > 0 ? 4 : 0,
         minWidth: 0
       }
-    }, (u.isCeo || u.schoolOfficial) && React.createElement("div", {
+    }, u.schoolOfficial && React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -42246,7 +42242,7 @@ function ExploreScreen({
         overflow: "hidden",
         textOverflow: "ellipsis"
       }
-    }, u.isCeo ? u.founderRole || "创业 CEO" : u.isUniversityRep ? "北京大学学生服务总队官方分身" : u.school || "官方机构"), !u.isCeo && React.createElement("span", {
+    }, u.isUniversityRep ? "北京大学学生服务总队官方分身" : u.school || "官方机构"), React.createElement("span", {
       "aria-label": "\u5B98\u65B9\u8BA4\u8BC1",
       style: {
         width: 13,
@@ -42275,7 +42271,7 @@ function ExploreScreen({
         fontWeight: 400,
         color: META,
         lineHeight: 1.2,
-        marginTop: u.isCeo || u.schoolOfficial ? 2 : 0,
+        marginTop: u.schoolOfficial ? 2 : 0,
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis"
@@ -42329,7 +42325,7 @@ function ExploreScreen({
       }
     }, React.createElement(CardStats, {
       u: u
-    }), (u.service || u.isCeo) && React.createElement("div", {
+    }), (u.service || jobCount > 0) && React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -42337,12 +42333,12 @@ function ExploreScreen({
         minWidth: 0,
         flexShrink: 0
       }
-    }, u.service && React.createElement(PriceBadge, {
+    }, jobCount > 0 ? React.createElement(HiringBadge, {
+      count: jobCount
+    }) : u.service && React.createElement(PriceBadge, {
       rate: originalRate,
       originalRate: originalRate,
       alumniRate: u.schoolVerified ? alumniRate : 0
-    }), !u.service && u.isCeo && React.createElement(HiringBadge, {
-      count: jobCount
     })), isPkuMimi && React.createElement("span", {
       style: {
         fontSize: 11.5,
@@ -42828,7 +42824,11 @@ function ExploreScreen({
   }, React.createElement("div", {
     className: "owo-fadeup",
     style: {
-      padding: "0 16px 14px"
+      padding: "0 16px 14px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12
     }
   }, React.createElement("h1", {
     style: {
@@ -42839,7 +42839,25 @@ function ExploreScreen({
       lineHeight: 1,
       margin: 0
     }
-  }, "\u5E7F\u573A")), React.createElement("div", {
+  }, "\u5E7F\u573A"), React.createElement("button", {
+    onClick: () => onRecruitment && onRecruitment({
+      publish: true
+    }),
+    style: {
+      border: "none",
+      borderRadius: 999,
+      background: T.grad,
+      color: "#fff",
+      height: 32,
+      padding: "0 12px",
+      fontSize: 13,
+      fontWeight: 800,
+      cursor: "pointer",
+      fontFamily: SANS,
+      whiteSpace: "nowrap",
+      boxShadow: "0 6px 16px rgba(159,151,235,.22)"
+    }
+  }, "+ 发布需求")), React.createElement("div", {
     style: {
       background: T.inputBg,
       backdropFilter: "blur(16px) saturate(180%)",
@@ -42919,7 +42937,7 @@ function ExploreScreen({
     label: "牛人"
   }, {
     id: "ceo",
-    label: "创业 CEO"
+    label: "正在找人"
   }, {
     id: "pku",
     label: "校友圈"
@@ -43369,59 +43387,149 @@ function JobCard({
   }, "和找人助手沟通")));
 }
 function demandViewerSections(demand) {
-  const type = demandTypeOf(demand);
-  const copy = demand.viewerCopy || {};
-  const titles = {
-    "连接人才": ["你们可以一起做什么", "适合这样的你", "参与方式", "AI会和你聊什么"],
-    "找合伙人": ["你将共同参与", "适合这样的你", "合作方式", "AI会和你聊什么"],
-    "找搭子": ["我们可以一起", "希望遇见这样的你", "时间与方式", "AI会和你聊什么"],
-    "遇见心动": ["期待的关系", "如果你也期待", "相处方式与边界", "AI会和你聊什么"],
-    "找场地": ["计划举办什么", "需要怎样的场地", "时间与预算", "AI会和你确认什么"],
-    "发布活动": ["你将参与", "适合谁参加", "活动安排", "AI会和你聊什么"],
-    "其它需求": ["想解决的问题", "希望你能提供", "合作条件", "AI会和你聊什么"]
-  }[type] || ["想解决的问题", "希望你能提供", "合作条件", "AI会和你聊什么"];
   const facts = entries => entries.filter(([, value]) => value).map(([label, value]) => label + "：" + value).join("；");
-  const introFallback = {
-    "连接人才": demand.description || demand.duties,
-    "找合伙人": demand.projectIntro,
-    "找搭子": demand.learningGoal || demand.description,
-    "遇见心动": demand.relationshipExpectation || demand.description,
-    "找场地": demand.description,
-    "发布活动": demand.description,
-    "其它需求": demand.description
-  }[type] || demand.description;
-  const fitFallback = {
-    "找合伙人": demand.ability || demand.matchingCriteria,
-    "找搭子": demand.expectedPerson || demand.matchingCriteria,
-    "遇见心动": demand.expectedPerson || demand.matchingCriteria,
-    "发布活动": demand.participationRequirements || demand.matchingCriteria,
-    "连接人才": demand.matchingCriteria || demand.expectedPerson,
-    "其它需求": demand.expectedPerson || demand.matchingCriteria
-  }[type] || demand.matchingCriteria || demand.requirements;
-  const contextFallback = {
-    "连接人才": demand.participationRequirements || demand.team || facts([["地点 / 线上线下", demand.location], ["需求人数", demand.count]]),
-    "找合伙人": demand.other || facts([["合作方式", demand.cooperation], ["时间投入", demand.time], ["地点", demand.location]]),
-    "找搭子": demand.other || facts([["方式", demand.learningMode], ["时间", demand.time], ["地点", demand.location]]),
-    "遇见心动": demand.other || facts([["所在城市", demand.location], ["兴趣与生活方式", demand.lifestyle]]),
-    "找场地": demand.other || facts([["区域", demand.location], ["使用时间", demand.time], ["使用人数", demand.count], ["预算", demand.budget]]),
-    "发布活动": demand.other || facts([["活动时间", demand.time], ["活动地点", demand.location], ["活动人数", demand.count]]),
-    "其它需求": demand.other || facts([["地点", demand.location], ["时间", demand.time], ["预算", demand.budget]])
-  }[type];
+  const context = facts([["参与方式", demandParticipationOf(demand)], ["时间 / 节奏", demand.time], ["地点 / 线上线下", demand.location]]);
+  const extras = facts([["预算 / 费用 / 回报", demand.budget], ["人数 / 名额", demand.count], ["报名截止时间", demand.deadline], ["补充说明", demand.other]]);
   const flowTopics = String(demand.flow || "").split("→").map(item => item.trim().replace(/^综合判断/, "").replace(/^判断/, "").replace(/^了解/, "")).filter(Boolean);
   const aiFallback = flowTopics.length ? "AI 会和你聊到：" + flowTopics.join("、") + "。沟通结束后只生成匹配建议，最终是否连接由双方决定。" : "AI 会根据发布者设置的标准进行基础了解，并生成匹配建议。最终是否连接由双方决定。";
   return [{
-    title: titles[0],
-    content: copy.intro || introFallback || demandSummaryOf(demand)
+    title: "我想做什么",
+    content: demandDescriptionOf(demand)
   }, {
-    title: titles[1],
-    content: copy.fit || fitFallback || "你可以通过与找人助手沟通，进一步说明自己的经历、目标和可提供的资源。"
+    title: "我想找谁 / 什么资源",
+    content: demandTargetOf(demand)
   }, {
-    title: titles[2],
-    content: copy.context || contextFallback || "具体时间、地点和合作方式，可以在双方建立连接后进一步确认。"
+    title: "适合这样的你",
+    content: demandExpectationOf(demand)
   }, {
-    title: titles[3],
-    content: copy.ai || aiFallback
-  }];
+    title: "时间、地点与方式",
+    content: context
+  }, {
+    title: "预算、人数与补充",
+    content: extras
+  }, {
+    title: "AI会和你聊什么",
+    content: aiFallback
+  }].filter(section => section.content);
+}
+function DemandPublicDetailPreview({
+  demand,
+  publisher = {}
+}) {
+  const sections = demandViewerSections(demand);
+  const publisherName = publisher.company || publisher.name || "我的公开名片";
+  const publisherMeta = [publisher.industry, publisher.fundStage].filter(Boolean).join(" · ") || "发布者公开信息";
+  return React.createElement(React.Fragment, null, React.createElement("div", {
+    style: {
+      background: T.bgCard,
+      borderRadius: T.radius,
+      padding: 16,
+      marginBottom: 10,
+      border: `1px solid ${T.border}`,
+      boxShadow: "0 2px 16px rgba(159,151,235,.07)"
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 20,
+      lineHeight: 1.4,
+      fontWeight: 800,
+      color: T.text1,
+      marginBottom: 7
+    }
+  }, demand.title || "未填写需求标题"), demandPrimaryMeta(demand).length ? React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 7,
+      marginBottom: 12
+    }
+  }, demandPrimaryMeta(demand).map(item => React.createElement("span", {
+    key: item,
+    style: {
+      fontSize: 11,
+      color: T.text2,
+      background: T.bgCardMuted,
+      borderRadius: 999,
+      padding: "4px 9px"
+    }
+  }, item))) : null, React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 9,
+      padding: "10px 11px",
+      borderRadius: 10,
+      background: T.bgLight
+    }
+  }, React.createElement(CeoAvPlain, {
+    seed: publisher.seed || "PublishPreview",
+    bg: publisher.bg || "ddd6fe",
+    size: 32
+  }), React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: T.text1,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, publisherName), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      marginTop: 2,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, publisherMeta)))), React.createElement("div", {
+    style: {
+      background: T.bgCard,
+      borderRadius: T.radius,
+      padding: "2px 16px 12px",
+      border: `1px solid ${T.border}`,
+      boxShadow: "0 2px 12px rgba(159,151,235,.05)"
+    }
+  }, sections.map((section, index) => React.createElement("div", {
+    key: section.title,
+    style: {
+      padding: "15px 0",
+      borderBottom: index === sections.length - 1 ? "none" : `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: T.text1,
+      marginBottom: 7
+    }
+  }, section.title), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.text2,
+      lineHeight: 1.75,
+      whiteSpace: "pre-line"
+    }
+  }, section.content))), React.createElement("button", {
+    type: "button",
+    disabled: true,
+    style: {
+      width: "100%",
+      height: 40,
+      marginTop: 4,
+      borderRadius: 10,
+      border: "none",
+      background: "rgba(159,151,235,.18)",
+      color: T.purple,
+      fontSize: 13,
+      fontWeight: 800
+    }
+  }, "与AI沟通")));
 }
 function JobDetailScreen({
   job,
@@ -43619,7 +43727,7 @@ function DetailScreen({
     for (let i = 0; i < source.length; i++) hash = hash * 31 + source.charCodeAt(i) >>> 0;
     return `Eurome${String(100000 + hash % 900000)}`;
   };
-  const ceoIdentity = user.isCeo ? user.founderRole || "创业 CEO" : null;
+  const ceoIdentity = null;
   const officialIdentity = user.schoolOfficial ? user.isUniversityRep ? "北京大学学生服务总队官方分身" : user.school || "官方机构" : null;
   const EXPERTISE_MAP = {
     5: [{
@@ -43735,7 +43843,7 @@ function DetailScreen({
       }
     }, "/\u5C0F\u65F6"));
   };
-  const TABS = user.isCeo ? ["笔记", "我在找人"] : ["笔记"];
+  const TABS = jobs.length > 0 ? ["笔记", "我在找人"] : ["笔记"];
   const openProfileNote = note => {
     const base = HOME_POSTS.find(p => p.id === note.id || p.id === note.postId) || {};
     const merged = {
@@ -44320,7 +44428,7 @@ function DetailScreen({
       color: "#999999",
       fontSize: 13
     }
-  }, "\u8FD8\u6CA1\u6709\u4E0A\u67B6\u54A8\u8BE2\u670D\u52A1")), activeTab === "我在找人" && user.isCeo && React.createElement(React.Fragment, null, publicAboutProfiles.map(profile => {
+  }, "\u8FD8\u6CA1\u6709\u4E0A\u67B6\u54A8\u8BE2\u670D\u52A1")), activeTab === "我在找人" && React.createElement(React.Fragment, null, publicAboutProfiles.map(profile => {
     const name = profile.company;
     const meta = [profile.industry, profile.employeeSize].filter(Boolean).join(" · ");
     const bio = profile.companyBio;
@@ -49349,6 +49457,54 @@ function PickerSheet({
     }
   }, "✓") : null)))));
 }
+function MicIcon({
+  color = T.text3,
+  size = 16
+}) {
+  return React.createElement("svg", {
+    width: size,
+    height: size,
+    fill: "none",
+    viewBox: "0 0 24 24",
+    "aria-hidden": "true"
+  }, React.createElement("rect", {
+    x: "9",
+    y: "2",
+    width: "6",
+    height: "12",
+    rx: "3",
+    stroke: color,
+    strokeWidth: "1.7"
+  }), React.createElement("path", {
+    d: "M5 10a7 7 0 0014 0M12 19v3M9 22h6",
+    stroke: color,
+    strokeWidth: "1.7",
+    strokeLinecap: "round"
+  }));
+}
+function PencilIcon({
+  color = T.text3,
+  size = 15
+}) {
+  return React.createElement("svg", {
+    width: size,
+    height: size,
+    fill: "none",
+    viewBox: "0 0 24 24",
+    "aria-hidden": "true"
+  }, React.createElement("path", {
+    d: "M4 20h4.4L19.2 9.2a2.4 2.4 0 00-3.4-3.4L5 16.6 4 20z",
+    stroke: color,
+    strokeWidth: "1.8",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }), React.createElement("path", {
+    d: "M14.5 7.1l2.4 2.4",
+    stroke: color,
+    strokeWidth: "1.8",
+    strokeLinecap: "round"
+  }));
+}
 function TextField({
   label,
   k,
@@ -49358,6 +49514,67 @@ function TextField({
   required,
   ph
 }) {
+  const [aiDraft, setAiDraft] = useState("");
+  const [listening, setListening] = useState(false);
+  const applyDraft = (text, mode = "replace") => {
+    const next = mode === "append" && form[k] ? `${form[k]}\n${text}` : text;
+    update(k, next);
+    setAiDraft("");
+  };
+  const startVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      applyDraft(demandVoiceDraft(form, k, label), form[k] ? "append" : "replace");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setListening(true);
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    recognition.onresult = event => {
+      const text = event.results?.[0]?.[0]?.transcript || "";
+      if (text) applyDraft(text, form[k] ? "append" : "replace");
+    };
+    recognition.start();
+  };
+  const polish = () => setAiDraft(demandPolishDraft(form, k, label));
+  const showAssist = !!multiline;
+  const AssistButton = ({
+    children,
+    onClick,
+    active,
+    title,
+    iconOnly
+  }) => React.createElement('button', {
+    type: "button",
+    onClick,
+    title,
+    "aria-label": title,
+    style: {
+      border: "none",
+      borderRadius: 6,
+      background: "transparent",
+      color: T.purple,
+      width: iconOnly ? 36 : "auto",
+      minWidth: iconOnly ? 36 : 58,
+      height: 36,
+      padding: iconOnly ? 0 : "0 4px",
+      fontSize: 11,
+      fontWeight: 700,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      whiteSpace: "nowrap",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+      opacity: active ? 1 : .88,
+      pointerEvents: "auto"
+    }
+  }, children);
   return React.createElement('div', {
     style: {
       marginBottom: 14
@@ -49374,7 +49591,11 @@ function TextField({
       color: "#ef4444",
       marginLeft: 3
     }
-  }, "*") : null), multiline ? React.createElement('textarea', {
+  }, "*") : null), React.createElement('div', {
+    style: {
+      position: "relative"
+    }
+  }, multiline ? React.createElement('textarea', {
     value: form[k] || "",
     onChange: e => update(k, e.target.value),
     placeholder: ph,
@@ -49382,13 +49603,13 @@ function TextField({
       width: "100%",
       borderRadius: 12,
       border: "1.5px solid rgba(159,151,235,.2)",
-      padding: "10px 12px",
+      padding: "10px 12px 42px",
       fontSize: 13,
       color: T.text1,
       background: T.inputBg,
       outline: "none",
       resize: "none",
-      height: 80,
+      height: 96,
       fontFamily: "inherit",
       lineHeight: 1.6
     }
@@ -49407,7 +49628,105 @@ function TextField({
       outline: "none",
       fontFamily: "inherit"
     }
-  }));
+  }), showAssist ? React.createElement('div', {
+    style: {
+      position: "absolute",
+      right: 8,
+      left: 8,
+      bottom: 4,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      pointerEvents: "none"
+    }
+  }, React.createElement(AssistButton, {
+    onClick: startVoiceInput,
+    active: listening,
+    title: listening ? "听写中" : "语音输入",
+    iconOnly: true
+  }, React.createElement(MicIcon, {
+    color: T.purple,
+    size: 15
+  })), React.createElement(AssistButton, {
+    onClick: polish,
+    title: "AI润色"
+  }, "AI", React.createElement('span', null, "润色"))) : null), aiDraft ? React.createElement('div', {
+    style: {
+      marginTop: 8,
+      borderRadius: 12,
+      border: "1px solid rgba(159,151,235,.20)",
+      background: "rgba(159,151,235,.06)",
+      padding: "10px 11px"
+    }
+  }, React.createElement('div', {
+    style: {
+      fontSize: 11,
+      fontWeight: 800,
+      color: T.purple,
+      marginBottom: 6
+    }
+  }, "AI 润色结果"), React.createElement('div', {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      lineHeight: 1.55,
+      marginBottom: 7
+    }
+  }, "以下是根据原文生成的新版本，使用后将替换当前内容。"), React.createElement('div', {
+    style: {
+      fontSize: 12,
+      color: T.text2,
+      lineHeight: 1.65,
+      whiteSpace: "pre-line",
+      marginBottom: 9
+    }
+  }, aiDraft), React.createElement('div', {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, React.createElement('button', {
+    type: "button",
+    onClick: () => applyDraft(aiDraft, "replace"),
+    style: {
+      flex: 1,
+      border: "none",
+      borderRadius: 999,
+      background: T.purple,
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: 700,
+      padding: "8px 0",
+      cursor: "pointer"
+    }
+  }, "使用此版本"), React.createElement('button', {
+    type: "button",
+    onClick: polish,
+    style: {
+      flex: 1,
+      border: `1px solid ${T.borderPurple}`,
+      borderRadius: 999,
+      background: T.bgCard,
+      color: T.purple,
+      fontSize: 12,
+      fontWeight: 700,
+      padding: "8px 0",
+      cursor: "pointer"
+    }
+  }, "重新生成"), React.createElement('button', {
+    type: "button",
+    onClick: () => setAiDraft(""),
+    style: {
+      width: 58,
+      border: "none",
+      borderRadius: 999,
+      background: "transparent",
+      color: T.text3,
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "取消"))) : null);
 }
 function SelectField({
   label,
@@ -49465,6 +49784,105 @@ function SelectField({
       onChange(v);
       setOpen(false);
     }
+  }) : null);
+}
+function DemandTypeField({
+  form,
+  update,
+  onTypeChange,
+  label = "需求类型"
+}) {
+  const [open, setOpen] = useState(false);
+  const type = demandTypeOf(form);
+  const isCustom = type === "自定义需求";
+  const selectType = value => {
+    update("type", value);
+    if (onTypeChange) onTypeChange(value);
+    setOpen(false);
+  };
+  return React.createElement('div', {
+    style: {
+      marginBottom: 14
+    }
+  }, React.createElement('div', {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: T.text1,
+      marginBottom: 6
+    }
+  }, label, React.createElement('span', {
+    style: {
+      color: "#ef4444",
+      marginLeft: 3
+    }
+  }, "*")), isCustom ? React.createElement('div', {
+    style: {
+      position: "relative"
+    }
+  }, React.createElement('input', {
+    autoFocus: true,
+    value: form.customDemandType || "",
+    onChange: event => update("customDemandType", event.target.value),
+    placeholder: "输入自定义需求类型，如：找宠物照护伙伴",
+    "aria-label": "自定义需求类型",
+    style: {
+      width: "100%",
+      borderRadius: 12,
+      border: "1.5px solid rgba(159,151,235,.32)",
+      padding: "10px 42px 10px 12px",
+      fontSize: 13,
+      color: T.text1,
+      background: T.inputBg,
+      outline: "none",
+      fontFamily: "inherit"
+    }
+  }), React.createElement('button', {
+    type: "button",
+    onClick: () => setOpen(true),
+    title: "重新选择需求类型",
+    "aria-label": "重新选择需求类型",
+    style: {
+      position: "absolute",
+      right: 4,
+      top: 4,
+      width: 34,
+      height: 32,
+      border: "none",
+      background: "transparent",
+      color: T.purple,
+      fontSize: 12,
+      cursor: "pointer"
+    }
+  }, "▾")) : React.createElement('button', {
+    type: "button",
+    onClick: () => setOpen(true),
+    style: {
+      width: "100%",
+      textAlign: "left",
+      borderRadius: 12,
+      border: "1.5px solid rgba(159,151,235,.2)",
+      padding: "10px 12px",
+      fontSize: 13,
+      color: T.text1,
+      background: T.inputBg,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      fontFamily: "inherit"
+    }
+  }, React.createElement('span', null, type), React.createElement('span', {
+    style: {
+      color: "#c4b8f0",
+      fontSize: 11
+    }
+  }, "▾")), open ? React.createElement(PickerSheet, {
+    title: label,
+    options: DEMAND_TYPES,
+    value: type,
+    onClose: () => setOpen(false),
+    onSelect: selectType
   }) : null);
 }
 function SubjectKindField({
@@ -50352,7 +50770,7 @@ function DurationField({
     }
   }, "自由设置时长"))))) : null);
 }
-const DEMAND_TYPES = ["连接人才", "找合伙人", "找搭子", "发布活动", "找场地", "遇见心动", "其它需求"];
+const DEMAND_TYPES = ["连接人才", "找合伙人", "找搭子", "发布活动", "找场地", "遇见心动", "自定义需求"];
 const LEGACY_DEMAND_TYPE_MAP = {
   "招聘人才": "连接人才",
   "寻找合伙人": "找合伙人",
@@ -50361,312 +50779,118 @@ const LEGACY_DEMAND_TYPE_MAP = {
   "寻找伴侣": "遇见心动",
   "找对象": "遇见心动",
   "寻找场地": "找场地",
-  "其他需求": "其它需求",
-  "自定义": "其它需求"
+  "其他需求": "自定义需求",
+  "其它需求": "自定义需求",
+  "自定义": "自定义需求"
 };
-const DEMAND_FIELDS = {
-  "连接人才": [{
-    k: "title",
-    label: "你想找什么人？",
-    required: true,
-    ph: "如：懂 AI 产品的共创伙伴 / 周末运动搭子"
-  }, {
-    k: "description",
-    label: "背景信息",
-    required: true,
-    multiline: true,
-    ph: "介绍你为什么想找这个人、目前的背景和希望一起推进的事情"
-  }, {
-    k: "matchingCriteria",
-    label: "希望 TA 具备什么",
-    required: true,
-    multiline: true,
-    ph: "如：相关经验、兴趣方向、时间投入、沟通方式、可提供的资源"
-  }, {
-    k: "participationRequirements",
-    label: "参与方式",
-    multiline: true,
-    ph: "如：线上沟通 / 线下见面 / 项目制共创 / 长期交流"
-  }, {
-    k: "location",
-    label: "地点 / 线上线下",
-    ph: "如：上海 / 线上 / 不限城市"
-  }, {
-    k: "count",
-    label: "需求人数",
-    ph: "如：1-3人"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充你希望找人助手重点了解或判断的内容"
-  }],
-  "找合伙人": [{
-    k: "title",
-    label: "需求名称",
-    required: true,
-    ph: "如：寻找创业合伙人"
-  }, {
-    k: "projectIntro",
-    label: "项目介绍",
-    required: true,
-    multiline: true,
-    ph: "介绍项目方向、当前阶段和你希望解决的问题"
-  }, {
-    k: "direction",
-    label: "合作方向",
-    ph: "如：产品、技术、增长、内容"
-  }, {
-    k: "partnerType",
-    label: "希望寻找的合伙人类型",
-    ph: "如：技术合伙人 / 增长合伙人"
-  }, {
-    k: "ability",
-    label: "希望对方具备的能力",
-    multiline: true,
-    ph: "描述关键能力、经验或资源"
-  }, {
-    k: "time",
-    label: "时间投入",
-    ph: "如：每周 10 小时 / 全职"
-  }, {
-    k: "cooperation",
-    label: "合作方式",
-    ph: "如：联合共创 / 股权合作 / 项目制"
-  }, {
-    k: "location",
-    label: "地点",
-    ph: "如：上海 / 远程"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充合作边界、节奏或偏好"
-  }, {
-    k: "matchingCriteria",
-    label: "匹配标准",
-    required: true,
-    multiline: true,
-    ph: "如：技术能力、创业经验、长期投入、价值观、沟通方式"
-  }],
-  "找搭子": [{
-    k: "title",
-    label: "需求名称",
-    required: true,
-    ph: "如：找英语学习搭子 / 找周末羽毛球搭子"
-  }, {
-    k: "buddyType",
-    label: "搭子类型",
-    kind: "select",
-    options: ["学习搭子", "兴趣搭子", "运动搭子", "饭搭子", "旅行搭子", "其它"],
-    ph: "请选择搭子类型"
-  }, {
-    k: "learningDirection",
-    label: "方向",
-    ph: "如：英语口语 / 羽毛球 / 看展 / 旅行"
-  }, {
-    k: "learningGoal",
-    label: "目标 / 期待",
-    multiline: true,
-    ph: "描述你希望一起完成的事情或期待的相处方式"
-  }, {
-    k: "learningMode",
-    label: "方式",
-    ph: "如：每日打卡 / 周末线下 / 线上交流"
-  }, {
-    k: "time",
-    label: "时间",
-    ph: "如：工作日晚 9 点 / 周末上午"
-  }, {
-    k: "location",
-    label: "地点 / 线上",
-    ph: "如：线上 / 上海静安"
-  }, {
-    k: "expectedPerson",
-    label: "希望对方具备",
-    multiline: true,
-    ph: "描述节奏、兴趣、目标感或互相配合方式"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充你在意的配合习惯"
-  }, {
-    k: "matchingCriteria",
-    label: "匹配标准",
-    multiline: true,
-    ph: "如：目标一致、时间稳定、兴趣相近、沟通舒服"
-  }],
-  "遇见心动": [{
-    k: "title",
-    label: "需求名称",
-    ph: "如：想认识认真了解彼此的人"
-  }, {
-    k: "relationshipExpectation",
-    label: "关系期待",
-    multiline: true,
-    ph: "描述你期待的关系状态和相处节奏"
-  }, {
-    k: "location",
-    label: "所在城市",
-    ph: "如：上海 / 杭州"
-  }, {
-    k: "preferredObject",
-    label: "希望认识的TA（选填）",
-    kind: "select",
-    options: ["不限", "男性", "女性", "其它", "暂不说明"],
-    ph: "不限"
-  }, {
-    k: "expectedPerson",
-    label: "希望认识的人",
-    multiline: true,
-    ph: "描述价值观、沟通方式和生活节奏，不做敏感属性筛选"
-  }, {
-    k: "lifestyle",
-    label: "兴趣 / 生活方式",
-    multiline: true,
-    ph: "如：阅读、运动、稳定沟通、喜欢探索城市"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充你希望 AI 重点了解的问题"
-  }, {
-    k: "matchingCriteria",
-    label: "匹配标准",
-    multiline: true,
-    ph: "如：关系期待、沟通方式、生活节奏、价值观"
-  }],
-  "找场地": [{
-    k: "title",
-    label: "需求名称",
-    ph: "如：寻找小型沙龙场地"
-  }, {
-    k: "venueType",
-    label: "场地类型",
-    ph: "如：会议室 / 咖啡馆 / 活动空间"
-  }, {
-    k: "location",
-    label: "城市 / 区域",
-    ph: "如：上海徐汇"
-  }, {
-    k: "time",
-    label: "使用时间",
-    ph: "如：9月下旬周末下午"
-  }, {
-    k: "count",
-    label: "使用人数",
-    ph: "如：20-30人"
-  }, {
-    k: "budget",
-    label: "预算",
-    ph: "如：2000元以内"
-  }, {
-    k: "description",
-    label: "场地要求",
-    multiline: true,
-    ph: "描述空间、设备、交通、餐饮等要求"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充特殊限制或偏好"
-  }, {
-    k: "matchingCriteria",
-    label: "匹配标准",
-    multiline: true,
-    ph: "如：位置、预算、容量、设备、服务"
-  }],
-  "发布活动": [{
-    k: "title",
-    label: "活动名称",
-    ph: "如：AI产品圆桌交流"
-  }, {
-    k: "description",
-    label: "活动介绍",
-    multiline: true,
-    ph: "介绍活动背景、适合谁参加、能获得什么"
-  }, {
-    k: "time",
-    label: "活动时间",
-    ph: "如：9月28日 19:30"
-  }, {
-    k: "location",
-    label: "活动地点",
-    ph: "如：上海 / 线上"
-  }, {
-    k: "count",
-    label: "活动人数",
-    ph: "如：30人"
-  }, {
-    k: "activityTheme",
-    label: "活动主题",
-    ph: "如：AI产品从0到1"
-  }, {
-    k: "participationRequirements",
-    label: "参与要求",
-    multiline: true,
-    ph: "描述适合参与的人和准备事项"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充活动规则或联系偏好"
-  }, {
-    k: "matchingCriteria",
-    label: "匹配标准",
-    multiline: true,
-    ph: "如：主题兴趣、时间匹配、参与动机"
-  }],
-  "其它需求": [{
-    k: "title",
-    label: "你想找什么人？",
-    required: true,
-    ph: "如：寻找播客剪辑伙伴"
-  }, {
-    k: "description",
-    label: "背景信息",
-    required: true,
-    multiline: true,
-    ph: "描述你要解决的问题、希望获得的帮助或资源"
-  }, {
-    k: "location",
-    label: "地点",
-    ph: "如：线上 / 上海"
-  }, {
-    k: "time",
-    label: "时间 / 节奏",
-    ph: "如：两周内 / 每周一次"
-  }, {
-    k: "budget",
-    label: "预算",
-    ph: "如：面议 / 500元以内"
-  }, {
-    k: "expectedPerson",
-    label: "希望寻找的对象 / 资源",
-    multiline: true,
-    ph: "描述你希望连接的人、资源或服务"
-  }, {
-    k: "other",
-    label: "补充说明",
-    multiline: true,
-    ph: "补充限制条件或偏好"
-  }, {
-    k: "matchingCriteria",
-    label: "匹配标准",
-    required: true,
-    multiline: true,
-    ph: "描述 AI 判断匹配度时应优先看什么"
-  }]
-};
+const COMMON_DEMAND_FIELDS = [{
+  k: "title",
+  label: "需求标题",
+  required: true,
+  ph: "如：寻找 AI 产品共创伙伴 / 周末运动搭子"
+}, {
+  k: "description",
+  label: "背景说明",
+  required: true,
+  multiline: true,
+  ph: "介绍你为什么发布这条需求、目前背景，以及希望一起推进的事情"
+}, {
+  k: "target",
+  label: "我想找谁 / 什么资源",
+  required: true,
+  multiline: true,
+  ph: "描述你想连接的人、资源、场地、活动参与者或合作对象"
+}, {
+  k: "matchingCriteria",
+  label: "希望对方具备什么",
+  multiline: true,
+  ph: "如：相关经验、兴趣方向、时间投入、沟通方式、可提供的资源"
+}, {
+  k: "participationRequirements",
+  label: "参与方式",
+  multiline: true,
+  ph: "如：线上沟通 / 线下见面 / 项目制共创 / 长期交流"
+}, {
+  k: "time",
+  label: "时间 / 节奏",
+  ph: "如：每周末 / 两周内 / 长期"
+}, {
+  k: "location",
+  label: "地点 / 线上线下",
+  ph: "如：上海 / 线上 / 不限城市"
+}, {
+  k: "budget",
+  label: "预算 / 费用 / 回报",
+  ph: "如：面议 / 500元以内 / 股权合作"
+}, {
+  k: "count",
+  label: "人数 / 名额",
+  ph: "如：1-3人 / 30人"
+}, {
+  k: "other",
+  label: "补充说明",
+  multiline: true,
+  ph: "补充限制条件、偏好，或希望找人助手重点了解的问题"
+}];
+const DEMAND_FIELDS = DEMAND_TYPES.reduce((acc, type) => {
+  acc[type] = COMMON_DEMAND_FIELDS;
+  return acc;
+}, {});
 const demandTypeOf = demand => {
   const raw = demand?.type || demand?.demandType || "";
   const normalized = LEGACY_DEMAND_TYPE_MAP[raw] || raw;
   return DEMAND_TYPES.includes(normalized) ? normalized : "连接人才";
 };
-const demandFieldsOf = type => DEMAND_FIELDS[LEGACY_DEMAND_TYPE_MAP[type] || type] || DEMAND_FIELDS["其它需求"];
-const demandSummaryOf = demand => demand.description || demand.summary || demand.projectIntro || demand.learningGoal || demand.expectedPerson || demand.duties || "发布者希望先由找人助手完成前期沟通与匹配判断。";
+const demandTypeLabelOf = demand => {
+  const type = demandTypeOf(demand);
+  const customLabel = String(demand?.customDemandType || "").trim();
+  return type === "自定义需求" && customLabel ? customLabel : type;
+};
+const demandFieldsOf = type => DEMAND_FIELDS[LEGACY_DEMAND_TYPE_MAP[type] || type] || DEMAND_FIELDS["自定义需求"];
+const demandDescriptionOf = demand => demand.description || demand.projectIntro || demand.learningGoal || demand.relationshipExpectation || demand.summary || demand.duties || "";
+const demandTargetOf = demand => demand.target || demand.partnerType || demand.expectedPerson || demand.preferredObject || demand.venueType || demand.activityTheme || demand.direction || "";
+const demandExpectationOf = demand => demand.matchingCriteria || demand.expectation || demand.ability || demand.requirements || "";
+const demandParticipationOf = demand => demand.participationRequirements || demand.cooperation || demand.learningMode || demand.team || "";
+const demandSummaryOf = demand => demandDescriptionOf(demand) || demandTargetOf(demand) || "发布者希望先由找人助手完成前期沟通与匹配判断。";
 const demandPrimaryMeta = demand => [demand.location, demand.time, demand.budget, demand.count].filter(Boolean).slice(0, 3);
+const demandVoiceDraft = (form, key, label) => {
+  const type = demandTypeLabelOf(form);
+  const samples = {
+    title: `${type}：请帮我连接合适的人`,
+    description: `我正在发布一条${type}需求，希望先把背景、目标和当前阶段讲清楚，方便对方判断是否适合进一步沟通。`,
+    target: "希望找到目标一致、沟通顺畅，并且能提供真实经验、资源或行动支持的人。",
+    matchingCriteria: "希望对方有相关经历，时间和目标匹配，表达清晰，愿意先通过找人助手完成基础了解。",
+    participationRequirements: "可以先线上沟通，确认方向合适后再决定是否线下见面、共创或进一步合作。",
+    time: "时间可协商，优先选择双方都稳定方便的节奏。",
+    location: "线上优先，城市不限；如果同城也可以线下见面。",
+    budget: "预算或回报方式可以进一步沟通确认。",
+    count: "1-3人",
+    other: "希望找人助手重点了解对方的动机、可投入时间、相关经历和现实条件。"
+  };
+  return samples[key] || `通过语音补充「${label}」内容。`;
+};
+const demandPolishDraft = (form, key, label) => {
+  const current = String(form[key] || "").trim();
+  const type = demandTypeLabelOf(form);
+  const base = current || demandVoiceDraft(form, key, label);
+  if (key === "title") return base.replace(/^需求：?/, "").slice(0, 28);
+  if (["time", "location", "budget", "count"].includes(key)) return base;
+  return `这是一条「${type}」需求。${base}\n\n希望先通过找人助手完成基础了解，确认双方目标、条件和节奏是否匹配；最终是否连接、合作或见面，仍由双方真人决定。`;
+};
+const demandGenerateFromBrief = (form, brief) => {
+  const text = String(brief || "").trim();
+  if (!text) return {};
+  const type = demandTypeLabelOf(form);
+  const targetPhrase = (text.match(/想找(?:一位|一个|几位)?([^，。；！？!?]{2,18})/)?.[1] || "").replace(/^有/, "").replace(/一起.*$/, "").trim();
+  const title = form.title || (targetPhrase ? `寻找${targetPhrase}` : text.replace(/[。！？!?].*$/, "").slice(0, 24)) || `${type}需求`;
+  return {
+    title,
+    description: form.description || `我正在发起一项「${type}」需求：${text}\n\n目前希望先把目标、现有条件与合作节奏说清楚，找到适合一起推进的人。\n\n可以先通过找人助手互相了解，确认目标和条件匹配后，再进一步沟通。`,
+    target: form.target || "希望找到目标一致、沟通顺畅，并且能提供真实经验、资源或行动支持的人。",
+    matchingCriteria: form.matchingCriteria || "相关经历、时间匹配、表达清晰、目标一致。",
+    participationRequirements: form.participationRequirements || "可以先通过找人助手完成基础了解，确认合适后再进一步沟通。"
+  };
+};
 const demandFinalAction = demand => {
   const type = demandTypeOf(demand);
   if (type === "找场地") return "联系发布者";
@@ -50682,7 +50906,7 @@ const buildDefaultDemandQuestions = demand => {
 };
 function jobMissing(form) {
   const type = demandTypeOf(form);
-  const required = [["type", "需求类型"]].concat(demandFieldsOf(type).filter(f => f.required).map(f => [f.k, f.label]));
+  const required = [["type", "需求类型"]].concat(type === "自定义需求" ? [["customDemandType", "自定义需求类型"]] : []).concat(demandFieldsOf(type).filter(f => f.required).map(f => [f.k, f.label]));
   return required.filter(([k]) => !(form[k] && String(form[k]).trim())).map(([, l]) => l);
 }
 function JobFormFields({
@@ -50691,17 +50915,37 @@ function JobFormFields({
   onTypeChange
 }) {
   const type = demandTypeOf(form);
-  return React.createElement(React.Fragment, null, React.createElement(SelectField, {
-    label: "需求类型 / 场景",
-    required: true,
-    value: type,
-    placeholder: "请选择需求类型 / 场景",
-    options: DEMAND_TYPES,
-    onChange: v => {
-      update("type", v);
-      if (onTypeChange) onTypeChange(v);
+  const fields = demandFieldsOf(type);
+  const [brief, setBrief] = useState("");
+  const [briefListening, setBriefListening] = useState(false);
+  const [generated, setGenerated] = useState(() => fields.some(field => form[field.k]) || !!form.deadline);
+  const [editingKey, setEditingKey] = useState(() => fields.some(field => form[field.k]) || !!form.deadline ? "" : "brief");
+  const fillFromBrief = () => {
+    const patch = demandGenerateFromBrief(form, brief);
+    Object.entries(patch).forEach(([k, v]) => update(k, v));
+    setGenerated(true);
+    setEditingKey("");
+  };
+  const startBriefVoice = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setBrief("我想找一个目标一致、沟通顺畅的人，先通过找人助手了解彼此是否匹配。");
+      return;
     }
-  }), demandFieldsOf(type).map(field => field.kind === "select" ? React.createElement(SelectField, {
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setBriefListening(true);
+    recognition.onerror = () => setBriefListening(false);
+    recognition.onend = () => setBriefListening(false);
+    recognition.onresult = event => {
+      const text = event.results?.[0]?.[0]?.transcript || "";
+      if (text) setBrief(text);
+    };
+    recognition.start();
+  };
+  const renderField = field => field.kind === "select" ? React.createElement(SelectField, {
     key: field.k,
     label: field.label,
     required: field.required,
@@ -50718,11 +50962,1416 @@ function JobFormFields({
     required: field.required,
     multiline: field.multiline,
     ph: field.ph
-  })), React.createElement(DateField, {
+  });
+  const fieldByKey = fields.reduce((acc, field) => {
+    acc[field.k] = field;
+    return acc;
+  }, {});
+  const renderFields = keys => keys.map(key => fieldByKey[key] ? renderField(fieldByKey[key]) : null);
+  const EditIconButton = ({
+    label,
+    onClick
+  }) => React.createElement("button", {
+    type: "button",
+    onClick,
+    title: label,
+    style: {
+      width: 30,
+      height: 30,
+      borderRadius: 999,
+      border: "none",
+      background: "rgba(159,151,235,.08)",
+      color: T.purple,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      flexShrink: 0
+    }
+  }, React.createElement(PencilIcon, {
+    color: T.purple,
+    size: 15
+  }));
+  const SectionCard = ({
+    id,
+    title,
+    content,
+    keys,
+    required,
+    children
+  }) => React.createElement("div", {
+    style: {
+      borderRadius: 16,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: 14,
+      marginBottom: 10
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+      marginBottom: 8
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 900,
+      color: T.text1
+    }
+  }, title, required ? React.createElement("span", {
+    style: {
+      marginLeft: 4,
+      color: "#ef4444"
+    }
+  }, "*") : null), React.createElement(EditIconButton, {
+    label: "编辑" + title,
+    onClick: () => setEditingKey(editingKey === id ? "" : id)
+  })), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: content ? T.text2 : T.text3,
+      lineHeight: 1.7,
+      whiteSpace: "pre-line"
+    }
+  }, content || "未填写，发布前可补充。"), editingKey === id ? React.createElement("div", {
+    style: {
+      marginTop: 12,
+      borderTop: `1px solid ${T.hairline}`,
+      paddingTop: 12
+    }
+  }, children || renderFields(keys), React.createElement("button", {
+    type: "button",
+    onClick: () => setEditingKey(""),
+    style: {
+      width: "100%",
+      height: 36,
+      borderRadius: 999,
+      border: "none",
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 12,
+      fontWeight: 800,
+      cursor: "pointer",
+      fontFamily: "inherit"
+    }
+  }, "完成")) : null);
+  const facts = entries => entries.filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
+  const previewMeta = demandPrimaryMeta(form);
+  const sectionList = [{
+    id: "description",
+    title: "我想做什么",
+    content: form.description,
+    keys: ["description"],
+    required: true
+  }, {
+    id: "target",
+    title: "我想找谁 / 什么资源",
+    content: form.target,
+    keys: ["target"],
+    required: true
+  }, {
+    id: "matching",
+    title: "适合这样的你",
+    content: form.matchingCriteria,
+    keys: ["matchingCriteria"]
+  }, {
+    id: "context",
+    title: "时间、地点与方式",
+    content: facts([["参与方式", form.participationRequirements], ["时间 / 节奏", form.time], ["地点 / 线上线下", form.location]]),
+    keys: ["participationRequirements", "time", "location"]
+  }, {
+    id: "extra",
+    title: "预算、人数与补充",
+    content: facts([["预算 / 费用 / 回报", form.budget], ["人数 / 名额", form.count], ["补充说明", form.other], ["报名截止时间", form.deadline]]),
+    keys: ["budget", "count", "other"],
+    children: React.createElement(React.Fragment, null, renderFields(["budget", "count", "other"]), React.createElement(DateField, {
+      label: "报名截止时间",
+      value: form.deadline,
+      onChange: v => update("deadline", v)
+    }))
+  }];
+  return React.createElement(React.Fragment, null, React.createElement('div', {
+    style: {
+      marginBottom: 16,
+      padding: "16px 16px 14px",
+      borderRadius: 20,
+      background: T._theme === "dark" ? "linear-gradient(180deg,rgba(159,151,235,.18),rgba(159,151,235,.07))" : "linear-gradient(180deg,rgba(159,151,235,.13),rgba(255,255,255,.78))",
+      border: "1px solid rgba(159,151,235,.20)",
+      boxShadow: T._theme === "dark" ? "none" : "0 8px 24px rgba(31,35,48,.05)"
+    }
+  }, React.createElement('div', {
+    style: {
+      fontSize: 17,
+      fontWeight: 900,
+      color: T.text1,
+      marginBottom: 5
+    }
+  }, "你想找谁？想一起做什么？"), React.createElement('div', {
+    style: {
+      fontSize: 12,
+      color: T.text3,
+      lineHeight: 1.55,
+      marginBottom: 10
+    }
+  }, "先自然说清楚需求，AI 会整理成一张可发布的找人卡片。"), React.createElement(DemandTypeField, {
+    form,
+    update,
+    onTypeChange,
+    label: "需求类型 / 场景"
+  }), React.createElement('textarea', {
+    value: brief,
+    onChange: e => setBrief(e.target.value),
+    placeholder: "如：我想找一个周末一起打羽毛球的搭子，在上海徐汇，每周一次",
+    style: {
+      width: "100%",
+      minHeight: 92,
+      borderRadius: 14,
+      border: "1.5px solid rgba(159,151,235,.18)",
+      padding: "12px 13px",
+      fontSize: 14,
+      color: T.text1,
+      background: T.inputBg,
+      outline: "none",
+      resize: "none",
+      fontFamily: "inherit",
+      lineHeight: 1.65
+    }
+  }), React.createElement('div', {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 8
+    }
+  }, React.createElement('button', {
+    type: "button",
+    onClick: startBriefVoice,
+    title: briefListening ? "听写中" : "语音",
+    style: {
+      flex: "0 0 auto",
+      border: `1px solid ${T.borderPurple}`,
+      borderRadius: 999,
+      background: T.bgCard,
+      color: T.purple,
+      width: 38,
+      height: 34,
+      padding: 0,
+      cursor: "pointer",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, React.createElement(MicIcon, {
+    color: T.purple,
+    size: 16
+  })), React.createElement('button', {
+    type: "button",
+    onClick: () => {
+      setGenerated(true);
+      setEditingKey("card");
+    },
+    style: {
+      flex: "0 0 auto",
+      border: `1px solid ${T.border}`,
+      borderRadius: 999,
+      background: T.bgCard,
+      color: T.text2,
+      fontSize: 12,
+      fontWeight: 800,
+      padding: "8px 12px",
+      cursor: "pointer",
+      fontFamily: "inherit"
+    }
+  }, "手动编辑"), React.createElement('button', {
+    type: "button",
+    onClick: fillFromBrief,
+    disabled: !brief.trim(),
+    style: {
+      flex: 1,
+      border: "none",
+      borderRadius: 999,
+      background: brief.trim() ? T.purple : "rgba(159,151,235,.24)",
+      color: "#fff",
+      fontSize: 12,
+      fontWeight: 800,
+      padding: "8px 0",
+      cursor: brief.trim() ? "pointer" : "default",
+      fontFamily: "inherit"
+    }
+  }, "AI整理成卡片"))), React.createElement('div', {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      lineHeight: 1.5,
+      margin: "0 0 12px"
+    }
+  }, "标题、背景说明、想找谁为必填；其它条件可先留空，发布后仍可编辑。"), generated ? React.createElement(React.Fragment, null, React.createElement('div', {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10
+    }
+  }, React.createElement('div', {
+    style: {
+      fontSize: 15,
+      fontWeight: 900,
+      color: T.text1
+    }
+  }, "找人卡片预览"), React.createElement('span', {
+    style: {
+      fontSize: 11,
+      color: T.text3
+    }
+  }, "公开展示效果")), React.createElement('div', {
+    style: {
+      borderRadius: 18,
+      border: "1px solid rgba(159,151,235,.16)",
+      background: T.bgCard,
+      padding: 15,
+      boxShadow: T._theme === "dark" ? "none" : "0 8px 22px rgba(31,35,48,.05)",
+      marginBottom: 14
+    }
+  }, React.createElement('div', {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 10,
+      marginBottom: 8
+    }
+  }, React.createElement('div', {
+    style: {
+      minWidth: 0,
+      flex: 1
+    }
+  }, React.createElement('div', {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      height: 24,
+      borderRadius: 999,
+      padding: "0 9px",
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 8
+    }
+  }, demandTypeLabelOf(form)), React.createElement('div', {
+    style: {
+      fontSize: 17,
+      fontWeight: 900,
+      color: T.text1,
+      lineHeight: 1.35
+    }
+  }, form.title || "给这条需求起个标题")), React.createElement(EditIconButton, {
+    label: "编辑找人卡片",
+    onClick: () => setEditingKey(editingKey === "card" ? "" : "card")
+  })), React.createElement('div', {
+    style: {
+      fontSize: 12,
+      color: T.text2,
+      lineHeight: 1.65,
+      marginBottom: 10,
+      display: "-webkit-box",
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: "vertical",
+      overflow: "hidden"
+    }
+  }, demandSummaryOf(form)), previewMeta.length ? React.createElement('div', {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 7,
+      marginBottom: 12
+    }
+  }, previewMeta.map(info => React.createElement("span", {
+    key: info,
+    style: {
+      borderRadius: 999,
+      background: "rgba(0,0,0,.04)",
+      color: T.text3,
+      fontSize: 11,
+      padding: "4px 8px"
+    }
+  }, info))) : null, React.createElement('button', {
+    type: "button",
+    disabled: true,
+    style: {
+      width: "100%",
+      height: 38,
+      borderRadius: 999,
+      border: "none",
+      background: "rgba(159,151,235,.16)",
+      color: T.purple,
+      fontSize: 12,
+      fontWeight: 800,
+      fontFamily: "inherit"
+    }
+  }, "与找人助手沟通"), editingKey === "card" ? React.createElement("div", {
+    style: {
+      marginTop: 12,
+      borderTop: `1px solid ${T.hairline}`,
+      paddingTop: 12
+    }
+  }, renderFields(["title", "description", "target"]), React.createElement("button", {
+    type: "button",
+    onClick: () => setEditingKey(""),
+    style: {
+      width: "100%",
+      height: 36,
+      borderRadius: 999,
+      border: "none",
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 12,
+      fontWeight: 800,
+      cursor: "pointer",
+      fontFamily: "inherit"
+    }
+  }, "完成")) : null), React.createElement('div', {
+    style: {
+      fontSize: 15,
+      fontWeight: 900,
+      color: T.text1,
+      margin: "16px 0 10px"
+    }
+  }, "详情预览"), sectionList.map(section => React.createElement(SectionCard, {
+    key: section.id,
+    ...section
+  }))) : React.createElement('div', {
+    style: {
+      borderRadius: 16,
+      border: `1px dashed ${T.borderPurple}`,
+      background: "rgba(159,151,235,.05)",
+      padding: "18px 14px",
+      textAlign: "center",
+      color: T.text3,
+      fontSize: 12,
+      lineHeight: 1.7
+    }
+  }, "用一句话描述需求后，点击“AI整理成卡片”，这里会出现公开卡片和详情预览。"));
+}
+function DemandPublishWizard({
+  form,
+  update,
+  onTypeChange,
+  step,
+  onStepChange
+}) {
+  const [brief, setBrief] = useState("");
+  const [briefListening, setBriefListening] = useState(false);
+  const [previewTab, setPreviewTab] = useState("card");
+  const type = demandTypeOf(form);
+  const fields = demandFieldsOf(type);
+  const fieldByKey = fields.reduce((acc, field) => {
+    acc[field.k] = field;
+    return acc;
+  }, {});
+  const renderField = field => React.createElement(TextField, {
+    key: field.k,
+    label: field.label,
+    k: field.k,
+    form,
+    update,
+    required: field.required,
+    multiline: field.multiline,
+    ph: field.ph
+  });
+  const renderFields = keys => keys.map(key => fieldByKey[key] ? renderField(fieldByKey[key]) : null);
+  const facts = entries => entries.filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
+  const goToReview = generatedByAi => {
+    if (generatedByAi) {
+      const patch = demandGenerateFromBrief(form, brief);
+      Object.entries(patch).forEach(([k, value]) => update(k, value));
+    }
+    onStepChange(2);
+  };
+  const startBriefVoice = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setBrief("我想找一个目标一致、沟通顺畅的人，先通过找人助手了解彼此是否匹配。");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setBriefListening(true);
+    recognition.onerror = () => setBriefListening(false);
+    recognition.onend = () => setBriefListening(false);
+    recognition.onresult = event => {
+      const text = event.results?.[0]?.[0]?.transcript || "";
+      if (text) setBrief(text);
+    };
+    recognition.start();
+  };
+  const Progress = () => {
+    const labels = ["描述需求", "核对信息", "预览发布"];
+    return React.createElement("div", {
+      style: {
+        margin: "2px 2px 20px"
+      }
+    }, React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 7,
+        marginBottom: 9
+      }
+    }, labels.map((label, index) => React.createElement(React.Fragment, {
+      key: label
+    }, React.createElement("div", {
+      style: {
+        width: index + 1 === step ? 24 : 8,
+        height: 6,
+        borderRadius: 999,
+        background: index + 1 <= step ? T.purple : T.hairline,
+        transition: "all .2s ease"
+      }
+    }), index < labels.length - 1 ? React.createElement("div", {
+      style: {
+        flex: 1,
+        height: 1,
+        background: index + 1 < step ? T.purple : T.hairline
+      }
+    }) : null)), React.createElement("span", {
+      style: {
+        marginLeft: 3,
+        fontSize: 11,
+        color: T.text3,
+        whiteSpace: "nowrap"
+      }
+    }, step, "/3")), React.createElement("div", {
+      style: {
+        fontSize: 20,
+        lineHeight: 1.3,
+        fontWeight: 900,
+        color: T.text1,
+        marginBottom: 5
+      }
+    }, labels[step - 1]), React.createElement("div", {
+      style: {
+        fontSize: 12,
+        lineHeight: 1.6,
+        color: T.text3
+      }
+    }, step === 1 ? "AI 会将内容整理为结构化草稿。" : step === 2 ? "检查 AI 整理的内容，只修改需要调整的部分。" : "这是其他人在广场看到的最终效果。"));
+  };
+  const SummaryLine = ({
+    label,
+    value,
+    required
+  }) => React.createElement("div", {
+    style: {
+      padding: "9px 0",
+      borderBottom: `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      marginBottom: 4
+    }
+  }, label, required ? React.createElement("span", {
+    style: {
+      color: "#ef4444",
+      marginLeft: 3
+    }
+  }, "*") : null), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: value ? T.text1 : T.text3,
+      lineHeight: 1.6,
+      whiteSpace: "pre-line"
+    }
+  }, value || "未填写"));
+  const FormSection = ({
+    title,
+    children,
+    last
+  }) => React.createElement("section", {
+    style: {
+      padding: "18px 0",
+      borderBottom: last ? "none" : `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 850,
+      color: T.text1,
+      marginBottom: 14
+    }
+  }, title), children);
+  const cardPreview = React.createElement("div", {
+    style: {
+      borderRadius: 16,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: 16,
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      height: 24,
+      borderRadius: 999,
+      padding: "0 9px",
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 10
+    }
+  }, type), React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 900,
+      color: T.text1,
+      lineHeight: 1.4,
+      marginBottom: 8
+    }
+  }, form.title || "未填写需求标题"), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.text2,
+      lineHeight: 1.7,
+      marginBottom: 12,
+      display: "-webkit-box",
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: "vertical",
+      overflow: "hidden"
+    }
+  }, demandSummaryOf(form)), demandPrimaryMeta(form).length ? React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 7,
+      marginBottom: 14
+    }
+  }, demandPrimaryMeta(form).map(item => React.createElement("span", {
+    key: item,
+    style: {
+      borderRadius: 999,
+      background: T.bgCardMuted,
+      color: T.text3,
+      fontSize: 11,
+      padding: "5px 8px"
+    }
+  }, item))) : null, React.createElement("button", {
+    type: "button",
+    disabled: true,
+    style: {
+      width: "100%",
+      height: 40,
+      borderRadius: 10,
+      border: "none",
+      background: "rgba(159,151,235,.16)",
+      color: T.purple,
+      fontSize: 13,
+      fontWeight: 800
+    }
+  }, "与找人助手沟通"));
+  const detailRows = [{
+    label: "我想做什么",
+    value: form.description
+  }, {
+    label: "我想找谁 / 什么资源",
+    value: form.target
+  }, {
+    label: "希望对方具备什么",
+    value: form.matchingCriteria
+  }, {
+    label: "参与方式",
+    value: form.participationRequirements
+  }, {
+    label: "时间 / 节奏",
+    value: form.time
+  }, {
+    label: "地点 / 线上线下",
+    value: form.location
+  }, {
+    label: "预算 / 费用 / 回报",
+    value: form.budget
+  }, {
+    label: "人数 / 名额",
+    value: form.count
+  }, {
+    label: "补充说明",
+    value: form.other
+  }, {
+    label: "报名截止时间",
+    value: form.deadline || "长期有效"
+  }].filter(row => row.value);
+  const detailPreview = React.createElement("div", {
+    style: {
+      borderRadius: 16,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: "5px 16px",
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement("div", {
+    style: {
+      padding: "14px 0 12px",
+      borderBottom: `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.purple,
+      fontWeight: 800,
+      marginBottom: 6
+    }
+  }, type), React.createElement("div", {
+    style: {
+      fontSize: 18,
+      color: T.text1,
+      fontWeight: 900,
+      lineHeight: 1.4
+    }
+  }, form.title || "未填写需求标题")), detailRows.map(row => React.createElement(SummaryLine, {
+    key: row.label,
+    ...row
+  })));
+  const viewerSections = demandViewerSections(form);
+  const publisherName = publisher.company || publisher.name || "我的公开名片";
+  const publisherMeta = [publisher.industry, publisher.fundStage].filter(Boolean).join(" · ") || "发布者公开信息";
+  const PublicSection = ({
+    title,
+    content,
+    last
+  }) => React.createElement("div", {
+    style: {
+      padding: "15px 0",
+      borderBottom: last ? "none" : `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 800,
+      color: T.text1,
+      marginBottom: 7
+    }
+  }, title), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.text2,
+      lineHeight: 1.75,
+      whiteSpace: "pre-line"
+    }
+  }, content));
+  const publicDetailPreview = React.createElement(React.Fragment, null, React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: 16,
+      marginBottom: 10,
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 19,
+      lineHeight: 1.4,
+      fontWeight: 900,
+      color: T.text1,
+      marginBottom: 9
+    }
+  }, form.title || "未填写需求标题"), React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 7,
+      marginBottom: 12
+    }
+  }, demandPrimaryMeta(form).map(item => React.createElement("span", {
+    key: item,
+    style: {
+      fontSize: 11,
+      color: T.text2,
+      background: T.bgCardMuted,
+      borderRadius: 999,
+      padding: "4px 9px"
+    }
+  }, item))), React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 9,
+      padding: "10px 11px",
+      borderRadius: 10,
+      background: T.bgLight
+    }
+  }, React.createElement(CeoAvPlain, {
+    seed: publisher.seed || "PublishPreview",
+    bg: publisher.bg || "ddd6fe",
+    size: 32
+  }), React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 800,
+      color: T.text1,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, publisherName), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      marginTop: 2,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, publisherMeta)))), React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: "2px 16px 12px",
+      boxShadow: T.shadowCard
+    }
+  }, viewerSections.map((section, index) => React.createElement(PublicSection, {
+    key: section.title,
+    title: section.title,
+    content: section.content,
+    last: index === viewerSections.length - 1
+  })), React.createElement("button", {
+    type: "button",
+    disabled: true,
+    style: {
+      width: "100%",
+      height: 40,
+      marginTop: 4,
+      borderRadius: 10,
+      border: "none",
+      background: "rgba(159,151,235,.18)",
+      color: T.purple,
+      fontSize: 13,
+      fontWeight: 800
+    }
+  }, "与AI沟通")));
+  let content = null;
+  if (step === 1) content = React.createElement("div", {
+    style: {
+      borderRadius: 16,
+      background: T.bgCard,
+      border: `1px solid ${T.border}`,
+      padding: 16,
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement(SelectField, {
+    label: "需求类型 / 场景",
+    required: true,
+    value: type,
+    placeholder: "请选择需求类型 / 场景",
+    options: DEMAND_TYPES,
+    onChange: value => {
+      update("type", value);
+      if (onTypeChange) onTypeChange(value);
+    }
+  }), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.text1,
+      fontWeight: 700,
+      marginBottom: 7
+    }
+  }, "用一句话描述你的需求"), React.createElement("div", {
+    style: {
+      position: "relative"
+    }
+  }, React.createElement("textarea", {
+    value: brief,
+    onChange: event => setBrief(event.target.value),
+    placeholder: "例如：我在筹备一款面向职场人的 AI 效率工具，已完成产品方向梳理，想找一位有大模型工程经验的技术合伙人，一起推进产品开发。",
+    autoFocus: true,
+    style: {
+      width: "100%",
+      minHeight: 132,
+      borderRadius: 12,
+      border: `1.5px solid ${T.borderPurple}`,
+      padding: "13px 44px 40px 13px",
+      fontSize: 14,
+      color: T.text1,
+      background: T.inputBg,
+      outline: "none",
+      resize: "none",
+      fontFamily: "inherit",
+      lineHeight: 1.7
+    }
+  }), React.createElement("button", {
+    type: "button",
+    onClick: startBriefVoice,
+    title: briefListening ? "听写中" : "语音输入",
+    "aria-label": briefListening ? "听写中" : "语音输入",
+    style: {
+      position: "absolute",
+      right: 10,
+      bottom: 10,
+      width: 30,
+      height: 30,
+      borderRadius: 999,
+      border: "none",
+      background: briefListening ? "rgba(159,151,235,.18)" : "rgba(159,151,235,.09)",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer"
+    }
+  }, React.createElement(MicIcon, {
+    color: T.purple,
+    size: 16
+  }))), React.createElement("button", {
+    type: "button",
+    onClick: () => goToReview(true),
+    disabled: !brief.trim(),
+    style: {
+      width: "100%",
+      height: 42,
+      marginTop: 12,
+      borderRadius: 10,
+      border: "none",
+      background: brief.trim() ? T.purple : "rgba(159,151,235,.24)",
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: 800,
+      cursor: brief.trim() ? "pointer" : "default",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 900,
+      border: "1px solid rgba(255,255,255,.55)",
+      borderRadius: 5,
+      padding: "1px 4px",
+      lineHeight: 1.4
+    }
+  }, "AI"), "生成需求草稿"), React.createElement("div", {
+    style: {
+      marginTop: 11,
+      fontSize: 11,
+      color: T.text3,
+      lineHeight: 1.55
+    }
+  }, "AI 只生成草稿，下一步可直接点击任意输入框修改。"));
+  if (step === 2) content = React.createElement("div", {
+    style: {
+      borderRadius: 16,
+      background: T.bgCard,
+      border: `1px solid ${T.border}`,
+      padding: "0 16px",
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement(FormSection, {
+    title: "基础信息"
+  }, React.createElement(SelectField, {
+    label: "需求类型 / 场景",
+    required: true,
+    value: type,
+    placeholder: "请选择需求类型 / 场景",
+    options: DEMAND_TYPES,
+    onChange: value => {
+      update("type", value);
+      if (onTypeChange) onTypeChange(value);
+    }
+  }), renderFields(["title", "description", "target"])), React.createElement(FormSection, {
+    title: "匹配偏好"
+  }, renderFields(["matchingCriteria", "participationRequirements"])), React.createElement(FormSection, {
+    title: "时间与条件（选填）",
+    last: true
+  }, React.createElement(React.Fragment, null, renderFields(["time", "location", "budget", "count", "other"]), React.createElement(DateField, {
+      label: "报名截止时间",
+      value: form.deadline,
+      onChange: value => update("deadline", value)
+    }))));
+  if (step === 3) content = React.createElement(React.Fragment, null, React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      marginBottom: 12
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "flex",
+      flex: 1,
+      padding: 3,
+      borderRadius: 10,
+      background: T.bgCardMuted
+    }
+  }, [["card", "名片效果"], ["detail", "详情效果"]].map(([key, label]) => React.createElement("button", {
+    key,
+    type: "button",
+    onClick: () => setPreviewTab(key),
+    style: {
+      flex: 1,
+      height: 34,
+      borderRadius: 8,
+      border: "none",
+      background: previewTab === key ? T.bgCard : "transparent",
+      color: previewTab === key ? T.text1 : T.text3,
+      boxShadow: previewTab === key ? "0 2px 8px rgba(0,0,0,.07)" : "none",
+      fontSize: 12,
+      fontWeight: previewTab === key ? 800 : 600,
+      cursor: "pointer"
+    }
+  }, label))), React.createElement("button", {
+    type: "button",
+    onClick: () => onStepChange(2),
+    style: {
+      flexShrink: 0,
+      border: "none",
+      background: "transparent",
+      color: T.purple,
+      fontSize: 12,
+      fontWeight: 750,
+      padding: "7px 0",
+      cursor: "pointer"
+    }
+  }, "返回修改")), previewTab === "card" ? cardPreview : detailPreview);
+  return React.createElement(React.Fragment, null, React.createElement(Progress), content);
+}
+function DemandPublishWizardV2({
+  form,
+  update,
+  onTypeChange,
+  step,
+  onStepChange,
+  publisher = {},
+  mode = "publish"
+}) {
+  const [brief, setBrief] = useState("");
+  const [briefListening, setBriefListening] = useState(false);
+  const [editingKey, setEditingKey] = useState("");
+  const type = demandTypeOf(form);
+  const typeLabel = demandTypeLabelOf(form);
+  const canGenerateDraft = !!brief.trim() && (type !== "自定义需求" || !!String(form.customDemandType || "").trim());
+  const fields = demandFieldsOf(type);
+  const fieldByKey = fields.reduce((acc, field) => {
+    acc[field.k] = field;
+    return acc;
+  }, {});
+  const renderField = key => fieldByKey[key] ? React.createElement(TextField, {
+    key,
+    label: fieldByKey[key].label,
+    k: key,
+    form,
+    update,
+    required: fieldByKey[key].required,
+    multiline: fieldByKey[key].multiline,
+    ph: fieldByKey[key].ph
+  }) : null;
+  const generateDraft = () => {
+    const patch = demandGenerateFromBrief({
+      ...form,
+      type
+    }, brief);
+    Object.entries(patch).forEach(([key, value]) => update(key, value));
+    setEditingKey("");
+    onStepChange(2);
+  };
+  const startBriefVoice = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setBrief("我想找一个目标一致、沟通顺畅的人，一起把这件事推进下去。");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setBriefListening(true);
+    recognition.onerror = () => setBriefListening(false);
+    recognition.onend = () => setBriefListening(false);
+    recognition.onresult = event => {
+      const text = event.results?.[0]?.[0]?.transcript || "";
+      if (text) setBrief(text);
+    };
+    recognition.start();
+  };
+  const Progress = () => {
+    const isEdit = mode === "edit";
+    const labels = isEdit ? ["需求信息", "补充条件"] : ["描述需求", "确认草稿", "补充条件", "预览发布"];
+    const titles = isEdit ? ["编辑需求信息", "编辑补充条件"] : ["你想找什么样的人或资源？", "确认 AI 生成的草稿", "还有什么条件需要说明吗？", "预览发布"];
+    const descriptions = isEdit ? ["点击任意内容即可修改。", "以下内容均为选填。"] : ["", "点击任意内容即可修改。", "以下内容均为选填，不填写也可预览。", "这是其他人在广场看到的最终效果。"];
+    const currentStep = isEdit ? step - 1 : step;
+    return React.createElement("div", {
+      style: {
+        margin: "2px 2px 20px"
+      }
+    }, React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 10
+      }
+    }, labels.map((label, index) => React.createElement(React.Fragment, {
+      key: label
+    }, React.createElement("div", {
+      style: {
+        width: index + 1 === currentStep ? 22 : 7,
+        height: 5,
+        borderRadius: 999,
+        background: index + 1 <= currentStep ? T.purple : T.hairline,
+        transition: "all .2s ease"
+      }
+    }), index < labels.length - 1 ? React.createElement("div", {
+      style: {
+        flex: 1,
+        height: 1,
+        background: index + 1 < currentStep ? T.purple : T.hairline
+      }
+    }) : null)), React.createElement("span", {
+      style: {
+        marginLeft: 3,
+        fontSize: 11,
+        color: T.text3,
+        whiteSpace: "nowrap"
+      }
+    }, currentStep, "/", labels.length)), React.createElement("div", {
+      style: {
+        fontSize: 20,
+        lineHeight: 1.35,
+        fontWeight: 900,
+        color: T.text1,
+        marginBottom: descriptions[currentStep - 1] ? 5 : 0
+      }
+    }, titles[currentStep - 1]), descriptions[currentStep - 1] ? React.createElement("div", {
+      style: {
+        fontSize: 12,
+        lineHeight: 1.6,
+        color: T.text3
+      }
+    }, descriptions[currentStep - 1]) : null);
+  };
+  const DraftCard = ({
+    fieldKey
+  }) => {
+    const field = fieldByKey[fieldKey];
+    const active = editingKey === fieldKey;
+    const value = form[fieldKey] || "";
+    return React.createElement("div", {
+      role: active ? undefined : "button",
+      tabIndex: active ? undefined : 0,
+      onClick: () => setEditingKey(fieldKey),
+      onKeyDown: event => {
+        if (!active && (event.key === "Enter" || event.key === " ")) setEditingKey(fieldKey);
+      },
+      style: {
+        borderRadius: 12,
+        border: `1px solid ${active ? T.borderPurple : T.border}`,
+        background: active ? "rgba(159,151,235,.04)" : T.bgCard,
+        padding: active ? "14px 14px 0" : "14px",
+        marginBottom: 10,
+        cursor: active ? "text" : "pointer",
+        boxShadow: active ? "0 0 0 2px rgba(159,151,235,.06)" : "none"
+      }
+    }, active ? renderField(fieldKey) : React.createElement(React.Fragment, null, React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: T.text3,
+        marginBottom: 6
+      }
+    }, field.label, field.required ? React.createElement("span", {
+      style: {
+        color: "#ef4444",
+        marginLeft: 3
+      }
+    }, "*") : null), React.createElement("div", {
+      style: {
+        fontSize: fieldKey === "title" ? 15 : 13,
+        fontWeight: fieldKey === "title" ? 800 : 500,
+        color: value ? T.text1 : T.text3,
+        lineHeight: 1.65,
+        whiteSpace: "pre-line",
+        maxHeight: fieldKey === "title" ? 50 : 86,
+        overflow: "hidden"
+      }
+    }, value || "点击补充内容")));
+  };
+  const SummaryLine = ({
+    label,
+    value
+  }) => React.createElement("div", {
+    style: {
+      padding: "10px 0",
+      borderBottom: `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      marginBottom: 4
+    }
+  }, label), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.text1,
+      lineHeight: 1.65,
+      whiteSpace: "pre-line"
+    }
+  }, value));
+  const cardPreview = React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: 16,
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      height: 24,
+      borderRadius: 999,
+      padding: "0 9px",
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 11,
+      fontWeight: 800,
+      marginBottom: 10
+    }
+  }, type), React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 900,
+      color: T.text1,
+      lineHeight: 1.4,
+      marginBottom: 8
+    }
+  }, form.title || "未填写需求标题"), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.text2,
+      lineHeight: 1.7,
+      marginBottom: 12,
+      display: "-webkit-box",
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: "vertical",
+      overflow: "hidden"
+    }
+  }, demandSummaryOf(form)), demandPrimaryMeta(form).length ? React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 7,
+      marginBottom: 14
+    }
+  }, demandPrimaryMeta(form).map(item => React.createElement("span", {
+    key: item,
+    style: {
+      borderRadius: 999,
+      background: T.bgCardMuted,
+      color: T.text3,
+      fontSize: 11,
+      padding: "5px 8px"
+    }
+  }, item))) : null, React.createElement("button", {
+    type: "button",
+    disabled: true,
+    style: {
+      width: "100%",
+      height: 40,
+      borderRadius: 10,
+      border: "none",
+      background: "rgba(159,151,235,.16)",
+      color: T.purple,
+      fontSize: 13,
+      fontWeight: 800
+    }
+  }, "与找人助手沟通"));
+  const detailRows = [{
+    label: "背景说明",
+    value: form.description
+  }, {
+    label: "我想找谁 / 什么资源",
+    value: form.target
+  }, {
+    label: "希望对方具备什么",
+    value: form.matchingCriteria
+  }, {
+    label: "参与方式",
+    value: form.participationRequirements
+  }, {
+    label: "时间 / 节奏",
+    value: form.time
+  }, {
+    label: "地点 / 线上线下",
+    value: form.location
+  }, {
+    label: "预算 / 费用 / 回报",
+    value: form.budget
+  }, {
+    label: "人数 / 名额",
+    value: form.count
+  }, {
+    label: "补充说明",
+    value: form.other
+  }, {
+    label: "报名截止时间",
+    value: form.deadline || "长期有效"
+  }].filter(row => row.value);
+  const detailPreview = React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      padding: "5px 16px",
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement("div", {
+    style: {
+      padding: "14px 0 12px",
+      borderBottom: `1px solid ${T.hairline}`
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.purple,
+      fontWeight: 800,
+      marginBottom: 6
+    }
+  }, type), React.createElement("div", {
+    style: {
+      fontSize: 18,
+      color: T.text1,
+      fontWeight: 900,
+      lineHeight: 1.4
+    }
+  }, form.title || "未填写需求标题")), detailRows.map(row => React.createElement(SummaryLine, {
+    key: row.label,
+    ...row
+  })));
+  let content = null;
+  if (step === 1) content = React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      background: T.bgCard,
+      border: `1px solid ${T.border}`,
+      padding: 14,
+      boxShadow: T.shadowCard
+    }
+  }, React.createElement(DemandTypeField, {
+    form,
+    update,
+    onTypeChange,
+    label: "需求类型"
+  }), React.createElement("div", {
+    style: {
+      position: "relative"
+    }
+  }, React.createElement("textarea", {
+    value: brief,
+    onChange: event => setBrief(event.target.value),
+    placeholder: "例如：我想找一位懂 AI 产品的技术合伙人，一起做面向职场人的效率工具",
+    autoFocus: type !== "自定义需求",
+    style: {
+      width: "100%",
+      minHeight: 142,
+      borderRadius: 12,
+      border: `1.5px solid ${T.borderPurple}`,
+      padding: "13px 13px 42px",
+      fontSize: 14,
+      color: T.text1,
+      background: T.inputBg,
+      outline: "none",
+      resize: "none",
+      fontFamily: "inherit",
+      lineHeight: 1.7
+    }
+  }), React.createElement("button", {
+    type: "button",
+    onClick: startBriefVoice,
+    title: briefListening ? "听写中" : "语音输入",
+    "aria-label": briefListening ? "听写中" : "语音输入",
+    style: {
+      position: "absolute",
+      left: 8,
+      bottom: 4,
+      width: 36,
+      height: 36,
+      borderRadius: 6,
+      border: "none",
+      background: "transparent",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      opacity: briefListening ? 1 : .88
+    }
+  }, React.createElement(MicIcon, {
+    color: T.purple,
+    size: 16
+  }))), React.createElement("button", {
+    type: "button",
+    onClick: generateDraft,
+    disabled: !canGenerateDraft,
+    style: {
+      width: "100%",
+      height: 44,
+      marginTop: 14,
+      borderRadius: 10,
+      border: "none",
+      background: canGenerateDraft ? T.purple : "rgba(159,151,235,.24)",
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: 800,
+      cursor: canGenerateDraft ? "pointer" : "default"
+    }
+  }, "AI整理"));
+  if (step === 2) content = React.createElement("div", null, React.createElement("div", {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      height: 25,
+      padding: "0 9px",
+      marginBottom: 10,
+      borderRadius: 999,
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 11,
+      fontWeight: 800
+    }
+  }, typeLabel), ["title", "description", "target", "matchingCriteria", "participationRequirements"].map(key => React.createElement(DraftCard, {
+    key,
+    fieldKey: key
+  })));
+  if (step === 3) content = React.createElement("div", {
+    style: {
+      borderRadius: 14,
+      background: T.bgCard,
+      border: `1px solid ${T.border}`,
+      padding: "16px 14px 4px",
+      boxShadow: T.shadowCard
+    }
+  }, ["time", "location", "budget", "count", "other"].map(renderField), React.createElement(DateField, {
     label: "报名截止时间",
     value: form.deadline,
-    onChange: v => update("deadline", v)
-  })); 
+    onChange: value => update("deadline", value)
+  }));
+  if (step === 4) content = React.createElement(DemandPublicDetailPreview, {
+    demand: form,
+    publisher
+  });
+  return React.createElement(React.Fragment, null, React.createElement(Progress), content);
 }
 function HeartfeltNoticeModal({
   onConfirm
@@ -50766,12 +52415,182 @@ function HeartfeltNoticeModal({
     onClick: onConfirm
   }, "我知道了，继续填写")));
 }
+function PhoneBindingScreen({
+  onBack,
+  onBound
+}) {
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const [sent, setSent] = useState(false);
+  const phoneValid = /^1\d{10}$/.test(phone);
+  const codeValid = /^\d{4,6}$/.test(code);
+  const canBind = phoneValid && sent && codeValid;
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(value => Math.max(0, value - 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+  const requestCode = () => {
+    if (!phoneValid || countdown > 0) return;
+    setSent(true);
+    setCountdown(60);
+  };
+  return React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.bg,
+      display: "flex",
+      flexDirection: "column"
+    }
+  }, React.createElement(StatusBar, null), React.createElement("div", {
+    style: {
+      padding: "var(--owo-safe-status-top) 20px 14px",
+      display: "flex",
+      alignItems: "center",
+      position: "relative",
+      background: T.navBg,
+      borderBottom: `1px solid ${T.hairline}`,
+      flexShrink: 0
+    }
+  }, React.createElement(BackBtn, {
+    onClick: onBack
+  }), React.createElement("span", {
+    style: {
+      position: "absolute",
+      left: "50%",
+      transform: "translateX(-50%)",
+      fontSize: 16,
+      fontWeight: 700,
+      color: T.text1
+    }
+  }, "绑定手机号码")), React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "18px 20px 32px"
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: T.text2,
+      lineHeight: 1.75,
+      marginBottom: 26
+    }
+  }, "根据《移动互联网应用程序信息服务管理规定》，发布公开需求前需完成手机号绑定。手机号仅用于账号安全验证，不会在需求或公开名片中展示。"), React.createElement("div", {
+    style: {
+      background: T.bgCard,
+      border: `1px solid ${T.border}`,
+      borderRadius: 12,
+      padding: "0 14px",
+      marginBottom: 14
+    }
+  }, React.createElement("div", {
+    style: {
+      height: 52,
+      display: "flex",
+      alignItems: "center",
+      borderBottom: `1px solid ${T.hairline}`
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 14,
+      color: T.text1,
+      paddingRight: 10,
+      flexShrink: 0
+    }
+  }, "+86"), React.createElement("input", {
+    type: "tel",
+    inputMode: "numeric",
+    maxLength: 11,
+    value: phone,
+    onChange: event => setPhone(event.target.value.replace(/\D/g, "").slice(0, 11)),
+    placeholder: "手机号码",
+    "aria-label": "手机号码",
+    style: {
+      flex: 1,
+      minWidth: 0,
+      border: "none",
+      outline: "none",
+      background: "transparent",
+      color: T.text1,
+      fontSize: 14,
+      fontFamily: "inherit"
+    }
+  })), React.createElement("div", {
+    style: {
+      height: 52,
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, React.createElement("input", {
+    type: "tel",
+    inputMode: "numeric",
+    maxLength: 6,
+    value: code,
+    onChange: event => setCode(event.target.value.replace(/\D/g, "").slice(0, 6)),
+    placeholder: "短信验证码",
+    "aria-label": "短信验证码",
+    style: {
+      flex: 1,
+      minWidth: 0,
+      border: "none",
+      outline: "none",
+      background: "transparent",
+      color: T.text1,
+      fontSize: 14,
+      fontFamily: "inherit"
+    }
+  }), React.createElement("button", {
+    type: "button",
+    disabled: !phoneValid || countdown > 0,
+    onClick: requestCode,
+    style: {
+      minWidth: 92,
+      height: 36,
+      border: "none",
+      background: "transparent",
+      color: phoneValid && countdown === 0 ? T.purple : T.text3,
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: phoneValid && countdown === 0 ? "pointer" : "default"
+    }
+  }, countdown > 0 ? countdown + "s 后重发" : sent ? "重新获取" : "获取验证码"))), sent ? React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.text3,
+      margin: "0 2px 20px"
+    }
+  }, "验证码已发送，请输入短信中的验证码。") : React.createElement("div", {
+    style: {
+      height: 20
+    }
+  }), React.createElement("button", {
+    type: "button",
+    disabled: !canBind,
+    onClick: () => onBound(phone),
+    style: {
+      width: "100%",
+      height: 48,
+      border: "none",
+      borderRadius: 10,
+      background: canBind ? T.purple : "rgba(159,151,235,.24)",
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: 800,
+      cursor: canBind ? "pointer" : "default"
+    }
+  }, "立即绑定")));
+}
 function JobEditScreen({
   job,
   onBack,
   onSave,
   onDelete
 }) {
+  const [step, setStep] = useState(2);
   const [form, setForm] = useState({
     ...job,
     type: demandTypeOf(job),
@@ -50780,11 +52599,15 @@ function JobEditScreen({
     location: job.location,
     exp: job.exp,
     edu: job.edu,
-    description: job.description || job.duties || job.summary || "",
-    matchingCriteria: job.matchingCriteria || job.requirements || "",
-    team: job.team,
+    description: demandDescriptionOf(job),
+    target: demandTargetOf(job),
+    matchingCriteria: demandExpectationOf(job),
+    participationRequirements: demandParticipationOf(job),
+    time: job.time || "",
+    budget: job.budget || "",
+    other: job.other || "",
     flow: job.flow,
-    count: job.count || "1-3人",
+    count: job.count || "",
     deadline: job.deadline || "",
     aiDuration: job.durationMin || (job.durationSec ? Math.round(job.durationSec / 60) : "")
   });
@@ -50809,6 +52632,15 @@ function JobEditScreen({
     }
     setErr("");
     onSave(form);
+  };
+  const continueToConditions = () => {
+    const m = jobMissing(form);
+    if (m.length) {
+      setErr("请先补充必填项：" + m.join("、"));
+      return;
+    }
+    setErr("");
+    setStep(3);
   };
   return React.createElement('div', {
     style: {
@@ -50840,7 +52672,10 @@ function JobEditScreen({
       lineNumber: 2215
     }
   }, React.createElement(BackBtn, {
-    onClick: onBack,
+    onClick: step === 2 ? onBack : () => {
+      setErr("");
+      setStep(2);
+    },
     __self: this,
     __source: {
       fileName: _jsxFileName,
@@ -50870,23 +52705,17 @@ function JobEditScreen({
       fileName: _jsxFileName,
       lineNumber: 2219
     }
-  }, React.createElement('div', {
-    style: {
-      background: T.bgCard,
-      borderRadius: T.radius,
-      padding: "18px",
-      border: `1px solid ${T.border}`
-    },
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 2220
-    }
-  }, React.createElement(JobFormFields, {
+  }, React.createElement(DemandPublishWizardV2, {
     form,
     update,
-    onTypeChange: handleTypeChange
-  }))), React.createElement('div', {
+    onTypeChange: handleTypeChange,
+    step,
+    mode: "edit",
+    onStepChange: nextStep => {
+      setErr("");
+      setStep(nextStep);
+    }
+  })), React.createElement('div', {
     style: {
       position: "absolute",
       bottom: 0,
@@ -50915,7 +52744,7 @@ function JobEditScreen({
       gap: 10,
       alignItems: "center"
     }
-  }, onDelete ? React.createElement('button', {
+  }, step === 3 && onDelete ? React.createElement('button', {
     onClick: () => onDelete(job),
     style: {
       flexShrink: 0,
@@ -50937,7 +52766,7 @@ function JobEditScreen({
       flex: 1
     }
   }, React.createElement(PurpleBtn, {
-    onClick: save,
+    onClick: step === 2 ? continueToConditions : save,
     style: {
       minHeight: 46
     },
@@ -50946,7 +52775,7 @@ function JobEditScreen({
       fileName: _jsxFileName,
       lineNumber: 2235
     }
-  }, "保存并更新")))), showHeartfeltNotice ? React.createElement(HeartfeltNoticeModal, {
+  }, step === 2 ? "下一步：补充条件" : "保存并更新")))), showHeartfeltNotice ? React.createElement(HeartfeltNoticeModal, {
     onConfirm: () => {
       setHeartfeltNoticeSeen(true);
       setShowHeartfeltNotice(false);
@@ -50998,6 +52827,29 @@ function RecruitmentJobDetailScreen({
       setConfirmPause(true);
     }
   };
+  const valueForField = field => {
+    if (field.k === "description") return demandDescriptionOf(job);
+    if (field.k === "target") return demandTargetOf(job);
+    if (field.k === "matchingCriteria") return demandExpectationOf(job);
+    if (field.k === "participationRequirements") return demandParticipationOf(job);
+    return job[field.k];
+  };
+  const detailSections = [{
+    title: "需求类型",
+    content: demandTypeLabelOf(job)
+  }, {
+    title: "报名截止时间",
+    content: job.deadline || "长期有效"
+  }].concat(demandFieldsOf(demandType).filter(field => field.k !== "title").map(field => ({
+    title: field.label.replace(/[？?]/g, ""),
+    content: valueForField(field)
+  })).filter(section => section.content)).concat([{
+    title: "找人助手训练状态",
+    content: job.hasAiInterviewer ? job.aiStatus || "已训练" : "待训练"
+  }, {
+    title: "AI沟通策略",
+    content: job.flow || "未训练时使用需求类型默认沟通模板；训练后将展示发布者补充的沟通重点。"
+  }]);
   return React.createElement('div', {
     style: {
       position: "absolute",
@@ -51097,37 +52949,18 @@ function RecruitmentJobDetailScreen({
       border: `1px solid ${T.border}`,
       boxShadow: T.shadowCard
     }
+  }, detailSections.map((section, idx) => React.createElement(React.Fragment, {
+    key: section.title
   }, React.createElement(Sec, {
-    title: demandType === "发布活动" ? "活动介绍" : demandType === "找合伙人" ? "项目介绍" : "需求描述",
-    content: demandSummaryOf(job)
-  }), React.createElement('div', {
+    title: section.title,
+    content: section.content
+  }), idx < detailSections.length - 1 ? React.createElement('div', {
     style: {
       height: 1,
       background: T.hairline,
       marginBottom: 18
     }
-  }), React.createElement(Sec, {
-    title: "匹配标准",
-    content: job.matchingCriteria || job.requirements
-  }), React.createElement('div', {
-    style: {
-      height: 1,
-      background: T.hairline,
-      marginBottom: 18
-    }
-  }), React.createElement(Sec, {
-    title: "其他要求",
-    content: job.other || job.team || job.expectedPerson || job.ability
-  }), React.createElement('div', {
-    style: {
-      height: 1,
-      background: T.hairline,
-      marginBottom: 18
-    }
-  }), React.createElement(Sec, {
-    title: "AI沟通策略",
-    content: job.flow
-  }))), React.createElement('div', {
+  }) : null)))), React.createElement('div', {
     style: {
       position: "absolute",
       bottom: 0,
@@ -51940,8 +53773,11 @@ function RecruitmentScreen({
   onJobsUpdate,
   companyProfile,
   onCompanyUpdate,
+  phoneBound = false,
+  onPhoneBound,
   jobUnreadMap = {},
-  onReadJobData
+  onReadJobData,
+  initialPublish = false
 }) {
   const normalizeJobForRecruitment = (j, i) => ({
     ...j,
@@ -51949,20 +53785,28 @@ function RecruitmentScreen({
     hasAiInterviewer: j.hasAiInterviewer !== false,
     createdAt: j.createdAt || 300 - i * 100,
     durationMin: j.durationMin || j.aiDuration || (j.durationSec ? Math.round(j.durationSec / 60) : 30),
-    count: j.count || "1-3人"
+    count: j.count || ""
   });
   const [jobs, setJobs] = useState((externalJobs || CEO_JOBS[101]).map(normalizeJobForRecruitment));
   const [editingJob, setEditingJob] = useState(null);
   const [detailJob, setDetailJob] = useState(null);
   const [dataJob, setDataJob] = useState(null);
   const [aiConfigJob, setAiConfigJob] = useState(null);
-  const [showPublish, setShowPublish] = useState(false);
+  const [showPublish, setShowPublish] = useState(!!initialPublish && phoneBound);
+  const [showPhoneBinding, setShowPhoneBinding] = useState(!!initialPublish && !phoneBound);
   const [delTarget, setDelTarget] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [editingCompany, setEditingCompany] = useState(null);
   const [viewingAboutProfile, setViewingAboutProfile] = useState(null);
   const [delCompany, setDelCompany] = useState(false);
   const cp = companyProfile || {};
+  const requestPublish = () => {
+    if (phoneBound) {
+      setShowPublish(true);
+      return;
+    }
+    setShowPhoneBinding(true);
+  };
   const aboutProfiles = (Array.isArray(cp.aboutProfiles) ? cp.aboutProfiles : cp.published === false ? [] : [{
     ...cp,
     id: "about_company_101",
@@ -51997,6 +53841,14 @@ function RecruitmentScreen({
     } : cur);
     if (onJobsUpdate) onJobsUpdate(updated);
   };
+  if (showPhoneBinding) return React.createElement(PhoneBindingScreen, {
+    onBack: () => setShowPhoneBinding(false),
+    onBound: phone => {
+      if (onPhoneBound) onPhoneBound(phone);
+      setShowPhoneBinding(false);
+      setShowPublish(true);
+    }
+  });
   if (viewingAboutProfile) return React.createElement(AboutProfileDetailScreen, {
     profile: viewingAboutProfile,
     onBack: () => setViewingAboutProfile(null),
@@ -52022,8 +53874,8 @@ function RecruitmentScreen({
         ...form,
         viewerCopy: null,
         summary: demandSummaryOf(form),
-        duties: form.description || form.projectIntro || form.learningGoal || form.expectedPerson || form.duties || "",
-        requirements: form.matchingCriteria || form.requirements || "",
+        duties: demandDescriptionOf(form),
+        requirements: demandExpectationOf(form),
         durationMin: form.aiDuration || editingJob.durationMin || 30,
         durationSec: editingJob.durationSec || 180
       });
@@ -52073,6 +53925,7 @@ function RecruitmentScreen({
   });
   if (showPublish) return React.createElement(JobPublishScreen, {
     onBack: () => setShowPublish(false),
+    publisher: cp,
     onPublish: newJob => {
       const created = {
         ...newJob,
@@ -52084,8 +53937,8 @@ function RecruitmentScreen({
         listed: true,
         createdAt: Date.now(),
         summary: demandSummaryOf(newJob),
-        duties: newJob.description || newJob.projectIntro || newJob.learningGoal || newJob.expectedPerson || "",
-        requirements: newJob.matchingCriteria || "",
+        duties: demandDescriptionOf(newJob),
+        requirements: demandExpectationOf(newJob),
         applyCount: 0,
         completedCount: 0,
         highMatchCount: 0,
@@ -52096,6 +53949,7 @@ function RecruitmentScreen({
       const updated = [...jobs, created];
       setJobs(updated);
       if (onJobsUpdate) onJobsUpdate(updated);
+      setStatusFilter("all");
       setShowPublish(false);
     },
     __self: this,
@@ -52177,7 +54031,7 @@ function RecruitmentScreen({
       lineNumber: 2316
     }
   }, "我要找人"), React.createElement('button', {
-    onClick: () => setShowPublish(true),
+    onClick: requestPublish,
     style: {
       position: "absolute",
       right: 20,
@@ -52852,20 +54706,24 @@ function RecruitmentScreen({
 }
 function JobPublishScreen({
   onBack,
-  onPublish
+  onPublish,
+  publisher
 }) {
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     type: "连接人才",
+    customDemandType: "",
     title: "",
-    salary: "",
+    description: "",
+    target: "",
+    matchingCriteria: "",
+    participationRequirements: "",
+    time: "",
     location: "",
-    exp: "",
-    edu: "",
-    duties: "",
-    requirements: "",
-    team: "",
-    flow: "",
+    budget: "",
     count: "",
+    other: "",
+    flow: "",
     deadline: ""
   });
   const [submitted, setSubmitted] = useState(false);
@@ -52890,6 +54748,24 @@ function JobPublishScreen({
     }
     setErr("");
     if (onPublish) onPublish(form);
+  };
+  const preview = () => {
+    const m = jobMissing(form);
+    if (m.length) {
+      setErr("请先补充必填项：" + m.join("、"));
+      return;
+    }
+    setErr("");
+    setStep(4);
+  };
+  const continueFromDraft = () => {
+    const m = jobMissing(form);
+    if (m.length) {
+      setErr("请先补充必填项：" + m.join("、"));
+      return;
+    }
+    setErr("");
+    setStep(3);
   };
   return React.createElement('div', {
     style: {
@@ -52921,7 +54797,10 @@ function JobPublishScreen({
       lineNumber: 2446
     }
   }, React.createElement(BackBtn, {
-    onClick: onBack,
+    onClick: step === 1 ? onBack : () => {
+      setErr("");
+      setStep(current => Math.max(1, current - 1));
+    },
     __self: this,
     __source: {
       fileName: _jsxFileName,
@@ -52944,40 +54823,24 @@ function JobPublishScreen({
     style: {
       flex: 1,
       overflowY: "auto",
-      padding: "16px 18px 130px"
+      padding: step === 1 ? "16px 18px 32px" : "16px 18px 130px"
     },
     __self: this,
     __source: {
       fileName: _jsxFileName,
       lineNumber: 2450
     }
-  }, React.createElement('div', {
-    style: {
-      fontSize: 12,
-      color: "#7c6fb0",
-      background: "rgba(159,151,235,.07)",
-      borderRadius: 12,
-      padding: "10px 12px",
-      marginBottom: 12,
-      lineHeight: 1.6
-    }
-  }, "填写开放的找人需求，有助于 AI 更准确地理解和匹配。报名截止时间不填则默认长期有效。发布后将直接上架，可稍后自由训练找人助手。"), React.createElement('div', {
-    style: {
-      background: T.bgCard,
-      borderRadius: T.radius,
-      padding: "18px",
-      border: `1px solid ${T.border}`
-    },
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 2451
-    }
-  }, React.createElement(JobFormFields, {
+  }, React.createElement(DemandPublishWizardV2, {
     form,
     update,
-    onTypeChange: handleTypeChange
-  }))), React.createElement('div', {
+    onTypeChange: handleTypeChange,
+    step,
+    publisher,
+    onStepChange: nextStep => {
+      setErr("");
+      setStep(nextStep);
+    }
+  })), step > 1 ? React.createElement('div', {
     style: {
       position: "absolute",
       bottom: 0,
@@ -53000,14 +54863,39 @@ function JobPublishScreen({
       marginBottom: 8,
       textAlign: "center"
     }
-  }, err) : null, React.createElement(PurpleBtn, {
-    onClick: submit,
-    __self: this,
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 2466
+  }, err) : null, React.createElement('div', {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
     }
-  }, "发布并上架")), showHeartfeltNotice ? React.createElement(HeartfeltNoticeModal, {
+  }, step === 4 ? React.createElement('button', {
+    type: "button",
+    onClick: () => {
+      setErr("");
+      if (step === 4) setStep(2);else setStep(current => Math.max(1, current - 1));
+    },
+    style: {
+      width: 88,
+      height: 46,
+      borderRadius: 12,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      color: T.text2,
+      fontSize: 14,
+      fontWeight: 750,
+      cursor: "pointer"
+    }
+  }, "返回修改") : null, React.createElement('div', {
+    style: {
+      flex: 1
+    }
+  }, React.createElement(PurpleBtn, {
+    onClick: step === 2 ? continueFromDraft : step === 3 ? preview : submit,
+    style: {
+      minHeight: 46
+    }
+  }, step === 4 ? "发布并上架" : step === 3 ? "预览" : "继续")))) : null, showHeartfeltNotice ? React.createElement(HeartfeltNoticeModal, {
     onConfirm: () => {
       setHeartfeltNoticeSeen(true);
       setShowHeartfeltNotice(false);
@@ -66744,6 +68632,8 @@ function PhoneInstance({
   const [weeklyOpenToken, setWeeklyOpenToken] = useState(0);
   const [homeAuthDone, setHomeAuthDone] = useState(forceHomeAuth ? false : start !== "login");
   const [showRecruitment, setShowRecruitment] = useState(false);
+  const [recruitmentStartPublish, setRecruitmentStartPublish] = useState(false);
+  const [boundPhone, setBoundPhone] = useState("");
   const [ceoJobs, setCeoJobs] = useState(CEO_JOBS[101]);
   const [jobUnreadMap, setJobUnreadMap] = useState(() => isCeoView ? {
     j2: 1
@@ -66903,8 +68793,13 @@ function PhoneInstance({
     setStack([t]);
     if (t === "contacts") setContactMainTab("chatted");
   };
+  const openRecruitment = (opts = {}) => {
+    setRecruitmentStartPublish(!!opts.publish);
+    setShowRecruitment(true);
+  };
   const returnToLogin = () => {
     setShowRecruitment(false);
+    setRecruitmentStartPublish(false);
     setUser(null);
     setInterviewJob(null);
     setChatThread(null);
@@ -66968,13 +68863,19 @@ function PhoneInstance({
   if (showRecruitment) return React.createElement(PhoneFrame, {
     label: label
   }, React.createElement("style", null, `@keyframes slideUp{from{transform:translateY(80px);opacity:0}to{transform:translateY(0);opacity:1}}`), React.createElement(RecruitmentScreen, {
-    onBack: () => setShowRecruitment(false),
+    onBack: () => {
+      setShowRecruitment(false);
+      setRecruitmentStartPublish(false);
+    },
     jobs: ceoJobs,
     onJobsUpdate: setCeoJobs,
     companyProfile: companyProfiles[101],
     onCompanyUpdate: patch => updateCompany(101, patch),
+    phoneBound: !!boundPhone,
+    onPhoneBound: setBoundPhone,
     jobUnreadMap: jobUnreadMap,
-    onReadJobData: markJobDataRead
+    onReadJobData: markJobDataRead,
+    initialPublish: recruitmentStartPublish
   }));
   return React.createElement(PhoneFrame, {
     label: label
@@ -67001,6 +68902,7 @@ function PhoneInstance({
     },
     navActive: nav,
     onNav: goNav,
+    onRecruitment: openRecruitment,
     followedMap: followedMap,
     onToggleFollow: toggleFollow,
     contactsUnread: contactUnreadCount,
@@ -67031,7 +68933,7 @@ function PhoneInstance({
   }), screen === "profile" && React.createElement(ProfileScreen, {
     navActive: nav,
     onNav: goNav,
-    onRecruitment: () => setShowRecruitment(true),
+    onRecruitment: () => openRecruitment(),
     isCeoView: isCeoView,
     followedMap: followedMap,
     onToggleFollow: toggleFollow,
@@ -67551,6 +69453,7 @@ function mountOwoDevRequirementNotes() {
         .owo-devreq-p1{background:rgba(245,158,11,.14);color:#b45309}
         .owo-devreq-info{background:rgba(159,151,235,.14);color:var(--owo-color-brand,#9F97EB)}
         .owo-devreq-path{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;line-height:1.45;color:var(--owo-color-text-tertiary,#999);word-break:break-all}
+        .owo-devreq-section code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;color:var(--owo-color-brand,#6f63cf)}
         [data-owo-theme="dark"] .owo-devreq-panel,[data-theme="dark"] .owo-devreq-panel{box-shadow:0 24px 80px rgba(0,0,0,.42)}
         [data-owo-theme="dark"] .owo-devreq-head,[data-theme="dark"] .owo-devreq-head{background:linear-gradient(135deg,rgba(159,151,235,.18),rgba(31,31,39,.72))}
         @media(max-width:480px){#__owoDevReqNotes{top:auto;right:14px;bottom:max(88px,calc(env(safe-area-inset-bottom) + 72px))}.owo-devreq-panel{top:max(70px,env(safe-area-inset-top));bottom:max(12px,env(safe-area-inset-bottom));right:10px;width:calc(100vw - 20px);border-radius:20px}}
@@ -67572,73 +69475,130 @@ function mountOwoDevRequirementNotes() {
         <div class="owo-devreq-head">
           <div>
             <div class="owo-devreq-title">我要找人的需求</div>
-            <div class="owo-devreq-sub">用于研发对齐所有用户发布需求、训练找人助手、报名沟通、匹配结果与真人连接流程。</div>
+            <div class="owo-devreq-sub">研发交付版 · 更新于 2026-09-18 · 字段、展示与状态规则以本说明为准</div>
           </div>
           <button class="owo-devreq-close" type="button" aria-label="关闭">×</button>
         </div>
         <div class="owo-devreq-body">
           <section class="owo-devreq-section">
             <div class="owo-devreq-tagrow">
-              <span class="owo-devreq-tag owo-devreq-p1">P1</span>
-              <span class="owo-devreq-tag owo-devreq-info">流程变动</span>
+              <span class="owo-devreq-tag owo-devreq-p0">P0</span>
+              <span class="owo-devreq-tag owo-devreq-info">范围与入口</span>
             </div>
-            <h3>需求发布与上架</h3>
+            <h3>产品边界</h3>
             <ul>
-              <li>入口路径：所有用户 → 我的 → 我的业务 → 我要找人。</li>
-              <li>“我要找人”开放给所有用户；个人信息沿用用户名片，“关于我”仅补充公司、社会组织、社团、创业社群、创业项目、活动等组织信息。</li>
-              <li>需求类型顺序为：连接人才、找合伙人、找搭子、发布活动、找场地、遇见心动、其它需求。</li>
-              <li>“关于我”不展示发布者类型；身份场景选择“自定义”后，原选择框直接切换为可编辑输入框。</li>
-              <li>发布需求填完开放式找人信息并提交后，需求直接上架为进行中，并返回“我要找人”主页。</li>
-              <li>训练找人助手不是发布前置条件；用户可在需求卡片中自由进入训练，完成后自动保存，后续仍可继续补充和优化训练要求。</li>
-              <li>报名截止时间为选填，不设置则默认长期有效。</li>
-              <li>需求状态统一为：进行中、待发布、已暂停。</li>
+              <li>入口路径：所有用户 → 我的 → 我的业务 → 我要找人；广场顶部右侧提供“+ 发布需求”快捷入口。</li>
+              <li>功能开放给所有用户。广场原“创业 CEO”改为“正在找人”，按是否有进行中的公开需求筛选，不限制身份；广场名片与详情页去掉 CEO 标签。</li>
+              <li>个人资料沿用个人名片；“关于我”只补充组织信息，不展示发布者类型和“个人”选项。身份场景为公司、社会组织、社团、创业社群、创业项目、活动、自定义。</li>
+              <li>产品统一使用“报名、沟通、找人助手”，不使用“申请、面试、AI面试官”。AI只辅助整理需求、沟通和匹配建议，最终连接由真人决定。</li>
+            </ul>
+          </section>
+
+          <section class="owo-devreq-section">
+            <div class="owo-devreq-tagrow">
+              <span class="owo-devreq-tag owo-devreq-p0">P0</span>
+              <span class="owo-devreq-tag owo-devreq-info">字段模型</span>
+            </div>
+            <h3>一套通用发布字段</h3>
+            <ul>
+              <li>必填：需求类型 <code>type</code>、标题 <code>title</code>、背景说明 <code>description</code>、我想找谁/什么资源 <code>target</code>。</li>
+              <li>选择“自定义需求”时，自定义类型 <code>customDemandType</code> 必填；选择框原位切换为输入框，可从右侧箭头重新选标准类型。展示类型时优先显示 <code>customDemandType</code>。</li>
+              <li>选填：希望对方具备什么 <code>matchingCriteria</code>、参与方式 <code>participationRequirements</code>、时间/节奏 <code>time</code>、地点/线上线下 <code>location</code>、预算/费用/回报 <code>budget</code>、人数/名额 <code>count</code>、补充说明 <code>other</code>、报名截止 <code>deadline</code>。</li>
+              <li>需求类型顺序：连接人才、找合伙人、找搭子、发布活动、找场地、遇见心动、自定义需求。类型只影响分类、AI默认沟通模板、AI润色上下文和报告维度，不改变字段结构。</li>
+              <li>组织字段：<code>company</code>、<code>subjectKind</code>、<code>industry</code>、<code>employeeSize</code>、<code>companyBio</code> 必填；<code>fundStage</code>、<code>avatar</code> 选填；选择自定义身份时 <code>customSubjectKind</code> 必填。</li>
+            </ul>
+          </section>
+
+          <section class="owo-devreq-section">
+            <div class="owo-devreq-tagrow">
+              <span class="owo-devreq-tag owo-devreq-p0">P0</span>
+              <span class="owo-devreq-tag owo-devreq-info">发布流程</span>
+            </div>
+            <h3>手机号校验与四步发布</h3>
+            <ul>
+              <li>任一发布入口先读取账号级手机号状态。未绑定进入绑定页；绑定成功自动进入第1步。返回不创建草稿，手机号不写入需求且不公开展示。</li>
+              <li>第1步“描述需求”：选择类型后用文字或语音自然描述，主动作“AI整理”。背景说明按“需求与当前事项 → 目标/条件/推进方式 → 先由找人助手了解，匹配后真人沟通”三段式生成。</li>
+              <li>第2步“确认草稿”：五张可编辑摘要卡片为标题、背景说明、目标对象/资源、匹配标准、参与方式；点击内容直接编辑，不显示编辑图标或局部完成按钮。</li>
+              <li>第3步“补充条件”：时间、地点、预算、人数、截止时间、补充说明全部选填，未填写也可点击唯一主按钮“预览”。AI只提取用户第1步明确说出的条件，不自动补默认值。</li>
+              <li>第4步“预览发布”：只展示真实公开需求详情效果，使用与线上详情相同组件和映射；空字段不展示。底部为“返回修改 / 发布并上架”。</li>
+              <li>发布成功后状态直接为进行中，返回管理页并将新需求置顶；不强制进入训练页。截止时间为空表示长期有效。</li>
+            </ul>
+          </section>
+
+          <section class="owo-devreq-section">
+            <div class="owo-devreq-tagrow">
+              <span class="owo-devreq-tag owo-devreq-p0">P0</span>
+              <span class="owo-devreq-tag owo-devreq-info">统一映射</span>
+            </div>
+            <h3>管理、编辑、公开展示</h3>
+            <ul>
+              <li>管理卡片：标题=<code>title</code>；概述优先 <code>description</code>，为空时用 <code>target</code>；辅助标签从 <code>location/time/budget/count</code> 中按顺序取有值的前三项；类型显示自定义类型或 <code>type</code>。</li>
+              <li>管理页概述展示需求数、报名数、高匹配数及灰紫色辅助线；卡片主体进入详情，底部为“查看报名”和“训练/优化找人助手”，可显示新报名角标。</li>
+              <li>发布者需求详情：展示全部非空发布字段、状态、截止时间、找人助手状态和AI策略摘要；底部提供编辑、暂停/恢复发布，暂停和删除均需二次确认。</li>
+              <li>点击编辑复用发布第2、3步组件，显示为1/2“需求信息”、2/2“补充条件”；读取并写回同一需求对象，最终页“删除 / 保存并更新”，不得给空选填项补默认值。</li>
+              <li>公开卡片：标题、两行概述、最多三个辅助标签、查看详情、与找人助手沟通；不展示报名数、训练状态或管理操作。</li>
+              <li>公开详情：“我想做什么”=<code>description</code>；“我想找谁/什么资源”=<code>target</code>；“适合这样的你”=<code>matchingCriteria</code>；“时间、地点与方式”组合 <code>participationRequirements/time/location</code>；“预算、人数与补充”组合 <code>budget/count/deadline/other</code>。</li>
+              <li>公开详情顶部从 <code>location/time/budget/count</code> 取有值的前三项，并展示组织名称、行业及非空融资阶段。空字段不生成栏目，组合栏目只展示有值项。</li>
+              <li>第4步预览、广场公开详情、管理详情和编辑页必须读取同一字段源；预览中确认的内容发布后逐字保持一致，不维护第二套演示文案。</li>
             </ul>
           </section>
 
           <section class="owo-devreq-section">
             <div class="owo-devreq-tagrow">
               <span class="owo-devreq-tag owo-devreq-p1">P1</span>
-              <span class="owo-devreq-tag owo-devreq-info">需求卡片</span>
+              <span class="owo-devreq-tag owo-devreq-info">AI输入辅助</span>
             </div>
-            <h3>列表交互</h3>
+            <h3>语音、整理与润色</h3>
             <ul>
-              <li>找人概述统计字段展示为：需求数、报名数、高匹配数。</li>
-              <li>三个统计数字下方展示短而细的灰紫色辅助线。</li>
-              <li>报名者卡片只保留“查看报告”，从报告页查看匹配分析与完整沟通记录。</li>
-              <li>匹配报告中的主体统一称为“发布者”，报告外层、文字、分割线和内层信息块均需兼容浅色与暗黑模式。</li>
-              <li>需求卡片主体点击进入需求详情页。</li>
-              <li>需求卡片底部主操作为查看报名、优化找人助手。</li>
-              <li>查看报名为白色胶囊、紫色文字；优化找人助手为紫色胶囊、白色文字。</li>
-              <li>未训练的需求仍保持进行中，并展示“训练找人助手”入口；训练完成后入口变为“优化找人助手”。</li>
-              <li>“大脑”在存在未查看的新周报或新需求报名时展示紫色提醒点；对应内容查看后清除，全部已读后提醒点消失。</li>
+              <li>语音使用与聊天输入框一致的麦克风图标。长文本输入区左下放语音，右下放“AI 润色”，无胶囊背景，各自至少保留36px点击热区。</li>
+              <li>标题、时间、地点、预算、人数等短字段不放字段级AI润色；AI行为由用户主动触发，不自动改写。</li>
+              <li>润色结果不直接覆盖原文，明确提示“使用后将替换当前内容”，操作仅为“使用此版本 / 重新生成 / 取消”，不提供“追加”。采用后仍可继续编辑。</li>
             </ul>
           </section>
 
           <section class="owo-devreq-section">
             <div class="owo-devreq-tagrow">
               <span class="owo-devreq-tag owo-devreq-p1">P1</span>
-              <span class="owo-devreq-tag owo-devreq-info">需求详情</span>
+              <span class="owo-devreq-tag owo-devreq-info">训练与报名</span>
             </div>
-            <h3>详情页动作</h3>
+            <h3>找人助手、沟通与报告</h3>
             <ul>
-              <li>需求详情页顶部提供返回按钮。</li>
-              <li>详情页底部固定展示编辑与发布需求/暂停找人/恢复发布按钮。</li>
-              <li>点击编辑进入需求编辑页，可修改需求信息。</li>
-              <li>需求编辑页底部展示删除与保存并更新按钮。</li>
-              <li>暂停找人需二次确认，避免误操作影响报名沟通。</li>
+              <li>训练不是发布前置条件。未训练需求仍可公开和报名，卡片显示“训练找人助手”；训练配置完整后显示“优化找人助手”，并允许继续补充。</li>
+              <li>未训练时采用“通用规则 + 需求类型模板 + 发布字段”；已训练时再叠加训练配置。训练对话与报名沟通使用不同提示词。</li>
+              <li>公开详情底部统一为“与AI沟通”。用户确认沟通须知并进入对话时创建报名；同一用户对同一需求仅一条有效报名，重复进入续接原对话。</li>
+              <li>沟通默认不限时，AI动态追问。信息不足为沟通中；信息充分或用户主动结束后生成报告并标为已沟通。</li>
+              <li>报名列表筛选：全部、已沟通、高匹配。报名者卡片只保留“查看报告”；报告含基本信息、匹配结论/分数、匹配点、风险点、完整记录和生成时间，主体称“发布者”。</li>
             </ul>
           </section>
 
           <section class="owo-devreq-section">
             <div class="owo-devreq-tagrow">
               <span class="owo-devreq-tag owo-devreq-p1">P1</span>
-              <span class="owo-devreq-tag owo-devreq-info">业务抽象</span>
+              <span class="owo-devreq-tag owo-devreq-info">状态与边界</span>
             </div>
-            <h3>编辑与删除</h3>
+            <h3>状态、通知和异常</h3>
             <ul>
-              <li>连接人才只是需求类型之一，不再把整个功能限定为招聘场景。</li>
-              <li>不同需求类型共用同一套发布、训练、AI沟通、匹配报告与真人连接结构。</li>
-              <li>AI只负责理解需求、结构化沟通和匹配建议，最终连接回到真人。</li>
+              <li>需求状态：进行中、已暂停、待发布；新建成功直接进入进行中。待发布仅用于历史草稿、迁移或发布失败。未训练不是需求状态。</li>
+              <li>找人助手状态：待训练、已训练、优化中。报名状态：未沟通、沟通中、已沟通；高匹配由后台阈值计算。</li>
+              <li>概述统计为需求数、报名数、高匹配数。新报名或新周报触发“大脑”紫色提醒点，查看对应内容后清除；卡片可显示新报名角标。</li>
+              <li>截止后停止新报名，历史沟通和报告可查看；暂停需求不公开但发布者可管理和恢复；删除不可恢复，需二次确认。</li>
+              <li>已发布需求保存组织快照；组织资料后续修改默认不追溯历史需求。权限、状态、未读、报告归属和数据过滤必须由服务端校验。</li>
+              <li>“遇见心动”不得基于敏感属性进行歧视性筛选，AI避免冒犯、诱导和越界追问。所有页面兼容浅色与暗黑模式。</li>
+            </ul>
+          </section>
+
+          <section class="owo-devreq-section">
+            <div class="owo-devreq-tagrow">
+              <span class="owo-devreq-tag owo-devreq-p1">P1</span>
+              <span class="owo-devreq-tag owo-devreq-info">数据与接口</span>
+            </div>
+            <h3>核心对象与服务端责任</h3>
+            <ul>
+              <li>需求对象至少包含：<code>id/publisherUserId/aboutProfileId/type/customDemandType/title/description/target/matchingCriteria/participationRequirements/time/location/budget/count/other/deadline/status/listed</code>。</li>
+              <li>助手与统计字段至少包含：<code>hasAiInterviewer/aiStatus/aiConfig/questions/applyCount/communicatedCount/highMatchCount/createdAt/updatedAt</code>。</li>
+              <li>报名对象至少包含：<code>id/demandId/applicantUserId/status/matchScore/matchLevel/matchPoints/riskPoints/conversationId/reportId/createdAt/updatedAt</code>。</li>
+              <li>服务端负责必填校验、对象归属、发布与暂停状态、截止时间、重复报名幂等、未读计数、报告权限和公开数据过滤，前端状态不能作为权限依据。</li>
+              <li>接口返回空值时沿用“空字段不展示”规则；历史数据缺少 <code>description</code> 时，管理卡片概述可降级使用 <code>target</code>，不得虚构其它默认内容。</li>
             </ul>
           </section>
 
@@ -67649,8 +69609,11 @@ function mountOwoDevRequirementNotes() {
             </div>
             <h3>交付检查</h3>
             <ul>
-              <li>页面支持浅色与暗黑模式，“我要找人”相关入口、底部按钮、弹层遮罩需与主题一致。</li>
-              <li>发布前需确认浏览器可正常打开、角色切换可用、普通用户与 CEO 用户均可进入“我要找人”。</li>
+              <li>普通用户与原CEO角色均可从两个入口发布；未绑定手机号完成绑定后自动回第1步，已绑定不重复拦截。</li>
+              <li>七种类型共用一套字段；发布、编辑、管理卡片、发布者详情、第4步预览和公开详情映射一致，选填为空时不展示、不补默认值。</li>
+              <li>发布后需求置顶且为进行中；未训练也能公开、报名和沟通；编辑保存后管理端与公开端同步显示新内容。</li>
+              <li>暂停、恢复、截止、删除、重复报名、报告生成、未读提醒及深浅主题均按上述规则验证。</li>
+              <li>完整数据结构和接口建议见同目录《我要找人模块需求文档.md》；原型备注用于页面内快速对齐，二者字段命名保持一致。</li>
             </ul>
           </section>
         </div>

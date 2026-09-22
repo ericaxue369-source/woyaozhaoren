@@ -40470,7 +40470,7 @@ function LoginScreen({
     style: {
       display: "inline-flex",
       alignItems: "center",
-      gap: 20,
+      gap: 26,
       marginBottom: 28
     }
   }, [["sms", "\u9A8C\u8BC1\u7801\u767B\u5F55"], ["password", "\u5BC6\u7801\u767B\u5F55"]].map(([mode, label]) => React.createElement("button", {
@@ -41694,6 +41694,7 @@ function ExploreScreen({
   });
   const [pkuCircleTab, setPkuCircleTab] = useState("pku-service");
   const [query, setQuery] = useState("");
+  const [demandTypeFilter, setDemandTypeFilter] = useState("全部");
   const [selectedDemand, setSelectedDemand] = useState(null);
   const [interviewDemand, setInterviewDemand] = useState(null);
   const INIT_LIKES = {};
@@ -41740,6 +41741,7 @@ function ExploreScreen({
     job,
     owner
   })));
+  const demandTypeFilters = ["全部", "找合伙人", "遇见心动", "找搭子", "活动招募", "找场地", "其他"];
   const list = tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : allUsers;
   const visibleList = list.filter(u => {
     const q = query.trim().toLowerCase();
@@ -41748,6 +41750,9 @@ function ExploreScreen({
   });
   const visibleDemands = publicDemands.filter(({job, owner}) => {
     const q = query.trim().toLowerCase();
+    const type = demandTypeOf(job);
+    const typeMatched = demandTypeFilter === "全部" || (demandTypeFilter === "其他" ? type === "社团/社群招新" || type === "自定义需求" : type === demandTypeFilter);
+    if (!typeMatched) return false;
     if (!q) return true;
     return [job.title, demandTypeLabelOf(job), demandSummaryOf(job), demandTargetOf(job), owner.name, ...(demandPrimaryMeta(job) || [])].filter(Boolean).join(" ").toLowerCase().includes(q);
   });
@@ -43075,7 +43080,44 @@ function ExploreScreen({
         transition: "color .25s ease, font-size .25s cubic-bezier(.22,1,.36,1), font-weight .25s"
       }
     }, t.label);
-  })))), React.createElement("div", {
+  })))), tab === "ceo" && React.createElement("div", {
+    style: {
+      display: "flex",
+      padding: "4px 16px 16px",
+      overflowX: "auto",
+      scrollbarWidth: "none",
+      msOverflowStyle: "none"
+    }
+  }, React.createElement("style", null, `.owo-demand-filter::-webkit-scrollbar{display:none}`), React.createElement("div", {
+    className: "owo-demand-filter",
+    style: {
+      display: "flex",
+      gap: 20,
+      alignItems: "baseline",
+      width: "max-content"
+    }
+  }, demandTypeFilters.map(filter => {
+    const selected = demandTypeFilter === filter;
+    return React.createElement("button", {
+      key: filter,
+      type: "button",
+      onClick: () => setDemandTypeFilter(filter),
+      "aria-pressed": selected,
+      style: {
+        flexShrink: 0,
+        border: "none",
+        background: "none",
+        color: selected ? T.purple : "#A8A49E",
+        padding: 0,
+        fontSize: 13,
+        lineHeight: 1.3,
+        fontWeight: selected ? 800 : 500,
+        cursor: "pointer",
+        fontFamily: SANS,
+        transition: "color .25s ease, font-weight .25s ease"
+      }
+    }, filter);
+  }))), React.createElement("div", {
     style: {
       position: "relative",
       flex: 1,
@@ -43123,7 +43165,7 @@ function ExploreScreen({
       color: META,
       fontSize: 13
     }
-  }, tab === "pku" && !pkuCircleJoined ? "点击圈子卡片申请进入后查看名片列表" : tab === "ceo" ? query ? `没有找到「${query}」相关需求` : "暂无进行中的需求" : `没有找到「${query}」`)), interviewDemand && React.createElement(InterviewRulesModal, {
+  }, tab === "pku" && !pkuCircleJoined ? "点击圈子卡片申请进入后查看名片列表" : tab === "ceo" ? query ? `没有找到「${query}」相关需求` : demandTypeFilter === "全部" ? "暂无进行中的需求" : `暂无「${demandTypeFilter}」需求` : `没有找到「${query}」`)), interviewDemand && React.createElement(InterviewRulesModal, {
     job: interviewDemand.job,
     onConfirm: () => {
       if (onStartInterview) onStartInterview(interviewDemand.job, interviewDemand.owner);
@@ -43425,6 +43467,7 @@ function JobCard({
   onViewDetail
 }) {
   const metas = demandPrimaryMeta(job);
+  const typeLabel = demandTypeLabelOf(job);
   const publisherName = publisher?.name || "发布者";
   const publisherMeta = publisherSubtitleOf(publisher || {});
   return React.createElement("div", {
@@ -43483,7 +43526,16 @@ function JobCard({
       gap: publisher ? 8 : 12,
       marginBottom: 10
     }
-  }, metas.map(info => React.createElement("span", {
+  }, React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: T.purple,
+      background: T._theme === "dark" ? "rgba(159,151,235,.22)" : "rgba(159,151,235,.13)",
+      borderRadius: 999,
+      padding: "5px 12px",
+      fontWeight: 700
+    }
+  }, typeLabel), metas.map(info => React.createElement("span", {
     key: info,
     style: {
       fontSize: 12,
@@ -69721,7 +69773,7 @@ function mountOwoDevRequirementNotes() {
         <div class="owo-devreq-head">
           <div>
             <div class="owo-devreq-title">我要找人的需求</div>
-            <div class="owo-devreq-sub">研发交付版 · 更新于 2026-09-21 · 字段、展示与状态规则以本说明为准</div>
+            <div class="owo-devreq-sub">研发交付版 · 更新于 2026-09-22 · 字段、展示与状态规则以本说明为准</div>
           </div>
           <button class="owo-devreq-close" type="button" aria-label="关闭">×</button>
         </div>
@@ -69734,7 +69786,7 @@ function mountOwoDevRequirementNotes() {
             <h3>产品边界</h3>
             <ul>
               <li>入口路径：所有用户 → 我的 → 外表 → 我要找人；广场顶部右侧提供“+ 发布找人”快捷入口。</li>
-              <li>功能开放给所有用户。广场原“创业 CEO”改为“正在找人”，直接展示进行中的需求卡片流，不展示用户名片，不限制发布者身份。</li>
+              <li>功能开放给所有用户。广场原“创业 CEO”改为“正在找人”，直接展示进行中的需求卡片流，不展示用户名片，不限制发布者身份；主 tab 下方提供“全部 / 找合伙人 / 遇见心动 / 找搭子 / 活动招募 / 找场地 / 其他”二级筛选。“其他”归并社团/社群招新和自定义需求，可与关键词搜索叠加。二级筛选为纯文字，不使用胶囊、底色、边框或圆角；与一级频道留白分层，使用13px字号、20px横向间距，选中为品牌紫，未选中为灰色，以字重反馈选择。</li>
               <li>广场“校友圈”的北京大学学生服务总队入口在名称前直接展示内嵌的彩色官方 Logo，保持方形尺寸，不增加白底、描边、阴影或额外外框；北大米米在成员列表、介绍区和名片详情中统一使用内嵌的红色吉祥物 Logo。单独发布 HTML 时不得依赖本地图片路径。</li>
               <li>“关于我”和组织信息模块全部删除。发布者头像、姓名、简介和角色直接读取个人名片。</li>
               <li>产品统一使用“报名、沟通、找人助手”，不使用“申请、面试、AI面试官”。AI只辅助整理需求、沟通和匹配建议，最终连接由真人决定。</li>
@@ -69784,7 +69836,7 @@ function mountOwoDevRequirementNotes() {
               <li>管理页概述展示需求数、报名数、高匹配数及灰紫色辅助线；卡片报名人数使用绿色文字，不加胶囊、底色或边框；卡片主体进入详情，底部为“查看报名”和“训练/优化找人助手”，可显示新报名角标。</li>
               <li>发布者需求详情：展示全部非空发布字段、状态、截止时间、找人助手状态和AI策略摘要；底部提供编辑、暂停/恢复发布，暂停和删除均需二次确认。</li>
               <li>点击编辑复用发布第2、3步组件，显示为1/2“需求信息”、2/2“补充条件”；读取并写回同一需求对象，最终页“删除 / 保存并更新”，不得给空选填项补默认值。</li>
-              <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、两行概述、最多三个辅助字段，标题右侧显示绿色“进行中”。广场卡片的辅助字段使用与公开详情一致的圆角标签；用户名片卡片保持简洁文本。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片不展示发布者信息。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
+              <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、紫色需求类型气囊、两行概述、最多三个辅助字段，标题右侧显示绿色“进行中”。类型读取 <code>type</code>，自定义需求优先显示 <code>customDemandType</code>。广场卡片的辅助字段使用与公开详情一致的圆角标签；用户名片卡片保持简洁文本。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片不展示发布者信息。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
               <li>公开详情：“我想做什么”=<code>description</code>；“我想找谁/什么资源”=<code>target</code>；“适合这样的你”=<code>matchingCriteria</code>；“时间、地点与方式”组合 <code>participationRequirements/time/location</code>；“预算、人数与补充”组合 <code>budget/count/deadline/other</code>。</li>
               <li>公开详情顶部从 <code>location/time/budget/count</code> 取有值的前三项，“遇见心动”排除 <code>count</code>；首次发布时间 <code>publishedAt</code> 展示在需求元信息之后、发布者信息卡之前，编辑不更新。</li>
               <li>发布者区映射个人名片：头像、姓名；副标题优先 <code>role · company</code>，其次 <code>role · industry</code>、<code>company · industry</code>，最后单行截断 <code>bio</code>。点击整个发布者区进入个人名片详情。</li>
@@ -69864,7 +69916,7 @@ function mountOwoDevRequirementNotes() {
               <li>普通用户与原CEO角色均可从两个入口发布；未绑定手机号完成绑定后自动回第1步，已绑定不重复拦截。</li>
               <li>七种类型共用一套字段；发布、编辑、管理卡片、发布者详情、第4步预览和公开详情映射一致，选填为空时不展示、不补默认值。</li>
               <li>发布后需求置顶且为进行中；未训练也能公开、报名和沟通；编辑保存后管理端与公开端同步显示新内容。</li>
-              <li>广场需求卡片整卡点击、发布者信息、圆角辅助标签、发布者跳转、发布时间、心动人数例外、报名分组、找人助手不限时、宽幅横向语音波形、中央紫色能量云、底部品牌紫背景及报告权限均按上述规则验证。</li>
+              <li>广场需求卡片整卡点击、二级类型筛选、需求类型标签、发布者信息、圆角辅助标签、发布者跳转、发布时间、心动人数例外、报名分组、找人助手不限时、宽幅横向语音波形、中央紫色能量云、底部品牌紫背景及报告权限均按上述规则验证。</li>
               <li>校友圈无外框方形组织 Logo、北大米米红色吉祥物 Logo、通讯录分割线、无白边未读提醒和管理卡片绿色报名人数需同时验证浅色与暗黑模式。</li>
               <li>完整数据结构和接口建议见同目录《我要找人模块需求文档.md》；原型备注用于页面内快速对齐，二者字段命名保持一致。</li>
             </ul>

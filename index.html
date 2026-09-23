@@ -34794,6 +34794,9 @@ const CEO_JOBS = {
     location: "上海 / 线下",
     time: "周六 19:00-21:30",
     count: "20人",
+    aiDuration: 15,
+    durationMin: 15,
+    durationSec: 900,
     summary: "围绕 AI 社交与青年表达做一次轻量共创，欢迎产品、设计和内容方向的同学参加。",
     description: "我们计划举办一场小型 AI 青年共创夜，通过主题分享和分组讨论，一起探索 AI 社交产品的新场景。",
     target: "对 AI 产品、设计、内容或青年社群感兴趣，愿意参与讨论和共创的伙伴。",
@@ -34850,6 +34853,7 @@ const CANDIDATES = [{
   job: "AI创新社群招募共创成员",
   demandType: "社团/社群招新",
   score: 82,
+  communicated: true,
   isExcellent: false,
   time: "今天 10:30",
   highlights: ["AI产品经验", "项目落地能力", "沟通表达"],
@@ -34882,6 +34886,7 @@ const CANDIDATES = [{
   job: "AI创新社群招募共创成员",
   demandType: "社团/社群招新",
   score: 76,
+  communicated: false,
   isExcellent: false,
   time: "今天 09:15",
   highlights: ["B端SaaS经验", "产品基础认知", "表达真诚"],
@@ -34904,6 +34909,7 @@ const CANDIDATES = [{
   job: "AI创新社群招募共创成员",
   demandType: "社团/社群招新",
   score: 88,
+  communicated: true,
   isExcellent: true,
   time: "昨天 16:40",
   highlights: ["增长方法论", "数据意识", "项目推动"],
@@ -34926,6 +34932,7 @@ const CANDIDATES = [{
   job: "寻找创业合伙人",
   demandType: "找合伙人",
   score: 84,
+  communicated: true,
   isExcellent: false,
   time: "昨天 14:20",
   highlights: ["全栈开发", "创业经历", "长期投入意愿"],
@@ -41669,10 +41676,17 @@ function ExploreScreen({
   onToggleFollow,
   onRecruitment,
   ceoJobs,
+  applications = [],
+  onCreateApplication,
+  onCancelApplication,
+  initialSelectedDemand = null,
+  onSelectedDemandChange,
+  initialSelectedCommunity = null,
+  onSelectedCommunityChange,
   contactsUnread = 0,
   profileUnread = 0
 }) {
-  const [tab, setTab] = useState("all");
+  const [tab, setTab] = useState(initialSelectedCommunity ? "community" : initialSelectedDemand ? "ceo" : "all");
   const [inviteTarget, setInviteTarget] = useState(null);
   const [showPkuAuth, setShowPkuAuth] = useState(false);
   const [pkuAuthForm, setPkuAuthForm] = useState({
@@ -41693,9 +41707,13 @@ function ExploreScreen({
     }
   });
   const [pkuCircleTab, setPkuCircleTab] = useState("pku-service");
+  const [communityJoined, setCommunityJoined] = useState(() => new Set());
+  const [selectedCommunity, setSelectedCommunity] = useState(initialSelectedCommunity);
+  const [showCommunityJoin, setShowCommunityJoin] = useState(null);
+  const [communitySuccessText, setCommunitySuccessText] = useState("");
   const [query, setQuery] = useState("");
   const [demandTypeFilter, setDemandTypeFilter] = useState("全部");
-  const [selectedDemand, setSelectedDemand] = useState(null);
+  const [selectedDemand, setSelectedDemand] = useState(initialSelectedDemand);
   const [interviewDemand, setInterviewDemand] = useState(null);
   const INIT_LIKES = {};
   EXPLORE_USERS.concat(CEO_USERS, PKU_ALUMNI_USERS, [PKU_MIMI_USER]).forEach((u, i) => {
@@ -41736,14 +41754,98 @@ function ExploreScreen({
     users: pkuUsers
   }];
   const activePkuCircle = pkuCircleTabs.find(c => c.id === pkuCircleTab) || pkuCircleTabs[0];
+  const socialCommunities = [{
+    id: "ai-builders",
+    name: "AI 创业者社群",
+    logoMark: "AI",
+    logoColor: "#6D5FEA",
+    logoBg: "#EEEAFE",
+    description: "面向正在做 AI 产品、创业或寻找共创伙伴的人。",
+    memberCount: "1,268",
+    official: {
+      id: "official-ai-builders",
+      communityOfficial: true,
+      name: "鸥我 AI 创业社群",
+      bio: "官方社群 · 连接 AI 创业者与共创伙伴",
+      bioFull: "聚集正在做 AI 产品、创业和寻找共创伙伴的人，持续分享真实项目、行业观察与合作机会。",
+      seed: "OwoAiCommunity",
+      bg: "d9d2ff",
+      tags: ["AI创业", "共创", "产品"],
+      role: "官方社群分身"
+    },
+    users: [CEO_USERS[0], EXPLORE_USERS[0], EXPLORE_USERS[1]]
+  }, {
+    id: "product-growth",
+    name: "产品增长共学社",
+    logoMark: "↗",
+    logoColor: "#12916C",
+    logoBg: "#EAF7F0",
+    description: "产品、增长与运营从业者的案例讨论和经验交流。",
+    memberCount: "836",
+    official: {
+      id: "official-product-growth",
+      communityOfficial: true,
+      name: "产品增长共学社",
+      bio: "官方社群 · 每周案例共学与主题讨论",
+      bioFull: "围绕产品、增长和运营案例进行每周共学，连接愿意认真交流方法与实践经验的从业者。",
+      seed: "OwoGrowthCommunity",
+      bg: "ffe1b8",
+      tags: ["产品", "增长", "运营"],
+      role: "官方社群分身"
+    },
+    users: [EXPLORE_USERS[2], CEO_USERS[1], EXPLORE_USERS[3]]
+  }, {
+    id: "weekend-city",
+    name: "周末城市搭子",
+    logoMark: "⌖",
+    logoColor: "#E07B39",
+    logoBg: "#FFF1E6",
+    description: "一起发现展览、运动、徒步和城市里的新去处。",
+    memberCount: "2,041",
+    official: {
+      id: "official-weekend-city",
+      communityOfficial: true,
+      name: "周末城市搭子",
+      bio: "官方社群 · 同城活动与兴趣连接",
+      bioFull: "分享展览、运动、徒步和城市活动，帮助同城伙伴找到节奏相近的周末搭子。",
+      seed: "OwoCityCommunity",
+      bg: "cfe9df",
+      tags: ["同城", "活动", "兴趣搭子"],
+      role: "官方社群分身"
+    },
+    users: [EXPLORE_USERS[4], EXPLORE_USERS[5], PKU_ALUMNI_USERS[0]]
+  }];
+  const CommunityLogo = ({
+    community,
+    size = 38
+  }) => React.createElement("div", {
+    "aria-label": community.name + "方向标识",
+    style: {
+      width: size,
+      height: size,
+      borderRadius: Math.max(9, Math.round(size * .26)),
+      background: community.logoBg || "#EEEAFE",
+      color: community.logoColor || T.purple,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      fontSize: community.logoMark === "AI" ? Math.round(size * .37) : Math.round(size * .58),
+      lineHeight: 1,
+      fontWeight: 900
+    }
+  }, community.logoMark || "社");
   const allUsers = [...EXPLORE_USERS, ...PKU_ALUMNI_USERS, ...CEO_USERS];
   const publicDemands = allUsers.flatMap(owner => (owner.id === 101 && ceoJobs ? ceoJobs : CEO_JOBS[owner.id] || []).filter(job => job.listed !== false && !job.paused).map(job => ({
     job,
     owner
-  })));
+  }))).sort((a, b) => {
+    const durationOf = item => Number(item.job.durationSec || (item.job.aiDuration || item.job.durationMin || 0) * 60) || 0;
+    return Number(durationOf(b) > 0) - Number(durationOf(a) > 0);
+  });
   const demandTypeFilters = ["全部", "找合伙人", "遇见心动", "找搭子", "活动招募", "找场地", "其他"];
-  const list = tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : allUsers;
-  const visibleList = list.filter(u => {
+  const list = tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : tab === "community" ? selectedCommunity ? selectedCommunity.users || [] : [] : allUsers;
+  const visibleList = (list || []).filter(Boolean).filter(u => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return [u.name, u.bio, u.bioFull, u.company, u.industry, u.role, u.school, u.schoolYear, u.schoolCollege, u.schoolMajor, ...(u.tags || [])].filter(Boolean).join(" ").toLowerCase().includes(q);
@@ -41779,8 +41881,20 @@ function ExploreScreen({
     return `Eurome${String(100000 + hash % 900000)}`;
   };
   const isPkuCertified = () => isPkuEducationCertified();
+  const selectCommunity = community => {
+    setSelectedCommunity(community);
+    if (onSelectedCommunityChange) onSelectedCommunityChange(community);
+  };
+  const selectDemand = demand => {
+    setSelectedDemand(demand);
+    if (onSelectedDemandChange) onSelectedDemandChange(demand);
+  };
   const openPkuTab = () => {
     setTab("pku");
+  };
+  const openCommunityTab = () => {
+    selectCommunity(null);
+    setTab("community");
   };
   const openPkuCircle = () => {
     if (!isPkuCertified()) {
@@ -41803,6 +41917,19 @@ function ExploreScreen({
     setPkuSuccessText("申请通过，已进入北京大学学生服务总队");
     setPkuAuthSuccess(true);
   };
+  const joinCommunity = () => {
+    if (!showCommunityJoin) return;
+    const community = showCommunityJoin;
+    setCommunityJoined(prev => {
+      const next = new Set(prev);
+      next.add(community.id);
+      return next;
+    });
+    setShowCommunityJoin(null);
+    selectCommunity(community);
+    setTab("community");
+    setCommunitySuccessText("申请通过，已进入" + community.name);
+  };
   useEffect(() => {
     if (pkuAuthCountdown <= 0) return;
     const t = setInterval(() => setPkuAuthCountdown(v => Math.max(0, v - 1)), 1000);
@@ -41816,6 +41943,11 @@ function ExploreScreen({
     }, 2200);
     return () => clearTimeout(t);
   }, [pkuAuthSuccess]);
+  useEffect(() => {
+    if (!communitySuccessText) return;
+    const t = setTimeout(() => setCommunitySuccessText(""), 2200);
+    return () => clearTimeout(t);
+  }, [communitySuccessText]);
   const ExploreAvatar = ({
     seed,
     bg,
@@ -42306,10 +42438,10 @@ function ExploreScreen({
       official: u.schoolOfficial
     })), React.createElement("div", {
       style: {
-        marginTop: u.schoolOfficial || isPkuTab && isPkuAlumni && schoolMeta.length > 0 ? 4 : 0,
+        marginTop: u.schoolOfficial || u.communityOfficial || isPkuTab && isPkuAlumni && schoolMeta.length > 0 ? 4 : 0,
         minWidth: 0
       }
-    }, u.schoolOfficial && React.createElement("div", {
+    }, (u.schoolOfficial || u.communityOfficial) && React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -42327,7 +42459,7 @@ function ExploreScreen({
         overflow: "hidden",
         textOverflow: "ellipsis"
       }
-    }, u.isUniversityRep ? "北京大学学生服务总队官方分身" : u.school || "官方机构"), React.createElement("span", {
+    }, u.isUniversityRep ? "北京大学学生服务总队官方分身" : u.communityOfficial ? "群主" : u.school || "官方机构"), React.createElement("span", {
       "aria-label": "\u5B98\u65B9\u8BA4\u8BC1",
       style: {
         width: 13,
@@ -42759,6 +42891,255 @@ function ExploreScreen({
       padding: "12px 0 0"
     }
   }, "\u7A0D\u540E\u518D\u8BF4"))) : null;
+  const CommunityJoinModal = () => showCommunityJoin ? React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      zIndex: 500,
+      background: "rgba(20,20,24,.42)",
+      backdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "flex-end"
+    },
+    onClick: () => setShowCommunityJoin(null)
+  }, React.createElement("div", {
+    onClick: event => event.stopPropagation(),
+    style: {
+      width: "100%",
+      background: T.bgCard,
+      borderRadius: "28px 28px 0 0",
+      padding: "22px 20px 34px",
+      boxShadow: "0 -12px 40px rgba(0,0,0,.14)"
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 17,
+      fontWeight: 850,
+      color: INK,
+      textAlign: "center",
+      marginBottom: 9
+    }
+  }, "申请加入" + showCommunityJoin.name), React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: SUB,
+      textAlign: "center",
+      lineHeight: 1.65,
+      marginBottom: 20
+    }
+  }, "提交后将直接进入社群，查看成员名片并发起交流。"), React.createElement("button", {
+    onClick: joinCommunity,
+    style: {
+      width: "100%",
+      border: "none",
+      borderRadius: 16,
+      padding: "14px 0",
+      background: T.grad,
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: 800,
+      cursor: "pointer"
+    }
+  }, "申请加入"), React.createElement("button", {
+    onClick: () => setShowCommunityJoin(null),
+    style: {
+      width: "100%",
+      border: "none",
+      background: "none",
+      color: META,
+      fontSize: 13,
+      fontWeight: 700,
+      padding: "13px 0 0",
+      cursor: "pointer"
+    }
+  }, "取消"))) : null;
+  const CommunityList = () => React.createElement(React.Fragment, null, React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: META,
+      margin: "1px 0 13px"
+    }
+  }, "找到感兴趣的主题，申请后即可进入社群。"), socialCommunities.map(community => {
+    const joined = communityJoined.has(community.id);
+    const members = (community.users || []).filter(Boolean);
+    const official = community.official || {};
+    const open = () => joined ? selectCommunity(community) : setShowCommunityJoin(community);
+    return React.createElement("div", {
+      key: community.id,
+      onClick: open,
+      style: {
+        background: T.bgCard,
+        border: `1px solid ${HAIR}`,
+        borderRadius: 16,
+        padding: 15,
+        marginBottom: 12,
+        boxShadow: SHADOW,
+        cursor: "pointer",
+        overflow: "hidden"
+      }
+    }, React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10
+      }
+    }, React.createElement(CommunityLogo, {
+      community: community,
+      size: 38
+    }), React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 850,
+        color: INK,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      }
+    }, community.name), React.createElement("div", {
+      style: {
+        fontSize: 11.5,
+        color: META,
+        marginTop: 4
+      }
+    }, community.memberCount + " 位成员", joined ? " · 已加入" : " · 申请后进入")), React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 7,
+        flexShrink: 0
+      }
+    }, React.createElement("div", {
+      style: {
+        display: "flex",
+        marginRight: 1
+      }
+    }, members.slice(0, 3).map((member, index) => React.createElement("img", {
+      key: member.id || member.name || index,
+      src: avUrl(member.seed || member.name, member.bg),
+      alt: "",
+      style: {
+        width: 23,
+        height: 23,
+        borderRadius: "50%",
+        objectFit: "cover",
+        border: `1.5px solid ${T.bgCard}`,
+        marginLeft: index ? -7 : 0
+      }
+    }))), React.createElement("button", {
+      onClick: event => {
+        event.stopPropagation();
+        open();
+      },
+      style: {
+        border: "none",
+        background: "none",
+        color: T.purple,
+        fontSize: 12,
+        fontWeight: 800,
+        padding: 0,
+        cursor: "pointer",
+        whiteSpace: "nowrap"
+      }
+    }, joined ? "进入社群" : "申请加入"), React.createElement("span", {
+      style: {
+        color: META,
+        fontSize: 20,
+        lineHeight: 1
+      }
+    }, "›"))), React.createElement("div", {
+      style: {
+        height: 1,
+        background: T.hairline,
+        margin: "13px 0 11px"
+      }
+    }), React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 9
+      }
+    }, React.createElement("img", {
+      src: avUrl(official.seed || community.id, official.bg || "ddd6fe"),
+      alt: "",
+      style: {
+        width: 27,
+        height: 27,
+        borderRadius: "50%",
+        objectFit: "cover",
+        flexShrink: 0
+      }
+    }), React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0,
+        fontSize: 12.5,
+        color: SUB,
+        lineHeight: 1.55,
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden"
+      }
+    }, official.bioFull || community.description)));
+  }));
+  const CommunityOfficialCard = () => selectedCommunity ? React.createElement("div", {
+    style: {
+      background: T.bgCard,
+      border: `1px solid ${T.borderPurple}`,
+      borderRadius: 16,
+      padding: "14px",
+      marginBottom: 14,
+      boxShadow: SHADOW
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 10
+    }
+  }, React.createElement(CommunityLogo, {
+    community: selectedCommunity,
+    size: 38
+  }), React.createElement("div", {
+    style: {
+      color: INK,
+      fontSize: 16,
+      fontWeight: 850,
+      minWidth: 0
+    }
+  }, selectedCommunity.name)), React.createElement("div", {
+    style: {
+      color: SUB,
+      fontSize: 13,
+      lineHeight: 1.65,
+      marginBottom: 9
+    }
+  }, selectedCommunity.description), React.createElement("div", {
+    style: {
+      color: META,
+      fontSize: 12
+    }
+  }, selectedCommunity.memberCount + " 位成员 · 申请后直接进入社群")) : null;
+  const CommunityOfficialPersonCard = () => selectedCommunity && selectedCommunity.official ? React.createElement("div", {
+    style: {
+      marginBottom: 14
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.purple,
+      fontWeight: 800,
+      margin: "0 0 8px 2px"
+    }
+  }, "置顶 · 官方分身"), React.createElement(PersonCard, {
+    u: selectedCommunity.official
+  })) : null;
   const pkuServiceTeamLogo = PKU_SERVICE_TEAM_LOGO_SRC;
   const pkuMimiLogo = PKU_MIMI_LOGO_SRC;
   const PkuCircleGate = () => tab === "pku" && !pkuCircleJoined ? React.createElement("div", {
@@ -42911,18 +43292,147 @@ function ExploreScreen({
   if (selectedDemand) return React.createElement(JobDetailScreen, {
     job: selectedDemand.job,
     user: selectedDemand.owner,
-    onBack: () => setSelectedDemand(null),
+    application: applications.find(item => item.job.id === selectedDemand.job.id),
+    onBack: () => selectDemand(null),
     onViewPublisher: () => {
       const owner = selectedDemand.owner;
-      setSelectedDemand(null);
       onSelectUser(owner);
     },
     onApply: job => {
       const owner = selectedDemand.owner;
-      setSelectedDemand(null);
       if (onStartInterview) onStartInterview(job, owner);
+    },
+    onRegister: job => {
+      if (onCreateApplication) onCreateApplication(job, selectedDemand.owner);
+    },
+    onCancelApplication: application => {
+      if (onCancelApplication) onCancelApplication(application);
     }
   });
+  if (tab === "pku" && pkuCircleJoined) return React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.bg,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: SANS
+    }
+  }, React.createElement(StatusBar, null), React.createElement("div", {
+    style: {
+      padding: "var(--owo-safe-status-top) 18px 14px",
+      display: "flex",
+      alignItems: "center",
+      background: T.navBg,
+      borderBottom: `1px solid ${T.hairline}`,
+      position: "relative",
+      flexShrink: 0
+    }
+  }, React.createElement(BackBtn, {
+    onClick: () => setTab("all")
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 50,
+      right: 50,
+      textAlign: "center",
+      fontSize: 16,
+      fontWeight: 800,
+      color: INK,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }
+  }, activePkuCircle.label)), React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "16px 16px 44px"
+    }
+  }, pkuAuthSuccess && React.createElement("div", {
+    style: {
+      marginBottom: 12,
+      padding: "10px 12px",
+      borderRadius: 10,
+      background: "rgba(159,151,235,.10)",
+      color: T.purple,
+      fontSize: 12,
+      fontWeight: 800
+    }
+  }, pkuSuccessText || "已进入校友圈"), (activePkuCircle.users || []).filter(Boolean).map((member, index) => React.createElement("div", {
+    key: member.id || member.name || index,
+    className: "owo-rise",
+    style: {
+      animationDelay: index * .06 + "s",
+      marginBottom: 14
+    }
+  }, React.createElement(PersonCard, {
+    u: member
+  })))));
+  if (tab === "community" && selectedCommunity) return React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.bg,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: SANS
+    }
+  }, React.createElement(StatusBar, null), React.createElement("div", {
+    style: {
+      padding: "var(--owo-safe-status-top) 18px 14px",
+      display: "flex",
+      alignItems: "center",
+      background: T.navBg,
+      borderBottom: `1px solid ${T.hairline}`,
+      position: "relative",
+      flexShrink: 0
+    }
+  }, React.createElement(BackBtn, {
+    onClick: () => selectCommunity(null)
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 52,
+      right: 52,
+      textAlign: "center",
+      fontSize: 16,
+      fontWeight: 800,
+      color: INK,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }
+  }, selectedCommunity.name)), React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "16px 16px 110px"
+    }
+  }, React.createElement(CommunityOfficialCard, null), React.createElement(CommunityOfficialPersonCard, null), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: META,
+      fontWeight: 800,
+      margin: "2px 0 10px 2px"
+    }
+  }, "社群成员"), (selectedCommunity.users || []).filter(Boolean).map((member, index) => React.createElement("div", {
+    key: member.id || member.name || index,
+    className: "owo-rise",
+    style: {
+      animationDelay: index * .06 + "s",
+      marginBottom: 14
+    }
+  }, React.createElement(PersonCard, {
+    u: member
+  })))), React.createElement(BottomNav, {
+    active: navActive,
+    onChange: onNav,
+    contactsUnread: contactsUnread,
+    profileUnread: profileUnread
+  }));
   return React.createElement("div", {
     style: {
       position: "absolute",
@@ -42933,7 +43443,7 @@ function ExploreScreen({
       flexDirection: "column",
       fontFamily: SANS
     }
-  }, PkuAuthModal(), PkuJoinModal(), React.createElement(StatusBar, null), React.createElement("div", {
+  }, PkuAuthModal(), PkuJoinModal(), CommunityJoinModal(), React.createElement(StatusBar, null), React.createElement("div", {
     style: {
       position: "relative",
       zIndex: 10,
@@ -43037,6 +43547,7 @@ function ExploreScreen({
       gap: 24,
       alignItems: "baseline",
       padding: "0 16px 12px",
+      borderBottom: `1px solid ${T.hairline}`,
       overflowX: "auto",
       scrollbarWidth: "none",
       msOverflowStyle: "none"
@@ -43061,11 +43572,14 @@ function ExploreScreen({
   }, {
     id: "pku",
     label: "校友圈"
+  }, {
+    id: "community",
+    label: "社群"
   }].map(t => {
     const on = tab === t.id;
     return React.createElement("button", {
       key: t.id,
-      onClick: () => t.id === "pku" ? openPkuTab() : setTab(t.id),
+      onClick: () => t.id === "pku" ? openPkuTab() : t.id === "community" ? openCommunityTab() : setTab(t.id),
       style: {
         flexShrink: 0,
         background: "none",
@@ -43083,7 +43597,7 @@ function ExploreScreen({
   })))), tab === "ceo" && React.createElement("div", {
     style: {
       display: "flex",
-      padding: "4px 16px 16px",
+      padding: "14px 16px 16px",
       overflowX: "auto",
       scrollbarWidth: "none",
       msOverflowStyle: "none"
@@ -43108,10 +43622,11 @@ function ExploreScreen({
         border: "none",
         background: "none",
         color: selected ? T.purple : "#A8A49E",
-        padding: 0,
+        padding: "0 0 7px",
         fontSize: 13,
         lineHeight: 1.3,
         fontWeight: selected ? 800 : 500,
+        borderBottom: selected ? `2px solid ${T.purple}` : "2px solid transparent",
         cursor: "pointer",
         fontFamily: SANS,
         transition: "color .25s ease, font-weight .25s ease"
@@ -43137,7 +43652,18 @@ function ExploreScreen({
       fontWeight: 800,
       color: T.purple
     }
-  }, pkuSuccessText || "北京大学认证成功"), PkuCircleGate(), tab === "ceo" ? visibleDemands.map(({job, owner}, idx) => React.createElement("div", {
+  }, pkuSuccessText || "北京大学认证成功"), communitySuccessText && React.createElement("div", {
+    style: {
+      margin: "0 0 12px",
+      padding: "10px 12px",
+      background: "rgba(5,150,105,.10)",
+      border: "1px solid rgba(5,150,105,.16)",
+      borderRadius: 10,
+      fontSize: 12,
+      fontWeight: 800,
+      color: "#059669"
+    }
+  }, communitySuccessText), PkuCircleGate(), tab === "ceo" ? visibleDemands.map(({job, owner}, idx) => React.createElement("div", {
     key: owner.id + "_" + job.id,
     className: "owo-rise",
     style: {
@@ -43147,9 +43673,20 @@ function ExploreScreen({
   }, React.createElement(JobCard, {
     job,
     publisher: owner,
-    onViewDetail: () => setSelectedDemand({job, owner}),
+    onViewDetail: () => selectDemand({job, owner}),
     onApply: () => setInterviewDemand({job, owner})
-  }))) : visibleList.map((u, idx) => React.createElement("div", {
+  }))) : tab === "community" && !selectedCommunity ? CommunityList() : React.createElement(React.Fragment, null, tab === "community" && selectedCommunity && React.createElement("button", {
+    onClick: () => selectCommunity(null),
+    style: {
+      border: "none",
+      background: "none",
+      color: T.purple,
+      fontSize: 13,
+      fontWeight: 750,
+      padding: "0 0 12px",
+      cursor: "pointer"
+    }
+  }, "‹ 社群列表"), tab === "community" && CommunityOfficialCard(), tab === "community" && CommunityOfficialPersonCard(), visibleList.map((u, idx) => React.createElement("div", {
     key: u.id,
     className: "owo-rise",
     style: {
@@ -43158,14 +43695,14 @@ function ExploreScreen({
     }
   }, React.createElement(PersonCard, {
     u: u
-  }))), (tab === "ceo" ? visibleDemands.length === 0 : visibleList.length === 0) && React.createElement("div", {
+  })))), (tab === "ceo" ? visibleDemands.length === 0 : tab === "community" && !selectedCommunity ? false : visibleList.length === 0) && React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "70px 0",
       color: META,
       fontSize: 13
     }
-  }, tab === "pku" && !pkuCircleJoined ? "点击圈子卡片申请进入后查看名片列表" : tab === "ceo" ? query ? `没有找到「${query}」相关需求` : demandTypeFilter === "全部" ? "暂无进行中的需求" : `暂无「${demandTypeFilter}」需求` : `没有找到「${query}」`)), interviewDemand && React.createElement(InterviewRulesModal, {
+  }, tab === "pku" && !pkuCircleJoined ? "点击圈子卡片申请进入后查看名片列表" : tab === "community" ? "社群内暂时还没有成员" : tab === "ceo" ? query ? `没有找到「${query}」相关需求` : demandTypeFilter === "全部" ? "暂无进行中的需求" : `暂无「${demandTypeFilter}」需求` : `没有找到「${query}」`)), interviewDemand && React.createElement(InterviewRulesModal, {
     job: interviewDemand.job,
     onConfirm: () => {
       if (onStartInterview) onStartInterview(interviewDemand.job, interviewDemand.owner);
@@ -43195,6 +43732,8 @@ function InterviewRulesModal({
   onClose
 }) {
   const type = demandTypeOf(job);
+  const durationMinutes = Number(job.aiDuration || job.durationMin || (job.durationSec ? Math.round(job.durationSec / 60) : 0)) || 0;
+  const rules = durationMinutes ? [`本次需求沟通限时 ${durationMinutes} 分钟`, "每位报名者只有一次需求沟通机会", "开始后计时持续进行；中途退出可在剩余时间内继续", "时间结束后需求评估停止，但仍可和找人助手聊其他问题", "需求沟通内容会用于实时匹配分析并提供给发布者", "最终是否连接、合作或见面，由双方真人决定"] : ["本次需求沟通暂不设置时长，可随时进入并继续", "请尽量完整表达你的经历、目标和可提供的资源", "沟通过程中 AI 会根据你的回答动态追问并更新匹配分析", "AI 只负责结构化了解与匹配分析，不直接决定最终结果", "最终是否连接、合作或见面，由双方真人决定", "沟通记录会被保存，供发布者后续确认"];
   return React.createElement("div", {
     style: {
       position: "absolute",
@@ -43256,7 +43795,7 @@ function InterviewRulesModal({
       padding: "16px 18px",
       marginBottom: 22
     }
-  }, [`本次沟通由找人助手根据发布者设定的标准进行`, "请尽量完整表达你的经历、目标和可提供的资源", "沟通过程中 AI 会根据你的回答动态追问", "AI 只负责结构化了解与匹配分析，不直接决定最终结果", "最终是否连接、合作或见面，由双方真人决定", "沟通记录会被保存，供发布者后续确认"].map((rule, i) => React.createElement("div", {
+  }, rules.map((rule, i) => React.createElement("div", {
     key: i,
     style: {
       display: "flex",
@@ -43295,7 +43834,7 @@ function InterviewRulesModal({
     }
   }, rule)))), React.createElement(PurpleBtn, {
     onClick: onConfirm
-  }, "同意并与找人助手聊聊"), React.createElement(GhostBtn, {
+  }, durationMinutes ? "确认并开始本次沟通" : "同意并与找人助手聊聊"), React.createElement(GhostBtn, {
     onClick: onClose,
     style: {
       marginTop: 10
@@ -43468,6 +44007,7 @@ function JobCard({
 }) {
   const metas = demandPrimaryMeta(job);
   const typeLabel = demandTypeLabelOf(job);
+  const durationMinutes = Number(job.aiDuration || job.durationMin || (job.durationSec ? Math.round(job.durationSec / 60) : 0)) || 0;
   const publisherName = publisher?.name || "发布者";
   const publisherMeta = publisherSubtitleOf(publisher || {});
   return React.createElement("div", {
@@ -43513,13 +44053,15 @@ function JobCard({
   }, job.title)), React.createElement("span", {
     style: {
       flexShrink: 0,
-      paddingTop: 2,
+      padding: "4px 9px",
+      borderRadius: 999,
+      background: "rgba(16,185,129,.10)",
       fontSize: 11,
       fontWeight: 700,
-      color: "#22A06B",
+      color: "#059669",
       whiteSpace: "nowrap"
     }
-  }, "进行中")), React.createElement("div", {
+    }, "进行中")), React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: publisher ? "wrap" : "nowrap",
@@ -43535,7 +44077,16 @@ function JobCard({
       padding: "5px 12px",
       fontWeight: 700
     }
-  }, typeLabel), metas.map(info => React.createElement("span", {
+  }, typeLabel), durationMinutes > 0 && React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: T.purple,
+      background: T._theme === "dark" ? "rgba(159,151,235,.16)" : "rgba(159,151,235,.08)",
+      borderRadius: 999,
+      padding: "5px 12px",
+      fontWeight: 700
+    }
+  }, "沟通限时 ", durationMinutes, " 分钟"), metas.map(info => React.createElement("span", {
     key: info,
     style: {
       fontSize: 12,
@@ -43724,9 +44275,18 @@ function JobDetailScreen({
   user,
   onBack,
   onApply,
+  onRegister,
+  application,
+  onCancelApplication,
   onViewPublisher
 }) {
   const [showRules, setShowRules] = useState(false);
+  const [toast, setToast] = useState("");
+  const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [optimisticRegistered, setOptimisticRegistered] = useState(application?.status !== "已取消" && !!application);
+  useEffect(() => {
+    setOptimisticRegistered(application?.status !== "已取消" && !!application);
+  }, [application?.id, application?.status]);
   const viewerSections = demandViewerSections(job);
   const publishedAt = demandPublishedAtLabel(job);
   const publisherMeta = publisherSubtitleOf(user);
@@ -43752,6 +44312,20 @@ function JobDetailScreen({
       whiteSpace: "pre-line"
     }
   }, content));
+  const register = () => {
+    if (optimisticRegistered) {
+      setCancelConfirm(true);
+      return;
+    }
+    onRegister && onRegister(job);
+    setOptimisticRegistered(true);
+    setToast("报名成功");
+    setTimeout(() => setToast(""), 1800);
+  };
+  const startInterview = () => {
+    if (!optimisticRegistered) register();
+    onApply && onApply(job);
+  };
   return React.createElement("div", {
     style: {
       position: "absolute",
@@ -43909,15 +44483,417 @@ function JobDetailScreen({
       padding: "12px 18px 32px"
     }
   }, React.createElement(PurpleBtn, {
-    onClick: () => setShowRules(true)
+    onClick: register,
+    style: optimisticRegistered ? {
+      background: T._theme === "dark" ? "rgba(159,151,235,.16)" : "rgba(159,151,235,.12)",
+      color: T.purple,
+      boxShadow: "none"
+    } : undefined
+  }, optimisticRegistered ? "已报名" : "我要报名"), React.createElement("button", {
+    onClick: () => application?.status === "已沟通" || application?.interviewStartedAt ? startInterview() : setShowRules(true),
+    style: {
+      width: "100%",
+      marginTop: 10,
+      minHeight: 44,
+      borderRadius: 14,
+      border: `1px solid ${T.borderPurple}`,
+      background: T.bgCard,
+      color: T.purple,
+      fontSize: 14,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
   }, "与找人助手聊聊")), showRules && React.createElement(InterviewRulesModal, {
     job: job,
     onConfirm: () => {
-      onApply(job);
+      startInterview();
       setShowRules(false);
     },
     onClose: () => setShowRules(false)
-  }));
+  }), toast && React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: "50%",
+      bottom: 132,
+      transform: "translateX(-50%)",
+      zIndex: 700,
+      background: "rgba(26,26,30,.86)",
+      color: "#fff",
+      borderRadius: 10,
+      padding: "10px 18px",
+      fontSize: 13,
+      fontWeight: 700,
+      whiteSpace: "nowrap"
+    }
+  }, toast), cancelConfirm && React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      zIndex: 800
+    }
+  }, React.createElement("div", {
+    onClick: () => setCancelConfirm(false),
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.scrim,
+      backdropFilter: "blur(6px)"
+    }
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 18,
+      right: 18,
+      top: "50%",
+      transform: "translateY(-50%)",
+      background: T.bgCard,
+      borderRadius: 18,
+      padding: "22px 18px 16px",
+      boxShadow: "0 18px 48px rgba(0,0,0,.18)"
+    }
+  }, React.createElement("div", {
+    style: {
+      textAlign: "center",
+      fontSize: 17,
+      fontWeight: 800,
+      color: T.text1,
+      marginBottom: 18
+    }
+  }, "确认要取消报名吗？"), React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, React.createElement("button", {
+    onClick: () => {
+      onCancelApplication && onCancelApplication(application);
+      setOptimisticRegistered(false);
+      setCancelConfirm(false);
+      setToast("已取消报名");
+      setTimeout(() => setToast(""), 1800);
+    },
+    style: {
+      flex: 1,
+      height: 42,
+      border: `1px solid ${T.hairline}`,
+      borderRadius: 12,
+      background: T.bgCard,
+      color: T.text2,
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "取消报名"), React.createElement("button", {
+    onClick: () => setCancelConfirm(false),
+    style: {
+      flex: 1,
+      height: 42,
+      border: "none",
+      borderRadius: 12,
+      background: T.grad,
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "暂不取消")))));
+}
+function MyApplicationsScreen({
+  applications = [],
+  onBack,
+  onCancel,
+  onStartInterview,
+  onRegister,
+  onViewPublisher
+}) {
+  const [tab, setTab] = useState("all");
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [detailApplication, setDetailApplication] = useState(null);
+  const liveDetail = detailApplication ? applications.find(item => item.id === detailApplication.id) || detailApplication : null;
+  if (liveDetail) return React.createElement(JobDetailScreen, {
+    job: liveDetail.job,
+    user: liveDetail.publisher,
+    application: liveDetail,
+    onBack: () => setDetailApplication(null),
+    onViewPublisher: () => onViewPublisher && onViewPublisher(liveDetail.publisher),
+    onRegister: job => onRegister && onRegister(job, liveDetail.publisher),
+    onApply: job => onStartInterview && onStartInterview(job, liveDetail.publisher, liveDetail),
+    onCancelApplication: application => onCancel && onCancel(application.id)
+  });
+  const counts = {
+    all: applications.length,
+    communicated: applications.filter(item => item.status === "已沟通").length,
+    pending: applications.filter(item => item.status === "已报名").length,
+    canceled: applications.filter(item => item.status === "已取消").length
+  };
+  const filteredApplications = applications.filter(item => {
+    if (tab === "communicated") return item.status === "已沟通";
+    if (tab === "pending") return item.status === "已报名";
+    if (tab === "canceled") return item.status === "已取消";
+    return true;
+  });
+  const tabs = [["all", "全部"], ["communicated", "已沟通"], ["pending", "未沟通"], ["canceled", "已取消"]];
+  return React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.bg,
+      display: "flex",
+      flexDirection: "column"
+    }
+  }, React.createElement(StatusBar, null), React.createElement("div", {
+    style: {
+      padding: "var(--owo-safe-status-top) 20px 14px",
+      display: "flex",
+      alignItems: "center",
+      background: T.navBg,
+      borderBottom: `1px solid ${T.hairline}`,
+      position: "relative",
+      flexShrink: 0
+    }
+  }, React.createElement(BackBtn, {
+    onClick: onBack
+  }), React.createElement("span", {
+    style: {
+      position: "absolute",
+      left: "50%",
+      transform: "translateX(-50%)",
+      fontSize: 16,
+      fontWeight: 750,
+      color: T.text1
+    }
+  }, "我的报名")), React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "16px 18px 40px"
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      overflowX: "auto",
+      marginBottom: 14,
+      paddingBottom: 2
+    }
+  }, tabs.map(([key, label]) => React.createElement("button", {
+    key,
+    onClick: () => setTab(key),
+    style: {
+      flexShrink: 0,
+      border: "none",
+      borderRadius: 999,
+      padding: "7px 12px",
+      background: tab === key ? T.grad : "rgba(159,151,235,.09)",
+      color: tab === key ? "#fff" : T.purple,
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, label, " ", counts[key]))), filteredApplications.length ? filteredApplications.map(application => {
+    const job = application.job;
+    const publisher = application.publisher || {};
+    const canceled = application.status === "已取消";
+    return React.createElement("div", {
+      key: application.id,
+      onClick: () => setDetailApplication(application),
+      style: {
+        background: T.bgCard,
+        border: `1px solid ${T.border}`,
+        borderRadius: 14,
+        padding: "15px 14px",
+        marginBottom: 12,
+        boxShadow: T.shadowCard,
+        cursor: "pointer",
+        opacity: canceled ? .78 : 1
+      }
+    }, React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 10,
+        marginBottom: 10
+      }
+    }, React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 750,
+        color: T.text1,
+        lineHeight: 1.4,
+        minWidth: 0
+      }
+    }, job.title), React.createElement("span", {
+      style: {
+        flexShrink: 0,
+        borderRadius: 999,
+        padding: "4px 9px",
+        background: "rgba(16,185,129,.10)",
+        color: "#059669",
+        fontSize: 11,
+        fontWeight: 750
+      }
+    }, "进行中")), React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 7,
+        marginBottom: 12
+      }
+    }, React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 700,
+        color: T.purple,
+        background: T.bgCardMuted,
+        borderRadius: 999,
+        padding: "4px 9px"
+      }
+    }, demandTypeLabelOf(job)), demandPrimaryMeta(job).slice(0, 2).map(meta => React.createElement("span", {
+      key: meta,
+      style: {
+        fontSize: 11,
+        color: T.text3,
+        background: T.bgLight,
+        borderRadius: 999,
+        padding: "4px 9px"
+      }
+    }, meta))), React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: T.text2,
+        lineHeight: 1.65,
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden",
+        marginBottom: 12
+      }
+    }, demandSummaryOf(job)), React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        paddingTop: 11,
+        borderTop: `1px solid ${T.hairline}`
+      }
+    }, React.createElement(CeoAvPlain, {
+      seed: publisher.seed || publisher.name || "publisher",
+      bg: publisher.bg || "ddd6fe",
+      size: 28
+    }), React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0,
+        fontSize: 12,
+        color: T.text2,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }
+    }, publisher.name || "发布者"), React.createElement("button", {
+      onClick: event => {
+        event.stopPropagation();
+        if (!canceled) setConfirmTarget(application);
+      },
+      disabled: canceled,
+      style: {
+        flexShrink: 0,
+        height: 30,
+        padding: "0 12px",
+        borderRadius: 999,
+        border: `1px solid ${canceled ? T.hairline : T.borderPurple}`,
+        background: canceled ? T.bgLight : T.bgCard,
+        color: canceled ? T.text3 : T.purple,
+        fontSize: 11,
+        fontWeight: 700,
+        cursor: canceled ? "default" : "pointer"
+      }
+    }, canceled ? "已取消" : "已报名")));
+  }) : React.createElement("div", {
+    style: {
+      textAlign: "center",
+      color: T.text3,
+      fontSize: 13,
+      padding: "70px 0"
+    }
+  }, tab === "all" ? "还没有报名的需求" : "该状态下暂无报名")), confirmTarget && React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      zIndex: 600
+    }
+  }, React.createElement("div", {
+    onClick: () => setConfirmTarget(null),
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.scrim,
+      backdropFilter: "blur(6px)"
+    }
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 18,
+      right: 18,
+      top: "50%",
+      transform: "translateY(-50%)",
+      background: T.bgCard,
+      borderRadius: 18,
+      padding: "22px 18px 16px",
+      boxShadow: "0 18px 48px rgba(0,0,0,.18)"
+    }
+  }, React.createElement("div", {
+    style: {
+      textAlign: "center",
+      fontSize: 17,
+      fontWeight: 800,
+      color: T.text1,
+      marginBottom: 8
+    }
+  }, "确认要取消报名吗？"), React.createElement("div", {
+    style: {
+      textAlign: "center",
+      fontSize: 12,
+      color: T.text3,
+      lineHeight: 1.6,
+      marginBottom: 18
+    }
+  }, "取消后仍可在“已取消”中查看该需求，并可再次报名。"), React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, React.createElement("button", {
+    onClick: () => {
+      onCancel && onCancel(confirmTarget.id);
+      setConfirmTarget(null);
+    },
+    style: {
+      flex: 1,
+      height: 42,
+      border: `1px solid ${T.hairline}`,
+      borderRadius: 12,
+      background: T.bgCard,
+      color: T.text2,
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "取消报名"), React.createElement("button", {
+    onClick: () => setConfirmTarget(null),
+    style: {
+      flex: 1,
+      height: 42,
+      border: "none",
+      borderRadius: 12,
+      background: T.grad,
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "暂不取消")))));
 }
 function DetailScreen({
   user,
@@ -44696,6 +45672,12 @@ function ChatScreen({
   onBack,
   withCountdown = false,
   initialInterview = null,
+  initialInterviewMessages = null,
+  initialInterviewSession = null,
+  onInterviewMessagesChange,
+  onInterviewStarted,
+  onInterviewProgress,
+  onInterviewEvaluationComplete,
   threadContext = null,
   onThreadAction,
   onViewProfile,
@@ -44707,6 +45689,7 @@ function ChatScreen({
   const isConsultationSession = withCountdown && !initialInterview;
   const isOnboardingChat = !!threadContext?.onboarding;
   const [msgs, setMsgs] = useState(() => {
+    if (initialInterviewMessages && initialInterviewMessages.length) return initialInterviewMessages;
     const base = isOnboardingChat ? [{
       id: 1,
       sentAt: Date.now(),
@@ -44740,15 +45723,22 @@ function ChatScreen({
   const [showConsultRenew, setShowConsultRenew] = useState(false);
   const [renewCode, setRenewCode] = useState("");
   const [renewError, setRenewError] = useState("");
+  const configuredDurationSec = Number(initialInterview?.durationSec || (initialInterview?.aiDuration || initialInterview?.durationMin || 0) * 60) || 0;
+  const resumedAnswerCount = (initialInterviewMessages || []).filter(message => message.type === "interviewAnswer").length;
+  const resumedQuestionCount = (initialInterview?.questions?.length || buildDefaultDemandQuestions(initialInterview || {}).length || 1);
+  const resumedEvaluationEnded = !!initialInterviewSession?.interviewEnded || !!initialInterview?.interviewEnded || resumedAnswerCount >= resumedQuestionCount;
+  const isResumingInterview = !!(initialInterview && initialInterviewMessages && initialInterviewMessages.length);
   const [interviewState, setInterviewState] = useState(initialInterview ? {
     job: initialInterview,
-    phase: "card",
-    qIdx: 0,
-    startTime: null,
+    phase: isResumingInterview ? resumedEvaluationEnded ? "done" : "running" : "card",
+    qIdx: resumedAnswerCount,
+    startTime: initialInterviewSession?.interviewStartedAt || null,
     elapsed: 0
   } : null);
-  const [timeLeft, setTimeLeft] = useState(initialInterview?.durationSec || 180);
-  const [interviewTimerActive, setInterviewTimerActive] = useState(false);
+  const initialEndsAt = Number(initialInterviewSession?.interviewEndsAt) || 0;
+  const initialTimeLeft = initialEndsAt ? Math.max(0, Math.ceil((initialEndsAt - Date.now()) / 1000)) : configuredDurationSec;
+  const [timeLeft, setTimeLeft] = useState(initialTimeLeft);
+  const [interviewTimerActive, setInterviewTimerActive] = useState(isResumingInterview && !resumedEvaluationEnded && configuredDurationSec > 0 && initialTimeLeft > 0);
   const [collapsedCards, setCollapsedCards] = useState({});
   const [logCollapsed, setLogCollapsed] = useState(false);
   const [msgMenuOpen, setMsgMenuOpen] = useState(null);
@@ -44765,14 +45755,16 @@ function ChatScreen({
   const inputRef = useRef(null);
   const timerRef = useRef(null);
   const startTimestampRef = useRef(null);
+  const interviewEndsAtRef = useRef(initialEndsAt);
+  const evaluationEndedRef = useRef(resumedEvaluationEnded);
+  const answerCountRef = useRef(resumedAnswerCount);
   useEffect(() => {
-    if (!interviewTimerActive || initialInterview) return;
-    if (startTimestampRef.current === null) startTimestampRef.current = Date.now();
+    if (!interviewTimerActive) return;
     timerRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimestampRef.current) / 1000);
       const job = interviewState?.job;
-      const total = job?.durationSec || 180;
-      const left = Math.max(0, total - elapsed);
+      const total = job?.durationSec || configuredDurationSec;
+      const endsAt = interviewEndsAtRef.current || Date.now() + total * 1000;
+      const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
       setTimeLeft(left);
       if (left <= 0) {
         clearInterval(timerRef.current);
@@ -44783,9 +45775,18 @@ function ChatScreen({
     return () => clearInterval(timerRef.current);
   }, [interviewTimerActive]);
   useEffect(() => {
+    if (!initialInterview || !initialEndsAt || resumedEvaluationEnded || initialEndsAt > Date.now()) return;
+    setTimeLeft(0);
+    setInterviewTimerActive(false);
+    autoEndInterview();
+  }, []);
+  useEffect(() => {
     setTimeout(() => bottomRef.current?.scrollIntoView({
       behavior: "smooth"
     }), 100);
+  }, [msgs]);
+  useEffect(() => {
+    if (initialInterview && onInterviewMessagesChange) onInterviewMessagesChange(msgs);
   }, [msgs]);
   useEffect(() => {
     if (!consultActive) return;
@@ -44804,13 +45805,15 @@ function ChatScreen({
   }, [consultActive]);
   const interviewBootRef = useRef(false);
   useEffect(() => {
-    if (initialInterview && !interviewBootRef.current) {
+    if (initialInterview && !isResumingInterview && !interviewBootRef.current) {
       interviewBootRef.current = true;
       const t = setTimeout(() => startInterview(initialInterview), 450);
       return () => clearTimeout(t);
     }
   }, []);
   const autoEndInterview = () => {
+    if (evaluationEndedRef.current) return;
+    evaluationEndedRef.current = true;
     setInterviewState(prev => prev ? {
       ...prev,
       phase: "done"
@@ -44819,9 +45822,14 @@ function ChatScreen({
       id: Date.now(),
       side: "them",
       who: "ai",
-      text: "沟通时间已到，感谢你的参与。沟通记录已保存，发布者会结合需求进一步确认是否连接。"
+      text: "本次需求沟通时间已结束，已经收到您的报名啦。需求沟通记录和匹配分析已保存，接下来我们可以聊聊其他问题。",
+      evaluationEnded: true
     }]);
-    setTimeout(() => setLogCollapsed(true), 500);
+    onInterviewEvaluationComplete && onInterviewEvaluationComplete({
+      reason: "timeout",
+      score: Math.min(92, 58 + answerCountRef.current * 7),
+      completeness: Math.min(100, Math.round(answerCountRef.current / Math.max(1, resumedQuestionCount) * 100))
+    });
   };
   const finishConsult = () => {
     setShowConsultRenew(false);
@@ -44860,20 +45868,30 @@ function ChatScreen({
     }]);
   };
   const startInterview = job => {
+    const durationSec = Number(job.durationSec || (job.aiDuration || job.durationMin || 0) * 60) || 0;
     const sessionJob = {
       ...job,
       questions: job.questions && job.questions.length ? job.questions : buildDefaultDemandQuestions(job),
-      durationSec: 0
+      durationSec,
+      originalDurationSec: durationSec
     };
-    startTimestampRef.current = null;
-    setTimeLeft(0);
-    setInterviewTimerActive(false);
+    const startedAt = Number(initialInterviewSession?.interviewStartedAt) || Date.now();
+    const endsAt = durationSec > 0 ? Number(initialInterviewSession?.interviewEndsAt) || startedAt + durationSec * 1000 : 0;
+    startTimestampRef.current = startedAt;
+    interviewEndsAtRef.current = endsAt;
+    setTimeLeft(endsAt ? Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)) : durationSec);
+    setInterviewTimerActive(durationSec > 0);
     setInterviewState({
       job: sessionJob,
       phase: "running",
       qIdx: 0,
-      startTime: Date.now(),
+      startTime: startedAt,
       elapsed: 0
+    });
+    onInterviewStarted && onInterviewStarted({
+      interviewStartedAt: startedAt,
+      interviewEndsAt: endsAt,
+      durationSec
     });
     setMsgs(prev => [...prev, {
       id: Date.now() - 1,
@@ -44904,6 +45922,14 @@ function ChatScreen({
       qIdx
     } = interviewState;
     const newQIdx = qIdx + 1;
+    answerCountRef.current = newQIdx;
+    const completeness = Math.min(100, Math.round(newQIdx / Math.max(1, job.questions.length) * 100));
+    const liveScore = Math.min(94, 58 + newQIdx * 7);
+    onInterviewProgress && onInterviewProgress({
+      score: liveScore,
+      completeness,
+      answerCount: newQIdx
+    });
     setMsgs(prev => [...prev, {
       id: Date.now(),
       side: "me",
@@ -44918,6 +45944,7 @@ function ChatScreen({
     if (newQIdx >= job.questions.length) {
       clearInterval(timerRef.current);
       setInterviewTimerActive(false);
+      evaluationEndedRef.current = true;
       setInterviewState(prev => ({
         ...prev,
         phase: "done",
@@ -44928,9 +45955,14 @@ function ChatScreen({
           id: Date.now(),
           side: "them",
           who: "ai",
-          text: "感谢你完成本次AI沟通。沟通记录已保存，发布者会结合需求进一步确认是否连接。"
+          text: "已经收到您的报名啦。本次需求沟通已完成，匹配分析会提供给发布者。接下来我们可以聊聊其他问题。",
+          evaluationEnded: true
         }]);
-        setTimeout(() => setLogCollapsed(true), 500);
+        onInterviewEvaluationComplete && onInterviewEvaluationComplete({
+          reason: "complete",
+          score: liveScore,
+          completeness: 100
+        });
       }, 800);
     } else {
       setInterviewState(prev => ({
@@ -44953,8 +45985,8 @@ function ChatScreen({
     }
   };
   const isInInterview = interviewState?.phase === "running";
-  const totalSec = interviewState?.job?.durationSec || 0;
-  const pct = 0;
+  const totalSec = interviewState?.job?.originalDurationSec || interviewState?.job?.durationSec || configuredDurationSec || 0;
+  const pct = totalSec > 0 ? Math.max(0, Math.min(1, timeLeft / totalSec)) : 0;
   const fmtTime = s => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   const AT_PREFIX = `@${user.name} `;
   const sendText = (raw, forcedMode = null) => {
@@ -45065,67 +46097,22 @@ function ChatScreen({
       border: T._theme === "dark" ? "1px solid rgba(159,151,235,.28)" : "1px solid rgba(102,87,170,.09)"
     }
   };
-  let displayMsgs;
   const interviewDone = interviewState?.phase === "done";
-  const logRounds = msgs.filter(m => m.interviewLog && m.type === "interviewAnswer").length;
-  if (logCollapsed) {
+  let displayMsgs = msgs;
+  if (consultCollapsed) {
     displayMsgs = [];
     let inserted = false;
     msgs.forEach(m => {
-      if (m.interviewLog) {
+      if (m.consultLog) {
         if (!inserted) {
           displayMsgs.push({
-            __fold: true,
-            job: m.job,
-            id: "fold_" + (m.sessionId || m.job?.id || "interview")
+            __consultFold: true,
+            id: "consult_fold"
           });
           inserted = true;
         }
       } else displayMsgs.push(m);
     });
-  } else if (interviewDone && logRounds > 0) {
-    displayMsgs = [];
-    let inserted = false;
-    let lastLogIdx = -1;
-    msgs.forEach((m, i) => {
-      if (m.interviewLog) lastLogIdx = i;
-    });
-    msgs.forEach((m, i) => {
-      if (m.interviewLog && !inserted) {
-        displayMsgs.push({
-          __logToggle: true,
-          pos: "top",
-          job: m.job,
-          id: "logtop_" + (m.sessionId || m.job?.id || "interview")
-        });
-        inserted = true;
-      }
-      displayMsgs.push(m);
-      if (i === lastLogIdx) displayMsgs.push({
-        __logToggle: true,
-        pos: "bottom",
-        job: m.job,
-        id: "logbottom_" + (m.sessionId || m.job?.id || "interview")
-      });
-    });
-  } else {
-    if (consultCollapsed) {
-      displayMsgs = [];
-      let inserted = false;
-      msgs.forEach(m => {
-        if (m.consultLog) {
-          if (!inserted) {
-            displayMsgs.push({
-              __consultFold: true,
-              id: "consult_fold"
-            });
-            inserted = true;
-          }
-        } else displayMsgs.push(m);
-      });
-    } else {
-      displayMsgs = msgs;
-    }
   }
   const canSwitchMode = allowModeSwitch && !isInInterview && !consultActive && !showConsultRenew;
   const activeInputMode = canSwitchMode ? mode : "ai";
@@ -45217,7 +46204,47 @@ function ChatScreen({
   }, React.createElement("path", {
     d: "M5 5l7 7-7 7V5zM14 5l7 7-7 7V5z",
     fill: "#9F97EB"
-  })))), consultActive && React.createElement("div", {
+  })))), initialInterview && totalSec > 0 && React.createElement("div", {
+    style: {
+      padding: "9px 18px 10px",
+      background: T.bgCard,
+      borderBottom: `1px solid ${T.hairline}`,
+      flexShrink: 0
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 7
+    }
+  }, React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: interviewDone ? T.text2 : T.purple,
+      fontWeight: 750
+    }
+  }, interviewDone ? "需求沟通已完成" : "需求沟通进行中"), React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: interviewDone ? T.text3 : timeLeft <= 60 ? "#ef4444" : T.text1,
+      fontWeight: 800
+    }
+  }, interviewDone ? "可以继续聊其他问题" : `剩余 ${fmtTime(timeLeft)}`)), React.createElement("div", {
+    style: {
+      height: 5,
+      background: T.bg3,
+      borderRadius: 999,
+      overflow: "hidden"
+    }
+  }, React.createElement("div", {
+    style: {
+      height: "100%",
+      width: `${interviewDone ? 100 : pct * 100}%`,
+      background: interviewDone ? "#B9B5C7" : timeLeft <= 60 ? "#ef4444" : T.grad,
+      transition: "width .5s linear"
+    }
+  }))), consultActive && React.createElement("div", {
     style: {
       margin: "6px 18px 0",
       background: "rgba(159,151,235,.06)",
@@ -46280,12 +47307,13 @@ function CandidateChatScreen({
     title: candidate.job
   };
   const report = buildCeoReport(candidate);
+  const reportTitle = candidate.evaluationStatus === "in_progress" ? "实时阶段分析" : "最终匹配报告";
+  const reportCompleteness = Number(candidate.completeness) || (candidate.communicated === false ? 0 : 100);
   const userKey = candidate.id;
   const ceoKey = candidate.id + "_ceo";
   const [liveMsgs, setLiveMsgs] = useState([]);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState("ai");
-  const [logCollapsed, setLogCollapsed] = useState(true);
   const [collapsedCards, setCollapsedCards] = useState({
     [userKey]: true,
     [ceoKey]: scrollTo !== "report"
@@ -46394,20 +47422,14 @@ function CandidateChatScreen({
     }
   };
   const body = [];
-  if (logCollapsed) body.push({
-    __logCard: true,
-    id: "logcard"
-  });else {
-    transcript.forEach(m => body.push({
-      ...m,
-      interviewLog: true
-    }));
-    body.push({
-      __logToggle: true,
-      id: "logtoggle"
-    });
-  }
-  if (interviewerView) body.push({
+  transcript.forEach(m => body.push({
+    ...m,
+    interviewLog: true
+  }));
+  if (interviewerView) body.push(candidate.communicated === false ? {
+    type: "ceoReportPending",
+    id: "cr_pending"
+  } : {
     type: "ceoReport",
     id: "cr"
   });
@@ -46462,7 +47484,7 @@ function CandidateChatScreen({
       fontWeight: 700,
       color: T.text1
     }
-  }, "最新匹配报告"), React.createElement("span", {
+  }, reportTitle), React.createElement("span", {
     style: {
       fontSize: 9,
       background: T.grad,
@@ -46480,7 +47502,7 @@ function CandidateChatScreen({
       gap: 6,
       marginTop: 2
     }
-  }, React.createElement("span", null, "仅你可见 · 匹配度 ", report.total, "%"), report.isExcellent && React.createElement("span", {
+  }, React.createElement("span", null, "仅你可见 · 匹配度 ", report.total, "% · 信息完整度 ", reportCompleteness, "%"), report.isExcellent && React.createElement("span", {
     style: {
       background: "rgba(159,151,235,.12)",
       color: T.purple,
@@ -46528,7 +47550,7 @@ function CandidateChatScreen({
       fontWeight: 800,
       color: T._theme === "dark" ? "#d8d4ff" : "#312e81"
     }
-  }, "最新匹配报告"), React.createElement("span", {
+  }, reportTitle), React.createElement("span", {
     style: {
       fontSize: 9,
       background: T.grad,
@@ -46577,7 +47599,13 @@ function CandidateChatScreen({
       color: T.text3,
       marginTop: 2
     }
-  }, "匹配度")), React.createElement("div", {
+  }, "匹配度"), React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: T.text3,
+      marginTop: 4
+    }
+  }, "完整度 ", reportCompleteness, "%")), React.createElement("div", {
     style: {
       flex: 1
     }
@@ -46802,70 +47830,6 @@ function CandidateChatScreen({
       position: "relative"
     }
   }, body.map((msg, msgIndex) => {
-    if (msg.__logCard) return React.createElement("div", {
-      key: msg.id,
-      onClick: () => setLogCollapsed(false),
-      style: {
-        background: T._theme === "dark" ? "linear-gradient(135deg,rgba(159,151,235,.13),rgba(159,151,235,.06))" : "linear-gradient(135deg,#f5f3ff,#eef2ff)",
-        border: "1.5px solid rgba(159,151,235,.22)",
-        borderRadius: 14,
-        padding: "14px 16px",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between"
-      }
-    }, React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10
-      }
-    }, React.createElement("span", {
-      style: {
-        fontSize: 18
-      }
-    }, "\uD83D\uDCCB"), React.createElement("div", null, React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: T.text1
-      }
-    }, candidate.job, " · AI沟通记录"), React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: T.text3
-      }
-    }, "\u5386\u53F2\u95EE\u7B54 \xB7 ", candidate.time))), React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: T.purple,
-        fontWeight: 600
-      }
-    }, "\u5C55\u5F00 \u25BC"));
-    if (msg.__logToggle) return React.createElement("div", {
-      key: msg.id,
-      style: {
-        display: "flex",
-        justifyContent: "center",
-        margin: "2px 0"
-      }
-    }, React.createElement("button", {
-      onClick: () => setLogCollapsed(true),
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "7px 16px",
-        background: "rgba(159,151,235,.1)",
-        border: "1px solid rgba(159,151,235,.25)",
-        borderRadius: 999,
-        cursor: "pointer",
-        fontSize: 12,
-        color: T.purple,
-        fontWeight: 700
-      }
-    }, "收起AI沟通记录 ▲"));
     if (msg.type === "interviewReport") return React.createElement("div", {
       key: msg.id,
       ref: reportRef,
@@ -46888,6 +47852,24 @@ function CandidateChatScreen({
       footerLabel: "\u6536\u8D77\u62A5\u544A"
     }));
     if (msg.type === "ceoReport") return renderCeoReport(msg.id);
+    if (msg.type === "ceoReportPending") return React.createElement("div", {
+      key: msg.id,
+      style: {
+        background: T.bgCard,
+        border: `1px solid ${T.hairline}`,
+        borderRadius: 14,
+        padding: "14px 16px",
+        color: T.text2,
+        fontSize: 12,
+        lineHeight: 1.7
+      }
+    }, React.createElement("div", {
+      style: {
+        color: T.text1,
+        fontWeight: 800,
+        marginBottom: 4
+      }
+    }, "暂未生成匹配报告"), "报名者还没有与找人助手沟通，完成沟通后这里会生成匹配度、信息完整度和匹配理由。" );
     let onRight, avatar, bs;
     if (interviewerView) {
       if (msg.who === "ai") {
@@ -50841,6 +51823,180 @@ function DurationField({
     }
   }, "自由设置时长"))))) : null);
 }
+function DemandConversationDurationField({
+  value,
+  onChange
+}) {
+  const normalized = Number(value) || 0;
+  const presetValues = [0, 15, 30, 45];
+  const savedCustom = normalized > 0 && !presetValues.includes(normalized);
+  const [customMode, setCustomMode] = useState(savedCustom);
+  const [customValue, setCustomValue] = useState(savedCustom ? String(normalized) : "");
+  const [customError, setCustomError] = useState("");
+  const customInputRef = useRef(null);
+  const updateCustomDraft = raw => {
+    const digits = String(raw || "").replace(/\D/g, "").slice(0, 3);
+    setCustomValue(digits);
+    setCustomError("");
+  };
+  const commitCustom = () => {
+    const minutes = Number(customValue);
+    if (minutes >= 5 && minutes <= 120) {
+      setCustomError("");
+      onChange(minutes);
+      return true;
+    }
+    setCustomError("请输入 5-120 分钟");
+    return false;
+  };
+  const chooseDuration = next => {
+    if (next === "custom") {
+      setCustomMode(true);
+      setCustomError("");
+      if (!savedCustom) setCustomValue("");
+      setTimeout(() => customInputRef.current?.focus(), 0);
+      return;
+    }
+    setCustomMode(false);
+    setCustomError("");
+    onChange(Number(next));
+  };
+  return React.createElement("div", {
+    style: {
+      borderRadius: 12,
+      border: `1px solid ${customError ? "rgba(239,68,68,.35)" : T.border}`,
+      background: T.bgCard,
+      padding: 14,
+      marginBottom: 10
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: T.text3,
+      marginBottom: 6
+    }
+  }, "找人助手沟通时长"), React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: T.text3,
+      lineHeight: 1.6,
+      marginBottom: 10
+    }
+  }, customMode ? "自定义范围为 5-120 分钟；保存后每位报名者只有一次正式需求沟通机会。" : normalized ? `每位报名者有一次 ${normalized} 分钟的需求沟通机会，结束后仍可继续普通聊天。` : "默认不限时，报名者可以随时进入并继续与找人助手沟通。"), React.createElement("div", {
+    style: {
+      position: "relative"
+    }
+  }, customMode ? React.createElement("div", {
+    style: {
+      position: "relative",
+      height: 44,
+      borderRadius: 10,
+      border: `1.5px solid ${customError ? "rgba(239,68,68,.55)" : T.borderPurple}`,
+      background: T.inputBg,
+      boxShadow: customError ? "none" : "0 0 0 2px rgba(159,151,235,.06)",
+      display: "flex",
+      alignItems: "center",
+      overflow: "hidden"
+    }
+  }, React.createElement("input", {
+    ref: customInputRef,
+    value: customValue,
+    onChange: event => updateCustomDraft(event.target.value),
+    onBlur: commitCustom,
+    onKeyDown: event => {
+      if (event.key === "Enter") event.currentTarget.blur();
+    },
+    inputMode: "numeric",
+    placeholder: "请输入时长",
+    "aria-label": "自定义找人助手沟通时长",
+    style: {
+      flex: 1,
+      minWidth: 0,
+      height: "100%",
+      border: "none",
+      background: "transparent",
+      color: T.text1,
+      padding: "0 8px 0 12px",
+      outline: "none",
+      fontSize: 13,
+      fontWeight: 600,
+      fontFamily: "inherit"
+    }
+  }), React.createElement("span", {
+    style: {
+      color: T.text2,
+      fontSize: 13,
+      flexShrink: 0
+    }
+  }, "分钟"), React.createElement("span", {
+    "aria-hidden": "true",
+    style: {
+      width: 38,
+      textAlign: "center",
+      color: T.text2,
+      fontSize: 13,
+      flexShrink: 0,
+      pointerEvents: "none"
+    }
+  }, "⌄"), React.createElement("select", {
+    value: "custom",
+    onChange: event => chooseDuration(event.target.value),
+    "aria-label": "选择找人助手沟通时长",
+    title: "选择预设时长",
+    style: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: 42,
+      height: "100%",
+      opacity: 0,
+      cursor: "pointer"
+    }
+  }, React.createElement("option", {
+    value: "0"
+  }, "暂不设置"), React.createElement("option", {
+    value: "15"
+  }, "15分钟"), React.createElement("option", {
+    value: "30"
+  }, "30分钟"), React.createElement("option", {
+    value: "45"
+  }, "45分钟"), React.createElement("option", {
+    value: "custom"
+  }, "自定义"))) : React.createElement("select", {
+    value: String(normalized),
+    onChange: event => chooseDuration(event.target.value),
+    style: {
+      width: "100%",
+      height: 44,
+      boxSizing: "border-box",
+      borderRadius: 10,
+      border: `1px solid ${T.border}`,
+      background: T.inputBg,
+      color: T.text1,
+      padding: "0 38px 0 12px",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, React.createElement("option", {
+    value: "0"
+  }, "暂不设置"), React.createElement("option", {
+    value: "15"
+  }, "15分钟"), React.createElement("option", {
+    value: "30"
+  }, "30分钟"), React.createElement("option", {
+    value: "45"
+  }, "45分钟"), React.createElement("option", {
+    value: "custom"
+  }, "自定义"))), customError ? React.createElement("div", {
+    role: "alert",
+    style: {
+      color: "#ef4444",
+      fontSize: 11,
+      marginTop: 7
+    }
+  }, customError) : null);
+}
 const DEMAND_TYPES = ["社团/社群招新", "找合伙人", "找搭子", "活动招募", "找场地", "遇见心动", "自定义需求"];
 const LEGACY_DEMAND_TYPE_MAP = {
   "连接人才": "社团/社群招新",
@@ -51672,6 +52828,9 @@ function DemandPublishWizard({
   }, {
     label: "报名截止时间",
     value: form.deadline || "长期有效"
+  }, {
+    label: "找人助手沟通时长",
+    value: Number(form.aiDuration) > 0 ? form.aiDuration + " 分钟" : "暂不设置"
   }].filter(row => row.value);
   const detailPreview = React.createElement("div", {
     style: {
@@ -52870,7 +54029,10 @@ function DemandPublishWizardV2({
   }, typeLabel), ["title", "description", "target", "matchingCriteria", "participationRequirements"].map(key => React.createElement(DraftCard, {
     key,
     fieldKey: key
-  })));
+  })), React.createElement(DemandConversationDurationField, {
+    value: form.aiDuration,
+    onChange: value => update("aiDuration", value)
+  }));
   if (step === 3) content = React.createElement("div", {
     style: {
       borderRadius: 14,
@@ -53134,7 +54296,7 @@ function JobEditScreen({
     flow: job.flow,
     count: job.count || "",
     deadline: job.deadline || "",
-    aiDuration: job.durationMin || (job.durationSec ? Math.round(job.durationSec / 60) : "")
+    aiDuration: Number(job.aiDuration || job.durationMin || (job.durationSec ? Math.round(job.durationSec / 60) : 0))
   });
   const [err, setErr] = useState("");
   const [showHeartfeltNotice, setShowHeartfeltNotice] = useState(false);
@@ -53366,6 +54528,9 @@ function RecruitmentJobDetailScreen({
   }, {
     title: "报名截止时间",
     content: job.deadline || "长期有效"
+  }, {
+    title: "找人助手沟通时长",
+    content: Number(job.aiDuration || job.durationMin) > 0 ? Number(job.aiDuration || job.durationMin) + " 分钟 · 每位报名者一次需求沟通机会" : "暂不设置 · 报名者可随时继续沟通"
   }].concat(demandFieldsOf(demandType).filter(field => field.k !== "title").map(field => ({
     title: field.label.replace(/[？?]/g, ""),
     content: valueForField(field)
@@ -53601,11 +54766,29 @@ function RecruitmentJobDetailScreen({
 function InterviewDataScreen({
   job,
   onBack,
-  companyProfile = {}
+  companyProfile = {},
+  applications = []
 }) {
-  const applicants = CANDIDATES.filter(c => c.job === job.title);
-  const highMatches = applicants.filter(c => isExcellentCandidate(c));
-  const otherMatches = applicants.filter(c => !isExcellentCandidate(c));
+  const applicants = CANDIDATES.filter(c => c.job === job.title).map(candidate => {
+    const application = applications.find(item => item.candidateId === candidate.id || item.applicantId === candidate.id);
+    if (!application) return {
+      ...candidate,
+      evaluationStatus: candidate.communicated === false ? "not_started" : "final",
+      completeness: candidate.communicated === false ? 0 : 100
+    };
+    const communicated = application.status === "已沟通" || application.evaluationStatus === "in_progress" || application.evaluationStatus === "final";
+    return {
+      ...candidate,
+      communicated,
+      score: communicated && Number.isFinite(Number(application.score)) ? Number(application.score) : candidate.score,
+      completeness: Number(application.completeness) || 0,
+      evaluationStatus: application.evaluationStatus || (communicated ? "in_progress" : "not_started"),
+      report: application.report || null
+    };
+  });
+  const hasMatchScore = c => c.communicated !== false && Number.isFinite(Number(c.score));
+  const highMatches = applicants.filter(c => hasMatchScore(c) && isExcellentCandidate(c));
+  const otherMatches = applicants.filter(c => !hasMatchScore(c) || !isExcellentCandidate(c));
   const [tab, setTab] = useState("all");
   const [chatC, setChatC] = useState(null);
   const [chatScroll, setChatScroll] = useState("bottom");
@@ -53789,7 +54972,13 @@ function InterviewDataScreen({
       fileName: _jsxFileName,
       lineNumber: 2265
     }
-  }, c.name), isExcellentCandidate(c) && React.createElement('span', {
+  }, c.name), hasMatchScore(c) && React.createElement('span', {
+    style: {
+      fontSize: 11,
+      color: isExcellentCandidate(c) ? "#059669" : T.text2,
+      fontWeight: 750
+    }
+  }, "匹配度 ", c.score, "%"), hasMatchScore(c) && isExcellentCandidate(c) && React.createElement('span', {
     style: {
       fontSize: 10,
       background: "#fef3c7",
@@ -53813,30 +55002,20 @@ function InterviewDataScreen({
       fileName: _jsxFileName,
       lineNumber: 2268
     }
-  }, "AI沟通已完成 · ", c.time)), React.createElement('div', {
+  }, React.createElement('span', {
+    style: {
+      color: T.purple,
+      fontWeight: 700
+    }
+  }, c.evaluationStatus === "in_progress" ? "沟通中" : c.evaluationStatus === "final" ? "报告已生成" : hasMatchScore(c) ? "报告已生成" : "尚未与找人助手沟通"), React.createElement('span', {
+    style: {
+      color: T.text3,
+      marginLeft: 5
+    }
+  }, "· ", c.time))), React.createElement('div', {
     style: {
       minWidth: 48,
       textAlign: "right"
-    }
-  }, React.createElement('div', {
-    style: {
-      fontSize: 19,
-      lineHeight: 1.1,
-      color: isExcellentCandidate(c) ? "#059669" : T.text1,
-      fontWeight: 850
-    }
-  }, c.score, "%"), React.createElement('div', {
-    style: {
-      fontSize: 10,
-      color: T.text3,
-      marginTop: 4
-    }
-  }, "匹配度")), React.createElement('div', {
-    style: {
-      gridColumn: "1 / -1",
-      paddingTop: 11,
-      marginTop: 1,
-      borderTop: `1px solid ${T.hairline}`
     }
   }, React.createElement('button', {
     onClick: e => {
@@ -53844,13 +55023,13 @@ function InterviewDataScreen({
       openChat(c, "report");
     },
     style: {
-      width: "100%",
+      minWidth: 78,
       background: "rgba(159,151,235,.12)",
       border: "none",
       borderRadius: 10,
-      height: 38,
+      height: 34,
       padding: "0 12px",
-      fontSize: 13,
+      fontSize: 11,
       color: T.purple,
       fontWeight: 700,
       cursor: "pointer"
@@ -53860,7 +55039,7 @@ function InterviewDataScreen({
       fileName: _jsxFileName,
       lineNumber: 2270
     }
-  }, "查看报告")))), filteredApplicants.length === 0 && React.createElement('div', {
+  }, "与TA聊聊")))), filteredApplicants.length === 0 && React.createElement('div', {
     style: {
       textAlign: "center",
       color: "#ccc",
@@ -54303,15 +55482,17 @@ function RecruitmentScreen({
   onPhoneBound,
   jobUnreadMap = {},
   onReadJobData,
-  initialPublish = false
+  initialPublish = false,
+  applications = []
 }) {
   const normalizeJobForRecruitment = (j, i) => ({
     ...j,
     listed: j.listed !== false,
     hasAiInterviewer: j.hasAiInterviewer !== false,
     createdAt: j.createdAt || 300 - i * 100,
-    durationMin: 0,
-    durationSec: 0,
+    aiDuration: Number(j.aiDuration || j.durationMin || (j.durationSec ? Math.round(j.durationSec / 60) : 0)),
+    durationMin: Number(j.aiDuration || j.durationMin || (j.durationSec ? Math.round(j.durationSec / 60) : 0)),
+    durationSec: Number(j.durationSec || (j.aiDuration || j.durationMin || 0) * 60),
     count: j.count || ""
   });
   const [jobs, setJobs] = useState((externalJobs || CEO_JOBS[101]).map(normalizeJobForRecruitment));
@@ -54369,8 +55550,9 @@ function RecruitmentScreen({
         summary: demandSummaryOf(form),
         duties: demandDescriptionOf(form),
         requirements: demandExpectationOf(form),
-        durationMin: 0,
-        durationSec: 0
+        aiDuration: Number(form.aiDuration) || 0,
+        durationMin: Number(form.aiDuration) || 0,
+        durationSec: (Number(form.aiDuration) || 0) * 60
       });
       setEditingJob(null);
     },
@@ -54390,6 +55572,7 @@ function RecruitmentScreen({
     job: dataJob,
     onBack: () => setDataJob(null),
     companyProfile: cp,
+    applications,
     __self: this,
     __source: {
       fileName: _jsxFileName,
@@ -54437,8 +55620,9 @@ function RecruitmentScreen({
         completedCount: 0,
         highMatchCount: 0,
         questions: [],
-        durationMin: 0,
-        durationSec: 0
+        aiDuration: Number(newJob.aiDuration) || 0,
+        durationMin: Number(newJob.aiDuration) || 0,
+        durationSec: (Number(newJob.aiDuration) || 0) * 60
       };
       const updated = [...jobs, created];
       setJobs(updated);
@@ -55025,7 +56209,8 @@ function JobPublishScreen({
     count: "",
     other: "",
     flow: "",
-    deadline: ""
+    deadline: "",
+    aiDuration: 0
   });
   const [submitted, setSubmitted] = useState(false);
   const [err, setErr] = useState("");
@@ -64920,6 +66105,7 @@ function ProfileScreen({
   navActive,
   onNav,
   onRecruitment,
+  onMyApplications,
   isCeoView = false,
   followedMap,
   onToggleFollow,
@@ -67215,7 +68401,54 @@ function ProfileScreen({
       letterSpacing: "-.01em",
       whiteSpace: "nowrap"
     }
-  }, "\u6211\u8981\u627E\u4EBA")))), React.createElement("div", {
+  }, "\u6211\u8981\u627E\u4Eba"))), React.createElement("div", {
+    onClick: () => onMyApplications && onMyApplications(),
+    style: {
+      flex: "0 1 auto",
+      maxWidth: "calc(60% - 5px)",
+      background: "rgba(255,255,255,.66)",
+      backdropFilter: "blur(20px) saturate(180%)",
+      WebkitBackdropFilter: "blur(20px) saturate(180%)",
+      borderRadius: 16,
+      padding: "11px 14px",
+      cursor: "pointer",
+      border: "1px solid rgba(20,20,30,.06)",
+      boxShadow: "0 4px 16px rgba(40,30,80,.06)",
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, React.createElement("div", {
+    style: {
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      background: "rgba(159,151,235,.12)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0
+    }
+  }, React.createElement("svg", {
+    width: "17",
+    height: "17",
+    fill: "none",
+    viewBox: "0 0 24 24"
+  }, React.createElement("path", {
+    d: "M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2zM8.5 9h7M8.5 13h7M8.5 17h4",
+    stroke: T.purple,
+    strokeWidth: "1.8",
+    strokeLinecap: "round"
+  }))), React.createElement("div", {
+    style: {
+      minWidth: 0,
+      fontSize: 13,
+      fontWeight: 700,
+      color: T.text1,
+      letterSpacing: "-.01em",
+      whiteSpace: "nowrap"
+    }
+  }, "\u6211\u7684\u62A5\u540D"))), React.createElement("div", {
     style: {
       display: "flex",
       borderBottom: T._theme === "dark" ? "none" : "1px solid #f0eeff",
@@ -68915,6 +70148,63 @@ function PhoneFrame({
     }
   }, label));
 }
+function buildCompletedInterviewHistory(job) {
+  const questions = (job.questions && job.questions.length ? job.questions : buildDefaultDemandQuestions(job)).slice(0, 3);
+  const answers = ["我有相关项目经验，希望长期参与，也愿意和团队保持稳定沟通。", "我可以负责需求梳理、方案推进和阶段复盘，每周可以投入稳定时间。", "我比较看重目标一致和沟通效率，可以先从一次小范围合作开始。"];
+  const startedAt = Date.now() - 86400000;
+  const sessionJob = {
+    ...job,
+    questions,
+    durationSec: 0
+  };
+  const history = [{
+    id: startedAt,
+    sentAt: startedAt,
+    side: "them",
+    who: "ai",
+    text: `你好，我是「${job.title}」的找人助手。以下是你此前与我的沟通记录。`
+  }, {
+    id: startedAt + 1,
+    sentAt: startedAt + 1,
+    side: "system",
+    type: "interviewStarted",
+    job: sessionJob,
+    interviewLog: true,
+    sessionId: job.id
+  }];
+  questions.forEach((question, index) => {
+    history.push({
+      id: startedAt + index * 2 + 2,
+      sentAt: startedAt + index * 60000 + 1000,
+      side: "them",
+      who: "ai",
+      text: question,
+      isQ: true,
+      qIdx: index,
+      interviewLog: true,
+      sessionId: job.id,
+      job: sessionJob
+    }, {
+      id: startedAt + index * 2 + 3,
+      sentAt: startedAt + index * 60000 + 30000,
+      side: "me",
+      who: "real",
+      type: "interviewAnswer",
+      text: answers[index] || answers[answers.length - 1],
+      interviewLog: true,
+      sessionId: job.id,
+      job: sessionJob
+    });
+  });
+  history.push({
+    id: startedAt + 100,
+    sentAt: startedAt + questions.length * 60000 + 40000,
+    side: "them",
+    who: "ai",
+    text: "感谢你完成本次AI沟通。沟通记录已保存，发布者会结合需求进一步确认是否连接。"
+  });
+  return history;
+}
 function PhoneInstance({
   start,
   startUser,
@@ -68926,10 +70216,13 @@ function PhoneInstance({
   isCeoView = false
 }) {
   const [screen, setScreen] = useState(start);
+  const [exploreSelectedDemand, setExploreSelectedDemand] = useState(null);
+  const [exploreSelectedCommunity, setExploreSelectedCommunity] = useState(null);
   const [user, setUser] = useState(startUser || null);
   const [nav, setNav] = useState(start === "contacts" ? "contacts" : start === "avatar" ? "avatar" : start === "profile" ? "profile" : start === "home" ? "home" : "explore");
   const [stack, setStack] = useState([start]);
   const [interviewJob, setInterviewJob] = useState(startJob || null);
+  const [activeApplicationId, setActiveApplicationId] = useState(null);
   const [chatCountdown, setChatCountdown] = useState(false);
   const [weeklyOpenToken, setWeeklyOpenToken] = useState(0);
   const [homeAuthDone, setHomeAuthDone] = useState(forceHomeAuth ? false : start !== "login");
@@ -68937,6 +70230,35 @@ function PhoneInstance({
   const [recruitmentStartPublish, setRecruitmentStartPublish] = useState(false);
   const [boundPhone, setBoundPhone] = useState("");
   const [ceoJobs, setCeoJobs] = useState(CEO_JOBS[101]);
+  const [applications, setApplications] = useState(() => isCeoView ? [] : [{
+    id: "application_d1",
+    job: CEO_JOBS[101][0],
+    publisher: CEO_USERS[0],
+    status: "已报名",
+    createdAt: Date.now() - 3600000
+  }, {
+    id: "application_d2",
+    job: CEO_JOBS[101][1],
+    publisher: CEO_USERS[0],
+    status: "已沟通",
+    messages: buildCompletedInterviewHistory(CEO_JOBS[101][1]),
+    interviewStartedAt: Date.now() - 86400000,
+    interviewEnded: true,
+    evaluationStatus: "final",
+    score: 86,
+    completeness: 100,
+    report: {
+      summary: "需求沟通已完成，经历与合作方式匹配，建议发布者进一步联系。",
+      finalizedAt: Date.now() - 86300000
+    },
+    createdAt: Date.now() - 86400000
+  }, {
+    id: "application_d3",
+    job: CEO_JOBS[101][2],
+    publisher: CEO_USERS[0],
+    status: "已取消",
+    createdAt: Date.now() - 172800000
+  }]);
   const [jobUnreadMap, setJobUnreadMap] = useState(() => isCeoView ? {
     j2: 1
   } : {});
@@ -68984,6 +70306,68 @@ function PhoneInstance({
     ...prev,
     [jobId]: 0
   }));
+  const createApplication = (job, publisher) => {
+    setApplications(prev => {
+      const existing = prev.find(item => item.job.id === job.id);
+      if (existing) return prev.map(item => item.id === existing.id && item.status === "已取消" ? {
+        ...item,
+        job,
+        publisher,
+        status: "已报名",
+        messages: null,
+        interviewStartedAt: null,
+        interviewEndsAt: null,
+        interviewEnded: false,
+        evaluationStatus: "not_started",
+        score: null,
+        completeness: 0,
+        report: null,
+        createdAt: Date.now()
+      } : item);
+      return [{
+        id: "application_" + job.id,
+        job,
+        publisher,
+        status: "已报名",
+        createdAt: Date.now()
+      }, ...prev];
+    });
+  };
+  const markApplicationCommunicated = jobId => {
+    setApplications(prev => prev.map(item => item.job.id === jobId ? {
+      ...item,
+      status: "已沟通"
+    } : item));
+  };
+  const startApplicationInterview = (job, publisher, application = null) => {
+    const existing = application || applications.find(item => item.job.id === job.id);
+    const durationSec = Number(job.durationSec || (job.aiDuration || job.durationMin || 0) * 60) || 0;
+    const timedOut = !!(existing?.interviewEndsAt && existing.interviewEndsAt <= Date.now() && !existing.interviewEnded);
+    createApplication(job, publisher);
+    markApplicationCommunicated(job.id);
+    if (timedOut) {
+      setApplications(prev => prev.map(item => item.job.id === job.id ? {
+        ...item,
+        interviewEnded: true,
+        evaluationStatus: "final",
+        completeness: Number(item.completeness) || 0,
+        score: Number(item.score) || 58,
+        report: item.report || {
+          summary: "限时需求沟通已结束，报告依据已完成的回答生成。",
+          finalizedAt: Date.now(),
+          reason: "timeout"
+        }
+      } : item));
+    }
+    setUser(publisher);
+    setInterviewJob({
+      ...job,
+      durationSec
+    });
+    setActiveApplicationId(existing?.id || "application_" + job.id);
+    setChatCountdown(false);
+    push("chat");
+  };
   const setThreadUnread = (groups, threadKey, unread = 0, unreadType = null) => {
     const patchList = list => list.map(item => {
       if (getContactKey(item) !== threadKey) return item;
@@ -69079,6 +70463,8 @@ function PhoneInstance({
     });
   };
   const goNav = t => {
+    setExploreSelectedDemand(null);
+    setExploreSelectedCommunity(null);
     setNav(t);
     setScreen(t);
     setStack([t]);
@@ -69093,6 +70479,7 @@ function PhoneInstance({
     setRecruitmentStartPublish(false);
     setUser(null);
     setInterviewJob(null);
+    setActiveApplicationId(null);
     setChatThread(null);
     setChatCountdown(false);
     setHomeAuthDone(false);
@@ -69106,6 +70493,7 @@ function PhoneInstance({
   const handleLoginSuccess = () => {
     setUser(TRACY_ONBOARDING_USER);
     setInterviewJob(null);
+    setActiveApplicationId(null);
     setChatCountdown(false);
     setHomeAuthDone(false);
     setChatThread({
@@ -69142,6 +70530,7 @@ function PhoneInstance({
       companyBio: ""
     });
     setInterviewJob(null);
+    setActiveApplicationId(null);
     setChatCountdown(false);
     setChatThread({
       threadKey,
@@ -69166,6 +70555,7 @@ function PhoneInstance({
     onPhoneBound: setBoundPhone,
     jobUnreadMap: jobUnreadMap,
     onReadJobData: markJobDataRead,
+    applications: applications,
     initialPublish: recruitmentStartPublish
   }));
   return React.createElement(PhoneFrame, {
@@ -69188,6 +70578,7 @@ function PhoneInstance({
     onSelectUser: u => {
       setUser(u);
       setInterviewJob(null);
+      setActiveApplicationId(null);
       setChatCountdown(false);
       push("detail");
     },
@@ -69195,12 +70586,17 @@ function PhoneInstance({
     onNav: goNav,
     onRecruitment: openRecruitment,
     ceoJobs: ceoJobs,
-    onStartInterview: (job, owner) => {
-      setUser(owner);
-      setInterviewJob(job);
-      setChatCountdown(false);
-      push("chat");
-    },
+    applications: applications,
+    onCreateApplication: createApplication,
+    onCancelApplication: application => setApplications(prev => prev.map(item => item.id === application.id ? {
+      ...item,
+      status: "已取消"
+    } : item)),
+    initialSelectedDemand: exploreSelectedDemand,
+    onSelectedDemandChange: setExploreSelectedDemand,
+    initialSelectedCommunity: exploreSelectedCommunity,
+    onSelectedCommunityChange: setExploreSelectedCommunity,
+    onStartInterview: startApplicationInterview,
     followedMap: followedMap,
     onToggleFollow: toggleFollow,
     contactsUnread: contactUnreadCount,
@@ -69217,6 +70613,7 @@ function PhoneInstance({
     onViewProfile: u => {
       setUser(u);
       setInterviewJob(null);
+      setActiveApplicationId(null);
       setChatCountdown(false);
       push("detail");
     },
@@ -69232,12 +70629,14 @@ function PhoneInstance({
     navActive: nav,
     onNav: goNav,
     onRecruitment: () => openRecruitment(),
+    onMyApplications: () => push("myApplications"),
     isCeoView: isCeoView,
     followedMap: followedMap,
     onToggleFollow: toggleFollow,
     onSelectUser: u => {
       setUser(u);
       setInterviewJob(null);
+      setActiveApplicationId(null);
       setChatCountdown(false);
       push("detail");
     },
@@ -69246,17 +70645,35 @@ function PhoneInstance({
     weeklyOpenToken: weeklyOpenToken,
     onLogout: returnToLogin,
     onDeleteAccount: returnToLogin
+  }), screen === "myApplications" && React.createElement(MyApplicationsScreen, {
+    applications: applications,
+    onBack: pop,
+    onViewPublisher: publisher => {
+      setUser(publisher);
+      setInterviewJob(null);
+      setActiveApplicationId(null);
+      setChatCountdown(false);
+      push("detail");
+    },
+    onCancel: applicationId => setApplications(prev => prev.map(item => item.id === applicationId ? {
+      ...item,
+      status: "已取消"
+    } : item)),
+    onStartInterview: startApplicationInterview,
+    onRegister: createApplication
   }), screen === "detail" && user && React.createElement(DetailScreen, {
     user: user,
     onBack: pop,
     onChat: (opts = {}) => {
       setInterviewJob(null);
+      setActiveApplicationId(null);
       setChatCountdown(!!opts.consult);
       push("chat");
     },
     onStartInterview: job => {
       setChatCountdown(false);
       setInterviewJob(job);
+      setActiveApplicationId(null);
       push("chat");
     },
     followedMap: followedMap,
@@ -69283,11 +70700,44 @@ function PhoneInstance({
     },
     withCountdown: chatCountdown,
     initialInterview: interviewJob,
+    initialInterviewMessages: activeApplicationId ? applications.find(item => item.id === activeApplicationId)?.messages || null : null,
+    initialInterviewSession: activeApplicationId ? applications.find(item => item.id === activeApplicationId) || null : null,
+    onInterviewMessagesChange: activeApplicationId ? messages => setApplications(prev => prev.map(item => item.id === activeApplicationId ? {
+      ...item,
+      messages
+    } : item)) : undefined,
+    onInterviewStarted: activeApplicationId ? session => setApplications(prev => prev.map(item => item.id === activeApplicationId ? {
+      ...item,
+      ...session,
+      status: "已沟通",
+      interviewEnded: false,
+      evaluationStatus: "in_progress",
+      completeness: Number(item.completeness) || 0
+    } : item)) : undefined,
+    onInterviewProgress: activeApplicationId ? progress => setApplications(prev => prev.map(item => item.id === activeApplicationId ? {
+      ...item,
+      ...progress,
+      status: "已沟通",
+      evaluationStatus: "in_progress"
+    } : item)) : undefined,
+    onInterviewEvaluationComplete: activeApplicationId ? result => setApplications(prev => prev.map(item => item.id === activeApplicationId ? {
+      ...item,
+      score: result.score,
+      completeness: result.completeness,
+      interviewEnded: true,
+      evaluationStatus: "final",
+      report: {
+        summary: result.reason === "timeout" ? "限时沟通已结束，报告依据已完成的回答生成。" : "需求沟通已完成，已生成最终匹配报告。",
+        finalizedAt: Date.now(),
+        reason: result.reason
+      }
+    } : item)) : undefined,
     threadContext: chatThread,
     onThreadAction: chatThread?.onboarding ? undefined : handleThreadAction,
     onViewProfile: profile => {
       setUser(profile);
       setInterviewJob(null);
+      setActiveApplicationId(null);
       setChatCountdown(false);
       push("detail");
     },
@@ -69772,8 +71222,8 @@ function mountOwoDevRequirementNotes() {
   panel.innerHTML = `
         <div class="owo-devreq-head">
           <div>
-            <div class="owo-devreq-title">我要找人的需求</div>
-            <div class="owo-devreq-sub">研发交付版 · 更新于 2026-09-22 · 字段、展示与状态规则以本说明为准</div>
+            <div class="owo-devreq-title">我要找人 · 技术需求文档</div>
+            <div class="owo-devreq-sub">研发交付版 · 更新于 2026-09-23 · 字段、交互、状态、报告与异常规则以本说明为准</div>
           </div>
           <button class="owo-devreq-close" type="button" aria-label="关闭">×</button>
         </div>
@@ -69785,9 +71235,9 @@ function mountOwoDevRequirementNotes() {
             </div>
             <h3>产品边界</h3>
             <ul>
-              <li>入口路径：所有用户 → 我的 → 外表 → 我要找人；广场顶部右侧提供“+ 发布找人”快捷入口。</li>
+              <li>入口路径：所有用户 → 我的 → 外表 → 我要找人 / 我的报名；广场顶部右侧提供“+ 发布找人”快捷入口。</li>
               <li>功能开放给所有用户。广场原“创业 CEO”改为“正在找人”，直接展示进行中的需求卡片流，不展示用户名片，不限制发布者身份；主 tab 下方提供“全部 / 找合伙人 / 遇见心动 / 找搭子 / 活动招募 / 找场地 / 其他”二级筛选。“其他”归并社团/社群招新和自定义需求，可与关键词搜索叠加。二级筛选为纯文字，不使用胶囊、底色、边框或圆角；与一级频道留白分层，使用13px字号、20px横向间距，选中为品牌紫，未选中为灰色，以字重反馈选择。</li>
-              <li>广场“校友圈”的北京大学学生服务总队入口在名称前直接展示内嵌的彩色官方 Logo，保持方形尺寸，不增加白底、描边、阴影或额外外框；北大米米在成员列表、介绍区和名片详情中统一使用内嵌的红色吉祥物 Logo。单独发布 HTML 时不得依赖本地图片路径。</li>
+              <li>广场“校友圈”的北京大学学生服务总队入口在名称前直接展示内嵌的彩色官方 Logo，保持方形尺寸，不增加白底、描边、阴影或额外外框；北大米米在成员列表、介绍区和名片详情中统一使用内嵌的红色吉祥物 Logo。广场“社群”展示社群列表，用户申请加入后直接进入成员名片页，顶部置顶官方社群名片。单独发布 HTML 时不得依赖本地图片路径。</li>
               <li>“关于我”和组织信息模块全部删除。发布者头像、姓名、简介和角色直接读取个人名片。</li>
               <li>产品统一使用“报名、沟通、找人助手”，不使用“申请、面试、AI面试官”。AI只辅助整理需求、沟通和匹配建议，最终连接由真人决定。</li>
             </ul>
@@ -69802,7 +71252,7 @@ function mountOwoDevRequirementNotes() {
             <ul>
               <li>必填：需求类型 <code>type</code>、标题 <code>title</code>、背景说明 <code>description</code>、我想找谁/什么资源 <code>target</code>。</li>
               <li>选择“自定义需求”时，自定义类型 <code>customDemandType</code> 必填；选择框原位切换为输入框，可从右侧箭头重新选标准类型。展示类型时优先显示 <code>customDemandType</code>。</li>
-              <li>选填：希望对方具备什么 <code>matchingCriteria</code>、参与方式 <code>participationRequirements</code>、时间/节奏 <code>time</code>、地点/线上线下 <code>location</code>、预算/费用/回报 <code>budget</code>、人数/名额 <code>count</code>、补充说明 <code>other</code>、报名截止 <code>deadline</code>。“遇见心动”不适用人数，切换类型时清空 <code>count</code>。</li>
+              <li>选填：希望对方具备什么 <code>matchingCriteria</code>、参与方式 <code>participationRequirements</code>、找人助手沟通时长 <code>aiDuration</code>（分钟）、时间/节奏 <code>time</code>、地点/线上线下 <code>location</code>、预算/费用/回报 <code>budget</code>、人数/名额 <code>count</code>、补充说明 <code>other</code>、报名截止 <code>deadline</code>。“遇见心动”不适用人数，切换类型时清空 <code>count</code>。</li>
               <li>需求类型顺序：社团/社群招新、找合伙人、找搭子、活动招募、找场地、遇见心动、自定义需求。类型只影响分类、AI默认沟通模板、AI润色上下文和报告维度，不改变字段结构；历史“发布活动”数据统一映射为“活动招募”。</li>
               <li>需求对象只关联 <code>publisherUserId</code>，不保存独立组织资料或组织快照。</li>
             </ul>
@@ -69818,7 +71268,8 @@ function mountOwoDevRequirementNotes() {
               <li>任一发布入口先读取账号级手机号状态。未绑定进入绑定页；绑定成功自动进入第1步。返回不创建草稿，手机号不写入需求且不公开展示。</li>
               <li>第1步“描述需求”：选择类型后用文字或语音自然描述。输入框右下角使用发送图标触发 AI 整理，不展示“AI整理”文字按钮；输入框下方展示紧凑的实心紫色圆形麦克风按钮，点击后打开覆盖当前手机页面的深色沉浸式语音浮层。</li>
               <li>语音浮层主视觉为占据内容区主要宽度的三层横向紫色流动波形，不使用中心放射状声纹；波形中央叠加低透明度品牌紫能量云，录音时轻微呼吸，暂停后静止并降低亮度；页面背景由顶部深紫黑自然过渡到底部品牌紫。同时展示录音时长和实时转写，支持暂停 / 继续、取消和完成。完成后回填原输入框并允许继续编辑，不支持原生语音识别时使用模拟文案完成原型流程。</li>
-              <li>第2步“确认草稿”：五张可编辑摘要卡片为标题、背景说明、目标对象/资源、匹配标准、参与方式；点击内容直接编辑，不显示编辑图标或局部完成按钮。</li>
+              <li>第2步“确认草稿”：五张可编辑摘要卡片为标题、背景说明、目标对象/资源、匹配标准、参与方式；点击内容直接编辑，不显示编辑图标或局部完成按钮。“找人助手沟通时长”紧接参与方式，以同规格完整卡片承载标题、说明和整行下拉控件。</li>
+              <li>沟通时长默认“暂不设置”，预设项为15、30、45分钟和自定义。选择自定义后，下拉框原位切换为数字输入，右侧固定显示“分钟”并保留选择箭头；点击外部或按回车保存。仅接受5-120的整数，非法值显示错误且不得写入需求。切回预设项立即保存。</li>
               <li>第3步“补充条件”：时间、地点、预算、人数、截止时间、补充说明全部选填，未填写也可点击唯一主按钮“预览”。“遇见心动”不展示人数；AI只提取用户第1步明确说出的条件，不自动补默认值。</li>
               <li>第4步“预览发布”：只展示真实公开需求详情效果，使用与线上详情相同组件和映射；空字段不展示。底部为“返回修改 / 发布并上架”。</li>
               <li>发布成功后状态直接为进行中，返回管理页并将新需求置顶；不强制进入训练页。截止时间为空表示长期有效。</li>
@@ -69860,17 +71311,37 @@ function mountOwoDevRequirementNotes() {
 
           <section class="owo-devreq-section">
             <div class="owo-devreq-tagrow">
-              <span class="owo-devreq-tag owo-devreq-p1">P1</span>
-              <span class="owo-devreq-tag owo-devreq-info">训练与报名</span>
+              <span class="owo-devreq-tag owo-devreq-p0">P0</span>
+              <span class="owo-devreq-tag owo-devreq-info">训练、报名与沟通</span>
             </div>
-            <h3>找人助手、沟通与报告</h3>
+            <h3>报名与一次正式需求沟通</h3>
             <ul>
               <li>训练不是发布前置条件。未训练需求仍可公开和报名，卡片显示“训练找人助手”；训练配置完整后显示“优化找人助手”，并允许继续补充。</li>
               <li>未训练时采用“通用规则 + 需求类型模板 + 发布字段”；已训练时再叠加训练配置。训练对话与报名沟通使用不同提示词。</li>
-              <li>公开详情底部统一为“与找人助手聊聊”。用户确认沟通须知并进入对话时创建报名；同一用户对同一需求仅一条有效报名，重复进入续接原对话。发布预览不展示该操作按钮。</li>
-              <li>找人AI沟通不限时，不显示倒计时或进度条，不因时间到自动结束。AI动态追问；信息充分或用户主动结束后保存记录。</li>
-              <li>发布者报名列表筛选为“全部 / 高匹配 / 其他”。高匹配按后台阈值判断，其他为未达到高匹配阈值的其余报名者；两组互斥且数量之和等于全部。</li>
-              <li>报名者端只展示完整AI沟通记录，不展示匹配结果、分数或报告。发布者端报名列表保留“查看报告”，详情只展示一份“最新匹配报告”和完整记录。</li>
+              <li>公开详情底部依次为“我要报名”和“与找人助手聊聊”。点击报名后留在详情页并提示报名成功；同一用户对同一需求仅一条有效报名。“我的报名”中已沟通需求点击“与找人助手聊聊”直接打开并续接该需求已有沟通记录，不重新展示沟通规则或创建新会话。用户可以随时取消报名；发布预览不展示这两个操作按钮。</li>
+              <li>设置时长时，每位报名者只有一次正式需求沟通机会。首次进入前弹窗明确时长和一次机会；确认后由服务端写入 <code>formalStartedAt/formalEndsAt</code> 并启动倒计时，退出页面、切到后台或换设备均不暂停。再次进入恢复同一会话和服务端剩余时间，不创建第二次机会。</li>
+              <li>限时结束后消息流完整保留，输入框不隐藏，找人助手提示“已经收到您的报名信息，本次需求沟通已完成。接下来我们可以聊聊其他问题”。之后进入普通聊天，消息继续保存在同一会话，但不再改变本次需求的匹配度和正式报告。</li>
+              <li>未设置时长时，不显示倒计时。报名者可随时进入同一需求会话，找人助手持续追问并保存消息；达到报告条件后匹配结果随新的有效信息更新，直至需求关闭、报名取消或发布者确认推进。</li>
+              <li>发布者需求管理卡片底部使用“查看报名”；报名者列表将匹配度放在姓名后方，右侧统一使用“与TA聊聊”。发布者报名列表筛选为“全部 / 高匹配 / 其他”。</li>
+              <li>我的报名提供“全部 / 已沟通 / 未沟通 / 已取消”筛选，以需求卡片展示标题、发布者、类型、时间地点和报名状态；卡片顶部统一显示“进行中”，发布者头像同行右侧显示“已报名 / 已取消”，点击“已报名”需二次确认后取消，并保留在已取消列表。卡片可进入需求详情，详情底部继续提供报名和沟通操作；报名者端只展示完整AI沟通记录，不展示匹配结果、分数或报告。</li>
+            </ul>
+          </section>
+
+          <section class="owo-devreq-section">
+            <div class="owo-devreq-tagrow">
+              <span class="owo-devreq-tag owo-devreq-p0">P0</span>
+              <span class="owo-devreq-tag owo-devreq-info">报告引擎</span>
+            </div>
+            <h3>匹配度与报告生成规则</h3>
+            <ul>
+              <li>“实时匹配度”和“正式报告”是两个产物。AI只基于需求字段、允许使用的名片资料、正式需求沟通消息和训练配置判断；所有结论必须能回溯到证据，不得补写用户未表达的信息。</li>
+              <li>最低信息门槛：至少3条有效报名者回答，且覆盖①相关经历/能力/资源、②参与动机与目标、③时间地点参与方式等合作条件。寒暄、表情、重复内容和普通聊天不计有效回答。未达到门槛时不显示百分比，只显示“评估中”或“尚未与找人助手沟通”。</li>
+              <li>达到门槛后，按本需求动态评分量表计算0-100分；各评价维度权重合计100。存在明确必选条件且报名者确认不满足时，综合分最高59。每次只用新出现的有效证据增量更新，更新需幂等并记录版本。</li>
+              <li>限时模式：沟通中达到门槛后可向发布者展示动态匹配度；服务端到达 <code>formalEndsAt</code> 后冻结正式消息范围、匹配度和报告版本。信息仍不足则生成“沟通信息不足”摘要，不强行输出百分比，也不进入高匹配。</li>
+              <li>不限时模式：达到门槛即生成首版阶段性报告，显示“报告已生成 · 持续更新”和最近更新时间。新增有效信息后延迟5秒或累计2条有效回答触发更新；需求关闭、报名取消或发布者确认推进时冻结最后版本。</li>
+              <li>报告固定包含：综合匹配度与结论、匹配依据、待确认/风险点、建议追问、生成/更新时间；下方直接展示完整需求沟通消息流，不折叠。报名者只能查看自己的消息记录，不能查看匹配分数、结论、报告或后台评价依据。</li>
+              <li>发布者筛选：“高匹配”为已有有效报告且 <code>matchScore &gt;= 80</code>；“其他”包含低于80、评估中、未沟通和信息不足；取消报名不计入当前有效报名统计。全部列表先按高匹配分数降序，再按报名时间倒序。</li>
+              <li>报告生成或更新失败时保留上一成功版本并显示“报告更新中/更新失败，请重试”，不得清空已有结果；模型版本、量表版本、输入消息截止ID和生成时间必须随报告保存，便于审计与重算。</li>
             </ul>
           </section>
 
@@ -69882,10 +71353,11 @@ function mountOwoDevRequirementNotes() {
             <h3>状态、通知和异常</h3>
             <ul>
               <li>需求状态：进行中、已暂停、待发布；新建成功直接进入进行中。发布者管理详情不展示正常“进行中”标签，仅在待发布或已暂停时显示状态提醒；待发布仅用于历史草稿、迁移或发布失败。未训练不是需求状态。</li>
-              <li>找人助手状态：待训练、已训练、优化中。报名状态：未沟通、沟通中、已沟通；高匹配由后台阈值计算。</li>
+              <li>找人助手状态：待训练、已训练、优化中。报名状态：已报名、沟通中、已沟通、已取消；报告状态：未开始、评估中、持续更新、已冻结、信息不足、生成失败。页面文案由状态码映射，不能用是否存在分数反推业务状态。</li>
               <li>概述统计为需求数、报名数、高匹配数。新报名或新周报触发“大脑”紫色提醒点，查看对应内容后清除；卡片可显示新报名角标。</li>
               <li>底部“分身AI”未读状态使用纯紫色圆点，不加白边、光圈或胶囊背景；通讯录及其它数字未读计数统一不加白色描边。通讯录联系人行除最后一项外均展示一致分割线。</li>
-              <li>截止后停止新报名，历史沟通和报告可查看；暂停需求不公开但发布者可管理和恢复；删除不可恢复，需二次确认。</li>
+              <li>截止后停止新报名，已开始的限时沟通按原 <code>formalEndsAt</code> 完成，历史沟通和报告可查看；暂停需求不公开但已报名用户仍能查看既有记录；删除不可恢复，需二次确认。</li>
+              <li>计时、重复报名、一次正式机会、报告冻结点和高匹配分组必须由服务端控制。客户端计时仅作展示；断网重连以服务端时间为准，服务端应避免同一报名并发创建多个正式会话。</li>
               <li>发布者公开信息从个人名片读取；权限、状态、未读、报告归属和数据过滤必须由服务端校验。</li>
               <li>“遇见心动”不得基于敏感属性进行歧视性筛选，AI避免冒犯、诱导和越界追问。所有页面兼容浅色与暗黑模式。</li>
             </ul>
@@ -69898,9 +71370,10 @@ function mountOwoDevRequirementNotes() {
             </div>
             <h3>核心对象与服务端责任</h3>
             <ul>
-              <li>需求对象至少包含：<code>id/publisherUserId/type/customDemandType/title/description/target/matchingCriteria/participationRequirements/time/location/budget/count/other/deadline/publishedAt/status/listed</code>。</li>
+              <li>需求对象至少包含：<code>id/publisherUserId/type/customDemandType/title/description/target/matchingCriteria/participationRequirements/aiDuration/time/location/budget/count/other/deadline/publishedAt/status/listed</code>；<code>aiDuration=0/null</code> 表示不限时。</li>
               <li>助手与统计字段至少包含：<code>hasAiInterviewer/aiStatus/aiConfig/questions/applyCount/communicatedCount/highMatchCount/createdAt/updatedAt</code>。</li>
-              <li>报名对象至少包含：<code>id/demandId/applicantUserId/status/matchScore/matchLevel/matchPoints/riskPoints/conversationId/reportId/createdAt/updatedAt</code>。</li>
+              <li>报名对象至少包含：<code>id/demandId/applicantUserId/status/conversationId/formalStartedAt/formalEndsAt/formalEndedAt/formalLastMessageId/effectiveAnswerCount/matchScore/matchLevel/reportStatus/reportId/reportVersion/cancelledAt/createdAt/updatedAt</code>。</li>
+              <li>报告对象至少包含：<code>id/applicationId/status/score/summary/matchPoints/riskPoints/followUpQuestions/evidenceMessageIds/modelVersion/rubricVersion/inputLastMessageId/generatedAt/updatedAt/frozenAt</code>。消息需标记 <code>formal/ordinary</code> 范围，限时结束后的普通聊天不得进入正式报告输入。</li>
               <li>服务端负责必填校验、对象归属、发布与暂停状态、截止时间、重复报名幂等、未读计数、报告权限和公开数据过滤，前端状态不能作为权限依据。</li>
               <li>接口返回空值时沿用“空字段不展示”规则；历史数据缺少 <code>description</code> 时，管理卡片概述可降级使用 <code>target</code>，不得虚构其它默认内容。</li>
             </ul>
@@ -69916,7 +71389,8 @@ function mountOwoDevRequirementNotes() {
               <li>普通用户与原CEO角色均可从两个入口发布；未绑定手机号完成绑定后自动回第1步，已绑定不重复拦截。</li>
               <li>七种类型共用一套字段；发布、编辑、管理卡片、发布者详情、第4步预览和公开详情映射一致，选填为空时不展示、不补默认值。</li>
               <li>发布后需求置顶且为进行中；未训练也能公开、报名和沟通；编辑保存后管理端与公开端同步显示新内容。</li>
-              <li>广场需求卡片整卡点击、二级类型筛选、需求类型标签、发布者信息、圆角辅助标签、发布者跳转、发布时间、心动人数例外、报名分组、找人助手不限时、宽幅横向语音波形、中央紫色能量云、底部品牌紫背景及报告权限均按上述规则验证。</li>
+              <li>沟通时长卡片、预设/自定义原位输入、失焦保存、5-120校验、限时一次机会、服务端续时、超时转普通聊天、不限时持续更新、信息不足不出分和报告权限均按上述规则验证。</li>
+              <li>广场需求卡片整卡点击、二级类型筛选、需求类型标签、发布者信息、圆角辅助标签、发布者跳转、发布时间、心动人数例外、报名分组、宽幅横向语音波形、中央紫色能量云及底部品牌紫背景均按上述规则验证。</li>
               <li>校友圈无外框方形组织 Logo、北大米米红色吉祥物 Logo、通讯录分割线、无白边未读提醒和管理卡片绿色报名人数需同时验证浅色与暗黑模式。</li>
               <li>完整数据结构和接口建议见同目录《我要找人模块需求文档.md》；原型备注用于页面内快速对齐，二者字段命名保持一致。</li>
             </ul>

@@ -34845,6 +34845,27 @@ const CEO_JOBS = {
     matchingCriteria: "有真实好奇心，愿意开放表达，并能尊重不同观点。",
     participationRequirements: "上海线下参与，活动前完成一份简短兴趣问卷。",
     other: "活动现场会按兴趣方向自由组队；如临时无法参加，请提前一天告知。"
+  }, {
+    id: "tracy-all-fields-1",
+    type: "活动招募",
+    title: "AI 创业共创日招募同行者",
+    publishedAt: "2026-10-08",
+    time: "每周六 14:00-17:00",
+    location: "上海 / 线下",
+    budget: "100元",
+    count: "4",
+    deadline: "2026-12-20",
+    durationSec: 0,
+    applyCount: 6,
+    completedCount: 3,
+    highMatchCount: 2,
+    aiStatus: "已训练",
+    summary: "寻找愿意持续参与 AI 创业讨论与小型验证的同行者，共同完成一次真实的共创实验。",
+    description: "我在筹备一个面向青年创作者的 AI 创业共创日，希望通过半天工作坊完成问题拆解、方案共创和下一步实验设计。",
+    target: "对 AI 产品、创业验证或青年社群有兴趣，愿意带着真实问题一起讨论与行动的伙伴。",
+    matchingCriteria: "有独立思考与表达意愿；能投入完整活动时间；愿意尊重分工并把讨论推进到具体行动。",
+    participationRequirements: "上海线下参与；活动前提交一个想解决的问题；现场以 4 人小组协作，结束后可自愿参与后续两周线上复盘。",
+    other: "费用包含场地与基础茶歇。报名截止后不再新增席位；如临时无法参与，请至少提前 24 小时说明。"
   }],
   2: [{
     id: "sabrina-partner-1",
@@ -34859,6 +34880,27 @@ const CEO_JOBS = {
     matchingCriteria: "内容判断力、行动力、长期投入意愿和坦诚沟通。",
     participationRequirements: "前期远程协作，每周固定一次同步，关键节点可在北京线下共创。",
     other: "希望先围绕一个小的内容实验合作 4 周，再共同确认是否进入长期共创。"
+  }, {
+    id: "sabrina-expired-1",
+    type: "找场地",
+    title: "寻找北京周末读书会场地",
+    publishedAt: "2026-09-01",
+    time: "10 月第一个周末下午",
+    location: "北京 · 朝阳或东城",
+    budget: "500元以内",
+    count: "12人",
+    deadline: "2025-12-31",
+    durationSec: 0,
+    applyCount: 12,
+    completedCount: 8,
+    highMatchCount: 3,
+    aiStatus: "已训练",
+    summary: "为一场小型人文读书会寻找安静、方便交流的线下场地。",
+    description: "我们原计划在北京组织一场 12 人以内的周末读书会，期待找到交通方便、可自由交流的独立空间。",
+    target: "可提供北京朝阳或东城周边活动空间的场地方、咖啡馆或社区伙伴。",
+    matchingCriteria: "空间安静、有基本桌椅与投影条件，便于提前确认时段与费用。",
+    participationRequirements: "先通过找人助手确认空间条件，再与发布者沟通具体预约细节。",
+    other: "该期报名已截止，仍可与找人助手了解下一场活动的筹备方向。"
   }],
   5: [{
     id: "wlf-buddy-1",
@@ -35192,29 +35234,35 @@ function Av({
   });
 }
 const OWO_TAGLINES = ["遇见有趣的鸥灵", "倾听另一个视角的答案", "随时随地的灵感伙伴", "来和鸥灵聊天吧", "从闲聊到深度洞察", "随时在线的私人向导", "探索未知的经验与故事", "与各个领域的鸥灵相遇", "把经验变成轻松的对话"];
+const OWO_TAGLINES_EN = ["Meet interesting Owo spirits", "Hear answers from another perspective", "An inspiration companion, anywhere", "Come chat with an Owo spirit", "From casual chat to deeper insight", "Your personal guide, always on", "Explore new experiences and stories", "Meet Owo spirits from every field", "Turn experience into easy conversations"];
 function TypeCarousel({
   style
 }) {
   const [idx, setIdx] = useState(0);
   const [sub, setSub] = useState(0);
   const [del, setDel] = useState(false);
+  const taglines = document.documentElement.dataset.owoLanguage === "en" ? OWO_TAGLINES_EN : OWO_TAGLINES;
   useEffect(() => {
-    const full = OWO_TAGLINES[idx];
+    const full = taglines[idx];
+    if (sub > full.length) {
+      setSub(full.length);
+      return;
+    }
     if (!del && sub === full.length) {
       const t = setTimeout(() => setDel(true), 1400);
       return () => clearTimeout(t);
     }
     if (del && sub === 0) {
       setDel(false);
-      setIdx(i => (i + 1) % OWO_TAGLINES.length);
+      setIdx(i => (i + 1) % taglines.length);
       return;
     }
     const t = setTimeout(() => setSub(s => s + (del ? -1 : 1)), del ? 42 : 85);
     return () => clearTimeout(t);
-  }, [sub, del, idx]);
+  }, [sub, del, idx, taglines]);
   return React.createElement("p", {
     style: style
-  }, OWO_TAGLINES[idx].slice(0, sub), React.createElement("span", {
+  }, taglines[idx].slice(0, sub), React.createElement("span", {
     style: {
       display: "inline-block",
       width: 2,
@@ -39631,7 +39679,7 @@ function AgreementModal({
       fontWeight: 700,
       cursor: "pointer"
     }
-  }, "\u300A\u7528\u6237\u534F\u8BAE\u300B"), "\u548C", React.createElement("span", {
+  }, "\u300A\u7528\u6237\u534F\u8BAE\u300B"), " \u548C ", React.createElement("span", {
     style: {
       color: "#9F97EB",
       fontWeight: 700,
@@ -41985,7 +42033,7 @@ function ExploreScreen({
   }, {
     id: "owo-creative-company",
     name: "鸥我青年创作社群",
-    logoMark: "O",
+    logoMark: "鸥",
     logoColor: "#B64D7E",
     logoBg: "#FCEAF1",
     description: "由鸥我发起，面向内容、设计和创意项目的年轻创作者，发现合作与活动机会。",
@@ -42004,6 +42052,13 @@ function ExploreScreen({
     users: [EXPLORE_USERS[3], PKU_ALUMNI_USERS[1], EXPLORE_USERS[2]],
     coreMembers: [{ user: EXPLORE_USERS[3], role: "主理人" }, { user: PKU_ALUMNI_USERS[1], role: "管理员" }]
   }];
+  const organizationLogoMark = community => {
+    const explicitMark = String(community?.logoMark || "").trim();
+    if (explicitMark) return explicitMark;
+    const name = String(community?.name || "组织").trim();
+    const first = Array.from(name)[0] || "组";
+    return /[A-Za-z]/.test(first) ? first.toUpperCase() : first;
+  };
   const CommunityLogo = ({
     community,
     size = 38
@@ -42033,7 +42088,7 @@ function ExploreScreen({
       display: "block",
       objectFit: "contain"
     }
-  }) : community.logoMark || "社");
+  }) : organizationLogoMark(community));
   const allUsers = [...EXPLORE_USERS, ...PKU_ALUMNI_USERS, ...CEO_USERS];
   const publicDemands = allUsers.flatMap(owner => (owner.id === 101 && ceoJobs ? ceoJobs : CEO_JOBS[owner.id] || []).filter(job => job.listed !== false && !job.paused).map(job => ({
     job,
@@ -42585,8 +42640,6 @@ function ExploreScreen({
     const isPkuMimi = u.id === "pku-mimi";
     const isPkuAlumni = u.school === "北京大学" && u.schoolVerified && u.service && !u.schoolOfficial;
     const pkuAuthed = isPkuCertified();
-    const originalRate = Number(u.hourlyRate || 0);
-    const alumniRate = u.schoolPrice || alumniPriceOf(originalRate);
     const schoolMeta = [u.schoolYear, u.schoolCollege, u.schoolMajor].filter(Boolean);
     return React.createElement("div", {
       onClick: () => onSelectUser({
@@ -42786,7 +42839,7 @@ function ExploreScreen({
       }
     }, React.createElement(CardStats, {
       u: u
-    }), (u.service || jobCount > 0) && React.createElement("div", {
+    }), jobCount > 0 && React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -42794,12 +42847,8 @@ function ExploreScreen({
         minWidth: 0,
         flexShrink: 0
       }
-    }, jobCount > 0 ? React.createElement(HiringBadge, {
+    }, React.createElement(HiringBadge, {
       count: jobCount
-    }) : u.service && React.createElement(PriceBadge, {
-      rate: originalRate,
-      originalRate: originalRate,
-      alumniRate: u.schoolVerified ? alumniRate : 0
     })), isPkuMimi && React.createElement("span", {
       style: {
         fontSize: 11.5,
@@ -43250,7 +43299,7 @@ function ExploreScreen({
         color: META,
         marginTop: 4
       }
-    }, community.memberCount + " 位成员", joined ? " · 已加入" : " · 申请后进入")), React.createElement("div", {
+    }, community.memberCount + " 位成员 · " + (joined ? "已加入" : "申请后进入"))), React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -43335,41 +43384,11 @@ function ExploreScreen({
     style: {
       position: "relative",
       minHeight: 174,
-      padding: "9px 22px 30px",
-      overflow: "hidden",
+      padding: "22px 22px 34px",
+      overflow: "visible",
       background: "transparent"
     }
   }, React.createElement("div", {
-    "aria-hidden": "true",
-    style: {
-      position: "absolute",
-      right: -22,
-      top: -32,
-      width: 178,
-      height: 178,
-      borderRadius: 46,
-      background: selectedCommunity.logoBg || "#EEEAFE",
-      color: selectedCommunity.logoColor || T.purple,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: selectedCommunity.logoMark === "AI" ? 58 : 88,
-      fontWeight: 950,
-      lineHeight: 1,
-      opacity: T._theme === "dark" ? .23 : .34,
-      transform: "rotate(-12deg)"
-    }
-  }, selectedCommunity.logoSrc ? React.createElement("img", {
-    src: selectedCommunity.logoSrc,
-    alt: "",
-    style: {
-      width: "100%",
-      height: "100%",
-      objectFit: "contain",
-      opacity: T._theme === "dark" ? .70 : .58,
-      filter: T._theme === "dark" ? "saturate(.65) brightness(1.45)" : "saturate(.78)"
-    }
-  }) : selectedCommunity.logoMark || "社"), React.createElement("div", {
     style: {
       position: "relative",
       zIndex: 1,
@@ -43623,9 +43642,9 @@ function ExploreScreen({
       const owner = selectedDemand.owner;
       onSelectUser(owner);
     },
-    onApply: job => {
+    onApply: (job, options) => {
       const owner = selectedDemand.owner;
-      if (onStartInterview) onStartInterview(job, owner);
+      if (onStartInterview) onStartInterview(job, owner, null, options);
     },
     onRegister: job => {
       if (onCreateApplication) onCreateApplication(job, selectedDemand.owner);
@@ -43706,6 +43725,39 @@ function ExploreScreen({
       fontFamily: SANS
     }
   }, React.createElement(StatusBar, null), React.createElement("div", {
+    "aria-hidden": "true",
+    style: {
+      position: "absolute",
+      zIndex: 0,
+      right: -28,
+      top: -12,
+      width: 226,
+      height: 226,
+      borderRadius: 62,
+      background: selectedCommunity.logoBg || "#EEEAFE",
+      color: selectedCommunity.logoColor || T.purple,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: selectedCommunity.logoMark === "AI" ? 76 : 112,
+      fontWeight: 950,
+      lineHeight: 1,
+      opacity: T._theme === "dark" ? .19 : .28,
+      transform: "rotate(-12deg)",
+      pointerEvents: "none",
+      transition: "opacity .22s ease"
+    }
+  }, selectedCommunity.logoSrc ? React.createElement("img", {
+    src: selectedCommunity.logoSrc,
+    alt: "",
+    style: {
+      width: "100%",
+      height: "100%",
+      objectFit: "contain",
+      opacity: T._theme === "dark" ? .7 : .58,
+      filter: T._theme === "dark" ? "saturate(.65) brightness(1.45)" : "saturate(.78)"
+    }
+  }) : selectedCommunity.logoMark || "社"), React.createElement("div", {
     style: {
       padding: "var(--owo-safe-status-top) 18px 14px",
       display: "flex",
@@ -43715,6 +43767,7 @@ function ExploreScreen({
       boxShadow: communityHeaderCompact ? (T._theme === "dark" ? "0 3px 12px rgba(0,0,0,.18)" : "0 3px 12px rgba(31,35,48,.05)") : "none",
       transition: "background .22s ease, border-color .22s ease, box-shadow .22s ease",
       position: "relative",
+      zIndex: 2,
       flexShrink: 0
     }
   }, React.createElement(BackBtn, {
@@ -43740,7 +43793,9 @@ function ExploreScreen({
     style: {
       flex: 1,
       overflowY: "auto",
-      padding: "0"
+      padding: "0",
+      position: "relative",
+      zIndex: 1
     },
     onScroll: event => setCommunityHeaderCompact(event.currentTarget.scrollTop > 72)
   }, React.createElement(CommunityOfficialCard, null), React.createElement("div", {
@@ -43919,7 +43974,7 @@ function ExploreScreen({
     label: "社群"
   }, {
     id: "companyCommunity",
-    label: "创业 CEO"
+    label: "未来独角兽"
   }].map(t => {
     const on = tab === t.id;
     return React.createElement("button", {
@@ -44378,6 +44433,7 @@ function JobCard({
 }) {
   const metas = demandPrimaryMeta(job);
   const typeLabel = demandTypeLabelOf(job);
+  const deadlineClosed = demandIsDeadlineClosed(job);
   const typeVisuals = {
     "找合伙人": {
       color: "#7568D8",
@@ -44456,13 +44512,13 @@ function JobCard({
       flexShrink: 0,
       padding: "4px 9px",
       borderRadius: 999,
-      background: "rgba(16,185,129,.10)",
+      background: deadlineClosed ? "rgba(148,163,184,.14)" : "rgba(16,185,129,.10)",
       fontSize: 11,
       fontWeight: 700,
-      color: "#059669",
+      color: deadlineClosed ? (T._theme === "dark" ? "#CBD5E1" : "#64748B") : "#059669",
       whiteSpace: "nowrap"
     }
-  }, "进行中")), React.createElement("div", {
+  }, deadlineClosed ? "报名已截止" : "进行中")), React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -44491,7 +44547,7 @@ function JobCard({
     key: info,
     style: {
       fontSize: 12,
-      color: T.text2,
+      color: T.purple,
       background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
       borderRadius: 999,
       padding: "5px 12px"
@@ -44598,10 +44654,10 @@ function DemandPublicDetailPreview({
     key: item,
     style: {
       fontSize: 11,
-      color: T.text2,
-      background: T.bgCardMuted,
+      color: T.purple,
+      background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
       borderRadius: 999,
-      padding: "4px 9px"
+      padding: "5px 12px"
     }
   }, item))) : null, React.createElement("div", {
     style: {
@@ -44679,6 +44735,7 @@ function JobDetailScreen({
   onViewPublisher
 }) {
   const [showRules, setShowRules] = useState(false);
+  const [showDeadlineClosed, setShowDeadlineClosed] = useState(false);
   const [toast, setToast] = useState("");
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [optimisticRegistered, setOptimisticRegistered] = useState(application?.status !== "已取消" && !!application);
@@ -44687,6 +44744,7 @@ function JobDetailScreen({
   }, [application?.id, application?.status]);
   const viewerSections = demandViewerSections(job);
   const publishedAt = demandPublishedAtLabel(job);
+  const deadlineClosed = demandIsDeadlineClosed(job);
   const publisherMeta = publisherSubtitleOf(user);
   const Sec = ({
     title,
@@ -44715,14 +44773,18 @@ function JobDetailScreen({
       setCancelConfirm(true);
       return;
     }
+    if (deadlineClosed) {
+      setShowDeadlineClosed(true);
+      return;
+    }
     onRegister && onRegister(job);
     setOptimisticRegistered(true);
     setToast("报名成功");
     setTimeout(() => setToast(""), 1800);
   };
   const startInterview = () => {
-    if (!optimisticRegistered) register();
-    onApply && onApply(job);
+    if (!optimisticRegistered && !deadlineClosed) register();
+    onApply && onApply(job, deadlineClosed ? { skipApplication: true } : undefined);
   };
   return React.createElement("div", {
     style: {
@@ -44786,7 +44848,7 @@ function JobDetailScreen({
     key: info,
     style: {
       fontSize: 12,
-      color: T.text2,
+      color: T.purple,
       background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
       borderRadius: 999,
       padding: "5px 12px"
@@ -44887,7 +44949,7 @@ function JobDetailScreen({
       color: T.purple,
       boxShadow: "none"
     } : undefined
-  }, optimisticRegistered ? "已报名" : "我要报名"), React.createElement("button", {
+  }, optimisticRegistered ? "已报名" : deadlineClosed ? "报名已截止" : "我要报名"), React.createElement("button", {
     onClick: () => application?.status === "已沟通" || application?.interviewStartedAt ? startInterview() : setShowRules(true),
     style: {
       width: "100%",
@@ -44908,6 +44970,41 @@ function JobDetailScreen({
       setShowRules(false);
     },
     onClose: () => setShowRules(false)
+  }), showDeadlineClosed && React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
+      zIndex: 800
+    }
+  }, React.createElement("div", {
+    onClick: () => setShowDeadlineClosed(false),
+    style: {
+      position: "absolute",
+      inset: 0,
+      background: T.scrim,
+      backdropFilter: "blur(6px)"
+    }
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 18,
+      right: 18,
+      top: "50%",
+      transform: "translateY(-50%)",
+      background: T.bgCard,
+      borderRadius: 18,
+      padding: "22px 18px 16px",
+      boxShadow: "0 18px 48px rgba(0,0,0,.18)",
+      textAlign: "center"
+    }
+  }, React.createElement("div", {
+    style: { fontSize: 17, fontWeight: 800, color: T.text1, marginBottom: 9 }
+  }, "报名已截止"), React.createElement("div", {
+    style: { fontSize: 13, color: T.text2, lineHeight: 1.65, marginBottom: 18 }
+  }, "这条需求的报名已截止，暂时无法报名。你仍可与找人助手聊聊，了解需求相关信息。"), React.createElement(PurpleBtn, {
+    onClick: () => setShowDeadlineClosed(false),
+    style: { minHeight: 42 }
+  }, "我知道了"))), toast && React.createElement("div", {
   }), toast && React.createElement("div", {
     style: {
       position: "absolute",
@@ -45015,7 +45112,7 @@ function MyApplicationsScreen({
     onBack: () => setDetailApplication(null),
     onViewPublisher: () => onViewPublisher && onViewPublisher(liveDetail.publisher),
     onRegister: job => onRegister && onRegister(job, liveDetail.publisher),
-    onApply: job => onStartInterview && onStartInterview(job, liveDetail.publisher, liveDetail),
+    onApply: (job, options) => onStartInterview && onStartInterview(job, liveDetail.publisher, liveDetail, options),
     onCancelApplication: application => onCancel && onCancel(application.id)
   });
   const counts = {
@@ -45092,6 +45189,16 @@ function MyApplicationsScreen({
     const job = application.job;
     const publisher = application.publisher || {};
     const canceled = application.status === "已取消";
+    const typeVisuals = {
+      "找合伙人": { color: "#7568D8" },
+      "遇见心动": { color: "#C96086" },
+      "找搭子": { color: "#2486AC" },
+      "活动招募": { color: "#C97632" },
+      "找场地": { color: "#12916C" },
+      "社团/社群招新": { color: "#596FCB" },
+      "自定义需求": { color: "#737373" }
+    };
+    const typeVisual = typeVisuals[demandTypeOf(job)] || typeVisuals["自定义需求"];
     return React.createElement("div", {
       key: application.id,
       onClick: () => setDetailApplication(application),
@@ -45135,26 +45242,35 @@ function MyApplicationsScreen({
       style: {
         display: "flex",
         flexWrap: "wrap",
-        gap: 7,
+        gap: 8,
         marginBottom: 12
       }
-    }, React.createElement("span", {
+    }, React.createElement("div", {
       style: {
-        fontSize: 11,
-        fontWeight: 700,
-        color: T.purple,
-        background: T.bgCardMuted,
-        borderRadius: 999,
-        padding: "4px 9px"
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexBasis: "100%"
       }
-    }, demandTypeLabelOf(job)), demandPrimaryMeta(job).slice(0, 2).map(meta => React.createElement("span", {
+    }, React.createElement(DemandTypeIcon, {
+      type: demandTypeOf(job),
+      color: typeVisual.color,
+      size: 18
+    }), React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 800,
+        color: typeVisual.color,
+        lineHeight: 1.2
+      }
+    }, demandTypeLabelOf(job))), demandPrimaryMeta(job).map(meta => React.createElement("span", {
       key: meta,
       style: {
-        fontSize: 11,
-        color: T.text3,
-        background: T.bgLight,
+        fontSize: 12,
+        color: T.purple,
+        background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
         borderRadius: 999,
-        padding: "4px 9px"
+        padding: "5px 12px"
       }
     }, meta))), React.createElement("div", {
       style: {
@@ -46107,7 +46223,7 @@ function ChatScreen({
       sentAt: Date.now(),
       side: "them",
       who: "ai",
-      text: initialInterview ? `你好，我是「${initialInterview.title}」的找人助手。接下来会根据发布者的标准了解你的情况，沟通记录会提供给发布者进一步确认。` : isConsultationSession ? `已进入「${user.name}」的咨询沟通，本次咨询时间开始计时。` : `你好！我是${user.name}的 AI 分身，有什么想聊的？`,
+      text: initialInterview ? `你好，我是${user.name}的 AI 分身。我会根据这条需求了解你的情况，沟通记录会提供给${user.name}进一步确认。` : isConsultationSession ? `已进入「${user.name}」的咨询沟通，本次咨询时间开始计时。` : `你好！我是${user.name}的 AI 分身，有什么想聊的？`,
       consultLog: isConsultationSession
     }];
     return base;
@@ -46512,6 +46628,16 @@ function ChatScreen({
       } else displayMsgs.push(m);
     });
   }
+  if (initialInterview) {
+    displayMsgs = displayMsgs.map(message => {
+      if (!message.text) return message;
+      const text = message.text.replace(/^你好[！,，]?\s*我是(?:这项(?:招新)?需求|「[^」]+」)的找人助手[。！]?/, `你好，我是${user.name}的 AI 分身。`);
+      return text === message.text ? message : {
+        ...message,
+        text
+      };
+    });
+  }
   const canSwitchMode = allowModeSwitch && !isInInterview && !consultActive && !showConsultRenew;
   const activeInputMode = canSwitchMode ? mode : "ai";
   const consultPct = isConsultationSession ? Math.max(0, Math.min(1, consultLeft / 90)) : 0;
@@ -46577,7 +46703,7 @@ function ChatScreen({
       fontSize: 15,
       color: T.text1
     }
-  }, initialInterview ? "找人助手" : user.name))), isOnboardingChat && React.createElement("button", {
+  }, user.name))), isOnboardingChat && React.createElement("button", {
     onClick: onSkipToHome,
     style: {
       marginLeft: "auto",
@@ -46628,7 +46754,7 @@ function ChatScreen({
       color: interviewDone ? T.text3 : timeLeft <= 60 ? "#ef4444" : T.text1,
       fontWeight: 800
     }
-  }, interviewDone ? "可以继续聊其他问题" : `剩余 ${fmtTime(timeLeft)}`)), React.createElement("div", {
+  }, interviewDone ? "可以继续聊其他问题" : document.documentElement.dataset.owoLanguage === "en" ? `Remaining ${fmtTime(timeLeft)}` : `剩余 ${fmtTime(timeLeft)}`)), React.createElement("div", {
     style: {
       height: 5,
       background: T.bg3,
@@ -47398,6 +47524,30 @@ function buildInterviewFeedback({
   score = 78
 } = {}) {
   const role = job && job.title || candidate && candidate.job || "目标需求";
+  const isEnglish = document.documentElement.dataset.owoLanguage === "en";
+  if (isEnglish) return {
+    summary: `Your chat with the match assistant for "${role}" is complete. Based on the criteria set by the request owner, your overall fit is strong. You clearly described your experience, goals, and available resources, and supported your answers with past examples. The request owner decides whether to connect, collaborate, or continue the conversation.`,
+    strengths: [{
+      title: "Clear communication",
+      text: "You clearly explained your background, goals, and strengths, helping the assistant identify the connection between you and this request."
+    }, {
+      title: "Good request understanding",
+      text: `You grounded your answers in real experience and showed that you understand the core needs of "${role}".`
+    }, {
+      title: "Verifiable experience",
+      text: "You shared specific past examples that can help the request owner decide whether to move to a human connection."
+    }],
+    improvements: [{
+      title: "Add practical constraints",
+      text: "Clarify practical details such as location, availability, budget, or commitment to make a human conversation more efficient."
+    }, {
+      title: "Add outcome evidence",
+      text: "Share work samples, project outcomes, collaboration references, or more specific data in a future connection when available."
+    }, {
+      title: "Align expectations",
+      text: "When you connect, align on shared goals, pace, and decision-making early rather than stopping at mutual interest."
+    }]
+  };
   const base = {
     summary: `你与「${role}」找人助手的沟通已完成。AI 根据发布者设定的标准，判断你与这项需求整体匹配度较高。你能清楚说明自己的经历、目标和可投入资源，也能结合过往案例解释判断依据。最终是否连接、合作或进一步沟通，仍由需求发布者决定。`,
     strengths: [{
@@ -47488,8 +47638,9 @@ function FeedbackContent({
   feedback,
   compact = false
 }) {
+  const isEnglish = document.documentElement.dataset.owoLanguage === "en";
   return React.createElement(React.Fragment, null, React.createElement(FeedbackSection, {
-    title: "\u6574\u4F53\u603B\u7ED3",
+    title: isEnglish ? "Summary" : "\u6574\u4F53\u603B\u7ED3",
     accent: T._theme === "dark" ? "#6ee7b7" : "#047857"
   }, React.createElement("div", {
     style: {
@@ -47502,13 +47653,13 @@ function FeedbackContent({
       borderRadius: 12
     }
   }, feedback.summary)), React.createElement(FeedbackSection, {
-    title: "匹配优势",
+    title: isEnglish ? "Strengths" : "匹配优势",
     accent: T._theme === "dark" ? "#6ee7b7" : "#059669"
   }, React.createElement(FeedbackList, {
     items: feedback.strengths,
     accent: T._theme === "dark" ? "#6ee7b7" : "#047857"
   })), React.createElement(FeedbackSection, {
-    title: "待进一步了解",
+    title: isEnglish ? "To confirm" : "待进一步了解",
     accent: T._theme === "dark" ? "#fbbf24" : "#d97706"
   }, React.createElement(FeedbackList, {
     items: feedback.improvements,
@@ -47524,6 +47675,7 @@ function UserReportCard({
   onCollapse,
   footerLabel
 }) {
+  const isEnglish = document.documentElement.dataset.owoLanguage === "en";
   const safeJob = job || {
     id: "report",
     title: "目标需求"
@@ -47574,19 +47726,19 @@ function UserReportCard({
       overflow: "hidden",
       textOverflow: "ellipsis"
     }
-  }, safeJob.title, " · 匹配结果"), React.createElement("div", {
+  }, `${safeJob.title} · ${isEnglish ? "Match result" : "匹配结果"}`), React.createElement("div", {
     style: {
       fontSize: 11,
       color: T.text3
     }
-  }, "整体总结 / 匹配优势 / 待进一步了解"))), React.createElement("span", {
+  }, isEnglish ? "Summary / Strengths / To confirm" : "整体总结 / 匹配优势 / 待进一步了解"))), React.createElement("span", {
     style: {
       fontSize: 12,
       color: T._theme === "dark" ? "#6ee7b7" : "#059669",
       fontWeight: 600,
       flexShrink: 0
     }
-  }, "\u25B6 \u67E5\u770B\u53CD\u9988")) : React.createElement("div", {
+  }, isEnglish ? "▶ View feedback" : "\u25B6 \u67E5\u770B\u53CD\u9988")) : React.createElement("div", {
     style: {
       background: T._theme === "dark" ? "linear-gradient(135deg,rgba(16,185,129,.10),rgba(31,31,39,.98))" : "linear-gradient(135deg,#f0fdf4,#ecfdf5)",
       border: "1.5px solid rgba(16,185,129,.25)",
@@ -47609,7 +47761,7 @@ function UserReportCard({
       fontWeight: 800,
       color: T._theme === "dark" ? "#6ee7b7" : "#065f46"
     }
-  }, "📄 匹配结果"), React.createElement("button", {
+  }, isEnglish ? "📄 Match result" : "📄 匹配结果"), React.createElement("button", {
     onClick: onCollapse,
     style: {
       background: "none",
@@ -47619,13 +47771,13 @@ function UserReportCard({
       color: T._theme === "dark" ? "#6ee7b7" : "#059669",
       fontWeight: 600
     }
-  }, "\u6536\u8D77 \u25B2")), React.createElement("div", {
+  }, isEnglish ? "Collapse ▲" : "\u6536\u8D77 \u25B2")), React.createElement("div", {
     style: {
       fontSize: 12,
       color: T.text2,
       marginBottom: 12
     }
-  }, "需求：", safeJob.title, " · LUNA AI"), React.createElement(FeedbackContent, {
+  }, `${isEnglish ? "Request" : "需求"}: ${safeJob.title} · LUNA AI`), React.createElement(FeedbackContent, {
     feedback: feedback
   }), footerLabel && React.createElement("button", {
     onClick: onCollapse,
@@ -47640,19 +47792,54 @@ function UserReportCard({
       border: "none",
       cursor: "pointer"
     }
-  }, footerLabel)));
+  }, isEnglish ? "Collapse report" : footerLabel)));
 }
 function buildCeoReport(c) {
   const base = c.score || 80;
   const clamp = n => Math.max(58, Math.min(98, Math.round(n)));
   const total = clamp(base);
   const isExcellent = total >= 85;
+  const isEnglish = document.documentElement.dataset.owoLanguage === "en";
   const tier = isExcellent ? {
-    cn: "高匹配",
+    label: isEnglish ? "High match" : "高匹配",
     color: "#059669",
     bg: "rgba(16,185,129,.12)"
   } : null;
-  const baseReport = {
+  const baseReport = isEnglish ? {
+    total,
+    isExcellent,
+    tier,
+    overallText: `The applicant's AI chat for "${c.job}" is complete. Based on the standards set by the request owner, the applicant shows clear communication, good request understanding, and verifiable experience, providing a solid basis for a human connection. AI does not make the final decision; it provides a structured matching recommendation.`,
+    excellentReason: "The applicant's evidence aligns strongly with the core criteria and indicates a reliable basis for a follow-up conversation.",
+    nextInterviewAdvice: "Use the first human conversation to confirm goals, availability, and the preferred way of working together.",
+    dimensions: [{
+      name: "Request understanding",
+      grade: total >= 82 ? "A" : "B",
+      reason: `The applicant connected their experience, goals, and available resources to the criteria for "${c.job}".`
+    }, {
+      name: "Communication",
+      grade: total >= 85 ? "A" : total >= 74 ? "B" : "C",
+      reason: "Most answers followed a clear context-action-outcome structure, making the applicant ready for a more specific human conversation."
+    }, {
+      name: "Experience evidence",
+      grade: total >= 88 ? "A" : total >= 78 ? "B" : "C",
+      reason: "The applicant shared relevant past examples. Confirm work samples, outcomes, collaboration records, or practical constraints next."
+    }, {
+      name: "Intent to connect",
+      grade: total >= 80 ? "A" : "B",
+      reason: "The applicant is open to continuing the conversation, while timing, location, budget, or collaboration boundaries still need mutual confirmation."
+    }],
+    process: [{
+      stage: "Background",
+      text: `The applicant shared their background and why they are interested in "${c.job}".`
+    }, {
+      stage: "Criteria follow-up",
+      text: "The match assistant asked follow-up questions around the request owner's criteria to identify strengths and points to confirm."
+    }, {
+      stage: "Match assessment",
+      text: "AI generated a structured recommendation for the request owner to decide whether to start a human connection."
+    }]
+  } : {
     total,
     isExcellent,
     tier,
@@ -47705,8 +47892,10 @@ function CandidateChatScreen({
     title: candidate.job
   };
   const report = buildCeoReport(candidate);
-  const reportTitle = candidate.evaluationStatus === "in_progress" ? "实时阶段分析" : "最终匹配报告";
+  const isEnglish = document.documentElement.dataset.owoLanguage === "en";
+  const reportTitle = candidate.evaluationStatus === "in_progress" ? isEnglish ? "Live assessment" : "实时阶段分析" : isEnglish ? "Final match report" : "最终匹配报告";
   const reportCompleteness = Number(candidate.completeness) || (candidate.communicated === false ? 0 : 100);
+  const reportMeta = isEnglish ? `Only you can view · Match score ${report.total}% · Information completeness ${reportCompleteness}%` : `仅你可见 · 匹配度 ${report.total}% · 信息完整度 ${reportCompleteness}%`;
   const userKey = candidate.id;
   const ceoKey = candidate.id + "_ceo";
   const [liveMsgs, setLiveMsgs] = useState([]);
@@ -47891,7 +48080,7 @@ function CandidateChatScreen({
       padding: "1px 6px",
       fontWeight: 800
     }
-  }, "发布者")), React.createElement("div", {
+  }, isEnglish ? "Owner" : "发布者")), React.createElement("div", {
     style: {
       fontSize: 11,
       color: T.text3,
@@ -47900,7 +48089,7 @@ function CandidateChatScreen({
       gap: 6,
       marginTop: 2
     }
-  }, React.createElement("span", null, "仅你可见 · 匹配度 ", report.total, "% · 信息完整度 ", reportCompleteness, "%"), report.isExcellent && React.createElement("span", {
+  }, React.createElement("span", null, reportMeta), report.isExcellent && React.createElement("span", {
     style: {
       background: "rgba(159,151,235,.12)",
       color: T.purple,
@@ -47909,14 +48098,14 @@ function CandidateChatScreen({
       fontWeight: 800,
       fontSize: 11
     }
-  }, report.tier.cn)))), React.createElement("span", {
+  }, report.tier.label)))), React.createElement("span", {
     style: {
       fontSize: 12,
       color: T.purple,
       fontWeight: 600,
       flexShrink: 0
     }
-  }, "\u25B6 \u67E5\u770B")) : React.createElement("div", {
+  }, isEnglish ? "▶ View" : "\u25B6 \u67E5\u770B")) : React.createElement("div", {
     style: {
       background: T._theme === "dark" ? "#202029" : T.bgCard,
       border: "1.5px solid rgba(99,102,241,.25)",
@@ -47957,7 +48146,7 @@ function CandidateChatScreen({
       padding: "2px 7px",
       fontWeight: 800
     }
-  }, "发布者")), React.createElement("button", {
+  }, isEnglish ? "Owner" : "发布者")), React.createElement("button", {
     onClick: () => setCollapsedCards(p => ({
       ...p,
       [ceoKey]: true
@@ -47970,7 +48159,7 @@ function CandidateChatScreen({
       color: T._theme === "dark" ? "#b9b3f4" : "#6366f1",
       fontWeight: 600
     }
-  }, "\u6536\u8D77 \u25B2")), React.createElement("div", {
+  }, isEnglish ? "Collapse ▲" : "\u6536\u8D77 \u25B2")), React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -47997,13 +48186,13 @@ function CandidateChatScreen({
       color: T.text3,
       marginTop: 2
     }
-  }, "匹配度"), React.createElement("div", {
+  }, isEnglish ? "Match score" : "匹配度"), React.createElement("div", {
     style: {
       fontSize: 10,
       color: T.text3,
       marginTop: 4
     }
-  }, "完整度 ", reportCompleteness, "%")), React.createElement("div", {
+  }, isEnglish ? `Completeness ${reportCompleteness}%` : `完整度 ${reportCompleteness}%`)), React.createElement("div", {
     style: {
       flex: 1
     }
@@ -48020,14 +48209,14 @@ function CandidateChatScreen({
       fontWeight: 800,
       marginBottom: 6
     }
-  }, report.tier.cn), React.createElement("div", {
+  }, report.tier.label), React.createElement("div", {
     style: {
       fontSize: 12,
       color: T.text2,
       lineHeight: 1.65
     }
-  }, "85%以上自动标记为高匹配，最终由发布者决定是否连接"))), React.createElement(FeedbackSection, {
-    title: "\u6574\u4F53\u8BC4\u5206",
+  }, isEnglish ? "Scores of 85% or higher are marked as high match. The request owner decides whether to connect." : "85%以上自动标记为高匹配，最终由发布者决定是否连接"))), React.createElement(FeedbackSection, {
+    title: isEnglish ? "Overall assessment" : "\u6574\u4F53\u8BC4\u5206",
     accent: T._theme === "dark" ? "#a9a2f2" : "#4f46e5"
   }, React.createElement("div", {
     style: {
@@ -48060,7 +48249,7 @@ function CandidateChatScreen({
     style: {
       fontWeight: 800
     }
-  }, "\u4F18\u79C0\u539F\u56E0\uFF1A"), report.excellentReason), React.createElement("div", {
+  }, isEnglish ? "Why this is strong: " : "\u4F18\u79C0\u539F\u56E0\uFF1A"), report.excellentReason), React.createElement("div", {
     style: {
       fontSize: 12,
       color: T._theme === "dark" ? "#fbbf24" : "#92400e",
@@ -48074,8 +48263,8 @@ function CandidateChatScreen({
     style: {
       fontWeight: 800
     }
-  }, "后续连接建议："), report.nextInterviewAdvice))), React.createElement(FeedbackSection, {
-    title: "\u5404\u7EF4\u5EA6\u8BC4\u5206",
+  }, isEnglish ? "Next-step suggestion: " : "后续连接建议："), report.nextInterviewAdvice))), React.createElement(FeedbackSection, {
+    title: isEnglish ? "Dimension scores" : "\u5404\u7EF4\u5EA6\u8BC4\u5206",
     accent: T.purple
   }, React.createElement("div", {
     style: {
@@ -48115,14 +48304,14 @@ function CandidateChatScreen({
       padding: "3px 9px",
       flexShrink: 0
     }
-  }, d.grade, "\u6863")), React.createElement("div", {
+  }, isEnglish ? `${d.grade} grade` : `${d.grade}档`)), React.createElement("div", {
     style: {
       fontSize: 12.3,
       color: T.text2,
       lineHeight: 1.78
     }
   }, d.reason))))), React.createElement(FeedbackSection, {
-    title: "AI沟通过程回顾",
+    title: isEnglish ? "AI chat recap" : "AI沟通过程回顾",
     accent: "#d97706"
   }, React.createElement("div", {
     style: {
@@ -48267,7 +48456,7 @@ function CandidateChatScreen({
         fontWeight: 800,
         marginBottom: 4
       }
-    }, "暂未生成匹配报告"), "报名者还没有与找人助手沟通，完成沟通后这里会生成匹配度、信息完整度和匹配理由。" );
+    }, isEnglish ? "Match report not available yet" : "暂未生成匹配报告"), isEnglish ? "The applicant has not chatted with the match assistant yet. A match score, information completeness, and match rationale will appear here once the chat is complete." : "报名者还没有与找人助手沟通，完成沟通后这里会生成匹配度、信息完整度和匹配理由。" );
     let onRight, avatar, bs;
     if (interviewerView) {
       if (msg.who === "ai") {
@@ -52483,7 +52672,40 @@ const demandTargetOf = demand => demand.target || demand.partnerType || demand.e
 const demandExpectationOf = demand => demand.matchingCriteria || demand.expectation || demand.ability || demand.requirements || "";
 const demandParticipationOf = demand => demand.participationRequirements || demand.cooperation || demand.learningMode || demand.team || "";
 const demandSummaryOf = demand => demandDescriptionOf(demand) || demandTargetOf(demand) || "发布者希望先由找人助手完成前期沟通与匹配判断。";
-const demandPrimaryMeta = demand => [demand.time, demand.location, demand.budget, demandTypeOf(demand) === "遇见心动" ? "" : demand.count].filter(Boolean);
+const demandDateParts = value => {
+  const match = String(value || "").trim().replace(/截止$/, "").match(/^(\d{4})[-./年]\s*(\d{1,2})[-./月]\s*(\d{1,2})/);
+  if (!match) return null;
+  return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+};
+const demandDeadlineLabel = value => {
+  const parts = demandDateParts(value);
+  if (!parts) return "";
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}截止`;
+};
+const demandIsDeadlineClosed = demand => {
+  const parts = demandDateParts(demand?.deadline);
+  if (!parts) return false;
+  return new Date(parts.year, parts.month - 1, parts.day, 23, 59, 59, 999).getTime() < Date.now();
+};
+const demandBudgetLabel = value => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  return /^(费用|预算|回报)\s*[:：]/.test(raw) ? raw : `费用：${raw}`;
+};
+const demandCountLabel = value => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/名额$/.test(raw)) return raw;
+  const normalized = raw.replace(/\s+/g, "");
+  return `${/人$/.test(normalized) ? normalized : `${normalized}人`}名额`;
+};
+const demandPrimaryMeta = demand => [
+  demand.time,
+  demand.location,
+  demandBudgetLabel(demand.budget),
+  demandTypeOf(demand) === "遇见心动" ? "" : demandCountLabel(demand.count),
+  demandDeadlineLabel(demand.deadline)
+].filter(Boolean);
 const publisherSubtitleOf = publisher => {
   const role = String(publisher?.role || "").trim();
   const company = String(publisher?.company || "").trim();
@@ -54838,10 +55060,11 @@ function RecruitmentJobDetailScreen({
   const [confirmPause, setConfirmPause] = useState(false);
   const listed = !!job.listed;
   const isPaused = !!job.paused;
+  const deadlineClosed = demandIsDeadlineClosed(job);
   const demandType = demandTypeOf(job);
-  const statusText = !listed ? "待发布" : isPaused ? "已暂停" : "进行中";
-  const statusBg = !listed ? "rgba(245,158,11,.12)" : isPaused ? "rgba(0,0,0,.06)" : "rgba(16,185,129,.1)";
-  const statusColor = !listed ? "#d97706" : isPaused ? T.text3 : "#059669";
+  const statusText = !listed ? "待发布" : isPaused ? "已暂停" : deadlineClosed ? "报名已截止" : "进行中";
+  const statusBg = !listed ? "rgba(245,158,11,.12)" : isPaused ? "rgba(0,0,0,.06)" : deadlineClosed ? "rgba(148,163,184,.14)" : "rgba(16,185,129,.1)";
+  const statusColor = !listed ? "#d97706" : isPaused ? T.text3 : deadlineClosed ? (T._theme === "dark" ? "#CBD5E1" : "#64748B") : "#059669";
   const Sec = ({
     title,
     content
@@ -54886,7 +55109,7 @@ function RecruitmentJobDetailScreen({
     content: demandTypeLabelOf(job)
   }, {
     title: "报名截止时间",
-    content: job.deadline || "长期有效"
+    content: demandDeadlineLabel(job.deadline) || "长期有效"
   }, {
     title: "找人助手沟通时长",
     content: Number(job.aiDuration || job.durationMin) > 0 ? Number(job.aiDuration || job.durationMin) + " 分钟 · 每位报名者一次需求沟通机会" : "暂不设置 · 报名者可随时继续沟通"
@@ -54986,10 +55209,10 @@ function RecruitmentJobDetailScreen({
     key: item,
     style: {
       fontSize: 12,
-      color: T.text2,
-      background: T.bgCardMuted,
+      color: T.purple,
+      background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
       borderRadius: 999,
-      padding: "5px 11px"
+      padding: "5px 12px"
     }
   }, item)))), React.createElement('div', {
     style: {
@@ -55110,7 +55333,7 @@ function RecruitmentJobDetailScreen({
       width: "100%",
       padding: "15px 0",
       borderRadius: 999,
-      background: "linear-gradient(to right,#ef4444,#f97316)",
+      background: T.grad,
       color: "#fff",
       fontWeight: 700,
       fontSize: 15,
@@ -55128,6 +55351,7 @@ function InterviewDataScreen({
   companyProfile = {},
   applications = []
 }) {
+  const isEnglish = document.documentElement.dataset.owoLanguage === "en";
   const applicants = CANDIDATES.filter(c => c.job === job.title).map(candidate => {
     const application = applications.find(item => item.candidateId === candidate.id || item.applicantId === candidate.id);
     if (!application) return {
@@ -55337,21 +55561,29 @@ function InterviewDataScreen({
       color: isExcellentCandidate(c) ? "#059669" : T.text2,
       fontWeight: 750
     }
-  }, "匹配度 ", c.score, "%"), hasMatchScore(c) && isExcellentCandidate(c) && React.createElement('span', {
+  }, isEnglish ? `Match score ${c.score}%` : `匹配度 ${c.score}%`), hasMatchScore(c) && isExcellentCandidate(c) && React.createElement('span', {
     style: {
       fontSize: 10,
       background: "#fef3c7",
       color: "#d97706",
       borderRadius: 999,
-      padding: "1px 6px",
-      fontWeight: 700
+      minWidth: isEnglish ? 72 : 0,
+      whiteSpace: "nowrap",
+      padding: "3px 8px",
+      lineHeight: 1.2,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      textAlign: "center",
+      fontWeight: 700,
+      flexShrink: 0
     },
     __self: this,
     __source: {
       fileName: _jsxFileName,
       lineNumber: 2266
     }
-  }, "高匹配")), React.createElement('div', {
+  }, isEnglish ? "High match" : "高匹配")), React.createElement('div', {
     style: {
       fontSize: 11,
       color: T.text3
@@ -56082,7 +56314,7 @@ function RecruitmentScreen({
       color: T.text1,
       margin: "2px 0 10px"
     }
-  }, "找人概述"), React.createElement('div', {
+  }, "找人数据"), React.createElement('div', {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(3,1fr)",
@@ -56205,14 +56437,25 @@ function RecruitmentScreen({
         fontSize: 13,
         padding: "40px 0"
       }
-    }, "该状态下暂无需求");
+    }, "该状态下无需求");
     return filtered.map(job => {
       const isPaused = job.paused;
       const configured = !!job.hasAiInterviewer;
       const listed = !!job.listed;
       const notListed = !listed;
-      const statusText = !listed ? "待发布" : isPaused ? "已暂停" : "进行中";
+      const deadlineClosed = demandIsDeadlineClosed(job);
+      const statusText = !listed ? "待发布" : isPaused ? "已暂停" : deadlineClosed ? "报名已截止" : "进行中";
       const statusAmber = !listed;
+      const metas = demandPrimaryMeta(job);
+      const typeColor = ({
+        "找合伙人": "#7568D8",
+        "遇见心动": "#C96086",
+        "找搭子": "#2486AC",
+        "活动招募": "#C97632",
+        "找场地": "#12916C",
+        "社团/社群招新": "#596FCB",
+        "自定义需求": "#737373"
+      })[demandTypeOf(job)] || "#737373";
       return React.createElement('div', {
         key: job.id,
         onClick: () => setDetailJob(job),
@@ -56298,8 +56541,8 @@ function RecruitmentScreen({
           fontWeight: 600,
           flexShrink: 0,
           marginLeft: 8,
-          background: statusAmber ? "rgba(245,158,11,.12)" : isPaused ? "rgba(0,0,0,.06)" : "rgba(16,185,129,.1)",
-          color: statusAmber ? "#d97706" : isPaused ? "#999" : "#059669"
+          background: statusAmber ? "rgba(245,158,11,.12)" : isPaused ? "rgba(0,0,0,.06)" : deadlineClosed ? "rgba(148,163,184,.14)" : "rgba(16,185,129,.1)",
+          color: statusAmber ? "#d97706" : isPaused ? "#999" : deadlineClosed ? (T._theme === "dark" ? "#CBD5E1" : "#64748B") : "#059669"
         },
         __self: this,
         __source: {
@@ -56308,16 +56551,39 @@ function RecruitmentScreen({
         }
       }, statusText)), React.createElement('div', {
         style: {
-          fontSize: 11,
-          color: T.text3,
-          marginBottom: 12
-        },
-        __self: this,
-        __source: {
-          fileName: _jsxFileName,
-          lineNumber: 2353
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: metas.length ? 8 : 10
         }
-      }, demandPrimaryMeta(job).join(" · ")), React.createElement('div', {
+      }, React.createElement(DemandTypeIcon, {
+        type: demandTypeOf(job),
+        color: typeColor,
+        size: 18
+      }), React.createElement('span', {
+        style: {
+          fontSize: 13,
+          color: typeColor,
+          fontWeight: 800,
+          lineHeight: 1.2
+        }
+      }, demandTypeLabelOf(job))), metas.length ? React.createElement('div', {
+        style: {
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          marginBottom: 10
+        }
+      }, metas.map(meta => React.createElement('span', {
+        key: meta,
+        style: {
+          fontSize: 12,
+          color: T.purple,
+          background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
+          borderRadius: 999,
+          padding: "5px 12px"
+        }
+      }, meta))) : null, React.createElement('div', {
         style: {
           fontSize: 12,
           color: T.text2,
@@ -56536,7 +56802,7 @@ function RecruitmentScreen({
       width: "100%",
       padding: "15px 0",
       borderRadius: 999,
-      background: "linear-gradient(to right,#ef4444,#f97316)",
+      background: T.grad,
       color: "#fff",
       fontWeight: 700,
       fontSize: 15,
@@ -59441,7 +59707,7 @@ function KnowledgeUploadTrain({
       color: T.text3,
       marginBottom: 14
     }
-  }, "\u5171 ", atts.length, " \u4E2A\u9644\u4EF6 \xB7 \u5220\u9664\u77E5\u8BC6\u4F1A\u4E00\u5E76\u5220\u9664\u5168\u90E8\u9644\u4EF6"), atts.length === 0 && React.createElement("div", {
+  }, "\u5171 " + atts.length + " \u4E2A\u9644\u4EF6 \xB7 \u5220\u9664\u77E5\u8BC6\u4F1A\u4E00\u5E76\u5220\u9664\u5168\u90E8\u9644\u4EF6"), atts.length === 0 && React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "40px 0",
@@ -60554,14 +60820,9 @@ function SettingsScreen({
   const [toast, setToast] = useState(null);
   const isEnglish = lang === "English";
   const changeLanguage = next => {
-    try {
-      localStorage.setItem(OWO_LANGUAGE_KEY, next);
-    } catch (e) {}
-    applyOwoRuntimePreferences({
-      language: next
-    });
-    setLang(next);
-    setToast(next === "English" ? "Language updated to English" : "已切换为简体中文");
+    const language = window.owoSetLanguage ? window.owoSetLanguage(next).language : normalizeOwoLanguage(next);
+    setLang(language);
+    setToast(language === "English" ? "Language updated to English" : "已切换为简体中文");
     setTimeout(() => setToast(null), 1500);
   };
   const [hasPassword, setHasPassword] = useState(() => {
@@ -62020,18 +62281,7 @@ function SettingsScreen({
         lineHeight: 1.7,
         marginTop: 2
       }
-    }, "消息推送需求文档说明：本页只展示可配置通知，今日经历回响为跨模块聚合，AI 笔记走二级设置页，通讯录和人生图书馆在本页直接开关。"), React.createElement("div", {
-      style: {
-        background: "rgba(14,165,233,.08)",
-        border: "1px solid rgba(14,165,233,.16)",
-        borderRadius: 14,
-        padding: "13px 14px",
-        color: T.text2,
-        fontSize: 11.5,
-        lineHeight: 1.7,
-        marginTop: 10
-      }
-    }, "消息推送需求文档说明：今日经历回响每日 18:00 生成，至少 1 条有效互动才下发，字段为 0 时不展示该行，整体占 1 条未读。所有开关逻辑由服务端生效。")), toast && React.createElement("div", {
+    }, "消息推送需求文档说明：本页只展示可配置通知，今日经历回响为跨模块聚合，AI 笔记走二级设置页，通讯录和人生图书馆在本页直接开关。")), toast && React.createElement("div", {
       style: {
         position: "absolute",
         top: "48%",
@@ -64324,7 +64574,7 @@ function WeeklySelfChatScreen({
       letterSpacing: 0,
       marginBottom: 8
     }
-  }, weekLabel, "·人生章节"), pageIndex === 0 && React.createElement("div", {
+  }, weekLabel + " · 人生章节"), pageIndex === 0 && React.createElement("div", {
     style: {
       fontSize: 12,
       lineHeight: 1.5,
@@ -64467,7 +64717,7 @@ function WeeklySelfChatScreen({
       color: T.text3,
       fontWeight: 600
     }
-  }, weekLabel, " \xB7 \u548C\u8FD9\u5468\u7684\u81EA\u5DF1\u804A\u804A"))), bookOpen && React.createElement("div", {
+  }, weekLabel + " \xB7 \u548C\u8FD9\u5468\u7684\u81EA\u5DF1\u804A\u804A"))), bookOpen && React.createElement("div", {
     style: {
       position: "absolute",
       inset: 0,
@@ -66840,19 +67090,19 @@ function ProfileScreen({
     time: ["刚刚关注", "2小时前", "今天", "昨天", "3天前"][i % 5]
   }));
   const profileEarnList = [{
-    label: "当前分身获得赞数",
+    label: "分身获得赞数",
     value: "1,200",
     source: "清北保研复试经验"
   }, {
-    label: "当前笔记获得赞数",
+    label: "笔记获得赞数",
     value: "780",
     source: "物理博士备考经验"
   }, {
-    label: "当前我的评论获赞数",
+    label: "我的评论获赞数",
     value: "220",
     source: "产品经理实习面试"
   }, {
-    label: "当前笔记获得收藏数",
+    label: "笔记获得收藏数",
     value: "200",
     source: "零基础进 Google 数据实习"
   }];
@@ -69098,7 +69348,7 @@ function ProfileScreen({
       fontWeight: 700,
       color: T.text1
     }
-  }, r.week, " \u4EBA\u751F\u7AE0\u8282"), React.createElement("div", {
+  }, r.week + " \u4EBA\u751F\u7AE0\u8282"), React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -69366,7 +69616,7 @@ function ProfileScreen({
       fontSize: 12,
       color: T.text3
     }
-  }, "\u8BAD\u7EC3 ", item.hours, "h \xB7 \u9644\u4EF6 ", (item.attachments || []).length), React.createElement("button", {
+  }, "\u8BAD\u7EC3 " + item.hours + "h \xB7 \u9644\u4EF6 " + (item.attachments || []).length), React.createElement("button", {
     onClick: () => {
       setTrainingKnowledgeId(item.id);
       setSubPage("knowledgeTrain");
@@ -70710,12 +70960,14 @@ function PhoneInstance({
       status: "已沟通"
     } : item));
   };
-  const startApplicationInterview = (job, publisher, application = null) => {
+  const startApplicationInterview = (job, publisher, application = null, options = {}) => {
     const existing = application || applications.find(item => item.job.id === job.id);
     const durationSec = Number(job.durationSec || (job.aiDuration || job.durationMin || 0) * 60) || 0;
     const timedOut = !!(existing?.interviewEndsAt && existing.interviewEndsAt <= Date.now() && !existing.interviewEnded);
-    createApplication(job, publisher);
-    markApplicationCommunicated(job.id);
+    if (!options?.skipApplication) {
+      createApplication(job, publisher);
+      markApplicationCommunicated(job.id);
+    }
     if (timedOut) {
       setApplications(prev => prev.map(item => item.job.id === job.id ? {
         ...item,
@@ -70735,7 +70987,7 @@ function PhoneInstance({
       ...job,
       durationSec
     });
-    setActiveApplicationId(existing?.id || "application_" + job.id);
+    setActiveApplicationId(options?.skipApplication ? null : existing?.id || "application_" + job.id);
     setChatCountdown(false);
     push("chat");
   };
@@ -71476,6 +71728,40 @@ function mountOwoApp() {
   window.__START = "home";
   const OWO_GLOBAL_EN_COPY = {
     "首页": "Home",
+    "外表": "Profile",
+    "大脑": "Mind",
+    "笔记": "Posts",
+    "评论": "Comments",
+    "收藏": "Saved",
+    "关注": "Following",
+    "粉丝": "Followers",
+    "获得与收藏": "Likes & saves",
+    "互动": "Interactions",
+    "我的机器人": "My AI profile",
+    "我的报名": "My applications",
+    "我的需求": "My requests",
+    "查看报名": "View applications",
+    "发布需求": "Post a request",
+    "我要找人": "Find people",
+    "找人助手": "Match assistant",
+    "与找人助手聊聊": "Chat with match assistant",
+    "返回": "Back",
+    "取消": "Cancel",
+    "完成": "Done",
+    "保存": "Save",
+    "删除": "Delete",
+    "编辑": "Edit",
+    "搜索": "Search",
+    "全部": "All",
+    "进行中": "Active",
+    "已暂停": "Paused",
+    "找合伙人": "Find a co-founder",
+    "找搭子": "Find a partner",
+    "活动招募": "Event recruitment",
+    "找场地": "Find a venue",
+    "遇见心动": "Meet someone special",
+    "社团/社群招新": "Club recruitment",
+    "其他": "Other",
     "登录页": "Sign in",
     "CEO Tracy聊天": "Chat with CEO Tracy",
     "授权弹窗": "Authorization",
@@ -71493,7 +71779,7 @@ function mountOwoApp() {
     "正在找人": "Looking for people",
     "校友圈": "Alumni",
     "社群": "Communities",
-    "创业 CEO": "Startup CEOs",
+    "未来独角兽": "Future Unicorns",
     "搜索需求、类型或发布者": "Search requests, types, or publishers",
     "申请加入": "Request to join",
     "进入社群": "Enter community",
@@ -71514,23 +71800,941 @@ function mountOwoApp() {
     "简体中文": "Chinese",
     "English": "English"
   };
+  // System copy is translated at the presentation layer so either language can be
+  // opened directly from a shared prototype URL. User-authored content is left intact.
+  Object.assign(OWO_GLOBAL_EN_COPY, {
+    "我在找人": "Looking for people",
+    "我想做什么": "What I want to do",
+    "适合这样的你": "You may be a fit if",
+    "查看我的需求": "View my requests",
+    "该状态下无需求": "No requests in this status",
+    "我的业务": "My services",
+    "需求概述": "Request overview",
+    "找人数据": "Request data",
+    "报名者": "Applicants",
+    "查看报名": "View applications",
+    "训练找人助手": "Train match assistant",
+    "优化找人助手": "Improve match assistant",
+    "全部": "All",
+    "高匹配": "High match",
+    "其他": "Other",
+    "我的公开名片": "My public profile",
+    "正在找人": "Looking for people",
+    "进行中": "Active",
+    "报名成功": "Application submitted",
+    "已报名": "Applied",
+    "与找人助手聊聊": "Chat with match assistant",
+    "Chat with match assistant": "Chat with match assistant",
+    "我的 AI 分身": "My AI profile",
+    "写下你的分享": "Share something",
+    "内容由AI生成，请谨慎核实": "AI-generated content. Please verify before using.",
+    "我的分身": "My AI profile",
+    "人生图书馆": "Life Library",
+    "知识": "Knowledge",
+    "谁为你书写人生之书": "Who writes your life story?",
+    "谁来为你书写人生之书": "Who writes your life story?",
+    "和这周的自己聊聊": "Chat with this week's self",
+    "创建知识": "Create knowledge",
+    "附 件训练": "Attachment training",
+    "对话访谈训练": "Conversation training",
+    "上传 PDF / Word / PPT / 图片，AI 会从文件中提取知识用于训练分身。": "Upload PDF, Word, PPT, or images. AI extracts knowledge to train your profile.",
+    "点击上传附件": "Tap to upload attachments",
+    "支持 PDF / Word / PPT / 图片": "PDF / Word / PPT / images supported",
+    "附件管理": "Attachment management",
+    "还没有附件": "No attachments yet",
+    "教育机构认证": "Education verification",
+    "教育经历管理": "Education history",
+    "完成认证": "Complete verification",
+    "认证通过后进入北京大学校友列表": "Enter the PKU alumni directory after verification",
+    "服务邮箱": "Support email",
+    "帮助与客服": "Help and support",
+    "外观": "Appearance",
+    "语言": "Language",
+    "通知": "Notifications",
+    "AI 笔记消息": "AI post notifications",
+    "AI 笔记消息": "AI post notifications",
+    "验证码已发送至": "Verification code sent to",
+    "重新发送": "Resend",
+    "验证码": "Verification code",
+    "手机号": "Phone number",
+    "密码": "Password",
+    "请输入当前密码后设置新密码。": "Enter your current password, then set a new one.",
+    "验证密码": "Verify password",
+    "设置青少年模式密码": "Set youth mode password",
+    "首次开启需要设置独立密码，之后关闭或再次开启都需要验证。": "Set a separate password the first time. Verification is required whenever you turn it off or on again.",
+    "请输入青少年模式密码完成操作。": "Enter your youth mode password to continue.",
+    "设置并开启": "Set and turn on",
+    "验证并关闭": "Verify and turn off",
+    "验证并开启": "Verify and turn on",
+    "咨询服务": "Consultation services",
+    "咨询记录": "Consultation history",
+    "咨询详情": "Consultation details",
+    "新咨询服务": "New consultation service",
+    "从知识创建咨询服务": "Create a consultation service from knowledge",
+    "主标题": "Main title",
+    "关联知识": "Related knowledge",
+    "定价": "Pricing",
+    "自定义价格": "Custom price",
+    "设置价格/小时": "Set price per hour",
+    "免费咨询": "Free consultation",
+    "待咨询": "Pending consultation",
+    "订单": "Orders",
+    "暂无订单": "No orders yet",
+    "已上架": "Published",
+    "已下架": "Unpublished",
+    "下架": "Unpublish",
+    "上架": "Publish",
+    "我想找一个目标一致、沟通顺畅的人，先通过找人助手了解彼此是否匹配。": "I want to find someone with aligned goals and easy communication, and first see whether we are a fit through the match assistant.",
+    "希望找到目标一致、沟通顺畅，并且能提供真实经验、资源或行动支持的人。": "Looking for someone with aligned goals, clear communication, and real experience, resources, or follow-through.",
+    "希望对方有相关经历，时间和目标匹配，表达清晰，愿意先通过找人助手完成基础了解。": "They should have relevant experience, compatible time and goals, clear communication, and be open to a first conversation with the match assistant.",
+    "可以先线上沟通，确认方向合适后再决定是否线下见面、共创或进一步合作。": "We can start online, then decide whether to meet, co-create, or collaborate further once the direction is right.",
+    "时间可协商，优先选择双方都稳定方便的节奏。": "Timing is flexible, with preference for a rhythm that works reliably for both sides.",
+    "线上优先，城市不限；如果同城也可以线下见面。": "Remote first and open to any city; we can also meet in person if we are local.",
+    "预算或回报方式可以进一步沟通确认。": "Budget or return can be discussed and confirmed together.",
+    "希望找人助手重点了解对方的动机、可投入时间、相关经历和现实条件。": "Ask the match assistant to focus on motivation, available time, relevant experience, and practical conditions.",
+    "相关经历、时间匹配、表达清晰、目标一致。": "Relevant experience, time fit, clear communication, and aligned goals.",
+    "可以先通过找人助手完成基础了解，确认合适后再进一步沟通。": "Start with a basic conversation through the match assistant, then continue if there is a fit.",
+    "我们计划举办一场小型 AI 青年共创夜，通过主题分享和分组讨论，一起探索 AI 社交产品的新场景。": "We are planning a small AI co-creation night for young people, using talks and group discussion to explore new AI social product scenarios.",
+    "围绕 AI 社交与青年表达做一次轻量共创，欢迎产品、设计和内容方向的同学参加。": "A lightweight co-creation session around AI social experiences and youth expression. Students in product, design, and content are welcome.",
+    "对 AI 产品、设计、内容或青年社群感兴趣，愿意参与讨论和共创的伙伴。": "People interested in AI products, design, content, or youth communities who are willing to discuss and co-create.",
+    "有真实好奇心，愿意开放表达，并能尊重不同观点。": "Bring genuine curiosity, openness, and respect for different perspectives.",
+    "上海线下参与，活动前完成一份简短兴趣问卷。": "Join in Shanghai in person and complete a short interest survey before the event.",
+    "活动现场会按兴趣方向自由组队；如临时无法参加，请提前一天告知。": "Form groups by interest at the event. Please let us know one day ahead if you can no longer attend.",
+    "AI 青年共创夜招募参与者": "AI Youth Co-creation Night: Participants Wanted",
+    "上海 / 线下": "Shanghai / in person",
+    "周六 19:00-21:30": "Saturday 19:00-21:30",
+    "20人": "20 people",
+    "需求沟通已完成，经历与合作方式匹配，建议发布者进一步联系。": "Request chat completed. Experience and collaboration style appear compatible; the publisher may want to follow up.",
+    "感谢你完成本次AI沟通。沟通记录已保存，发布者会结合需求进一步确认是否连接。": "Thanks for completing this AI chat. The record is saved, and the publisher will decide whether to connect based on the request.",
+    "查看人生章节": "View life chapter",
+    "我的人生章节": "My life chapters",
+    "鸥灵・局外执笔人": "Owo spirit · Outside narrator",
+    "独立记录者，客观写下你的故事": "An independent narrator who records your story objectively",
+    "你本人・亲历自述": "You · First-person reflection",
+    "由你执笔，回顾你的一周点滴": "Written by you, reflecting on your week",
+    "你的分身・另一个你": "Your AI profile · Another you",
+    "屏幕对面的你，静静审视你的生活": "The you across the screen, quietly observing your life",
+    "你的分身・记录TA自己": "Your AI profile · Their own story",
+    "记录TA自己的虚拟人生，这是不是你的人生？": "It records its own virtual life. Is that your life?",
+    "请补充这条知识的副标题…": "Add a subtitle for this knowledge item…",
+    "还没有知识，点击右上角创建一个": "No knowledge yet. Create one in the top right.",
+    "添加附件": "Add attachment",
+    "开始新访谈": "Start new interview",
+    "附件入口上传": "Upload from attachments",
+    "对话上传": "Upload from chat"
+  });
+  Object.assign(OWO_GLOBAL_EN_COPY, {
+    "跟随系统": "System default",
+    "深色": "Dark",
+    "加载中": "Loading",
+    "内容正在准备，请稍候": "Content is being prepared. Please wait.",
+    "暂无内容": "No content yet",
+    "有新内容后会出现在这里": "New content will appear here.",
+    "出错了": "Something went wrong",
+    "请稍后重试": "Please try again later",
+    "操作成功": "Done",
+    "已完成当前操作": "This action is complete",
+    "需要授权": "Permission needed",
+    "开启权限后可继续使用": "Enable permission to continue",
+    "确认操作": "Confirm action",
+    "更多操作": "More actions",
+    "已保存": "Saved",
+    "AI 思考中": "AI is thinking",
+    "正在理解你的问题": "Understanding your question",
+    "AI 生成中": "AI is generating",
+    "正在组织更合适的回答": "Preparing a better answer",
+    "AI 无法回答": "AI cannot answer this",
+    "换个问法可能会更好": "Try asking in a different way",
+    "AI 训练中": "AI is training",
+    "正在同步你的知识与经历": "Syncing your knowledge and experience",
+    "男": "Male",
+    "女": "Female",
+    "女性": "Female",
+    "男性": "Male",
+    "我聊过的": "My chats",
+    "聊过我的": "Chatted with me",
+    "常联系": "Frequent contacts",
+    "暂无记录": "No history yet",
+    "搜索经验...": "Search experiences...",
+    "你想认识什么样的人？": "Who would you like to meet?",
+    "搜索需求、类型或发布者": "Search requests, types, or publishers",
+    "+ 发布找人": "+ Post a request",
+    "+ 发布需求": "+ Post a request",
+    "发布于": "Posted",
+    "发布者": "Posted by",
+    "查看发布者个人名片": "View publisher profile",
+    "点击圈子卡片申请进入后查看名片列表": "Request to join a community to view member profiles",
+    "组织内暂时还没有成员": "No members in this organization yet",
+    "暂无进行中的需求": "No active requests",
+    "申请通过，已进入": "Request approved. You joined",
+    "申请加入": "Request to join",
+    "进入社群": "Enter community",
+    "公司组织": "Company communities",
+    "社群列表": "Community list",
+    "名社群成员": "community members",
+    "核心成员": "Core members",
+    "社群成员": "Community members",
+    "官方分身": "Official assistant",
+    "主理人": "Host",
+    "管理员": "Admin",
+    "已进圈": "Joined",
+    "进圈聊聊": "Join and chat",
+    "申请进入": "Request to join",
+    "社团/社群招新": "Club recruitment",
+    "自定义需求": "Custom request",
+    "找人中": "Looking for people",
+    "正在聊天": "In chat",
+    "人正在聊": "people chatting",
+    "认证": "Verified",
+    "官方机构": "Official organization",
+    "官方认证": "Officially verified",
+    "免费问北大": "Ask PKU for free",
+    "需求详情": "Request details",
+    "需求说明": "Request description",
+    "我找谁 / 什么资源": "Who / what I am looking for",
+    "希望对方具备什么": "What they should bring",
+    "参与方式": "How to participate",
+    "补充说明": "Additional notes",
+    "报名成功": "Application submitted",
+    "已报名": "Applied",
+    "我要报名": "Apply now",
+    "取消报名": "Cancel application",
+    "确认要取消报名吗？": "Cancel this application?",
+    "已取消报名": "Application cancelled",
+    "暂不取消": "Keep application",
+    "未沟通": "Not started",
+    "已沟通": "Completed",
+    "我的报名": "My applications",
+    "还没有报名的需求": "No applications yet",
+    "该状态下暂无报名": "No applications in this status",
+    "联系发布者": "Contact publisher",
+    "报名 / 联系发布者": "Apply / contact publisher",
+    "发起连接": "Start a connection",
+    "需求沟通已完成": "Request chat completed",
+    "需求沟通进行中": "Request chat in progress",
+    "可以继续聊其他问题": "You can continue with other questions",
+    "咨询剩余时间": "Time remaining",
+    "咨询记录": "Chat history",
+    "找分身": "Find AI profiles",
+    "找真人": "Find people",
+    "语音": "Voice",
+    "发送给真人…": "Message a person…",
+    "发消息…": "Write a message…",
+    "输入咨询内容…": "Type a question…",
+    "输入你的回答，按回车发送…": "Type your reply and press Enter…",
+    "内容由AI生成，请谨慎核实": "AI-generated content. Please verify before using.",
+    "查看名片": "View profile",
+    "跳过": "Skip",
+    "撤回": "Unsend",
+    "找人助手": "Match assistant",
+    "与找人助手聊聊": "Chat with match assistant",
+    "每位报名者只有一次需求沟通机会": "Each applicant gets one request chat session",
+    "AI沟通须知": "AI chat notice",
+    "确认并开始本次沟通": "Confirm and start chat",
+    "同意并与找人助手聊聊": "Agree and chat with match assistant",
+    "最终是否连接、合作或见面，由双方真人决定": "Whether to connect, collaborate, or meet is decided by both people.",
+    "需求沟通内容会用于实时匹配分析并提供给发布者": "Chat content is used for match analysis and shared with the publisher.",
+    "本次需求沟通暂不设置时长，可随时进入并继续": "No time limit is set. You can return and continue anytime.",
+    "需求信息": "Request details",
+    "补充条件": "Additional details",
+    "确认草稿": "Review draft",
+    "编辑需求信息": "Edit request details",
+    "编辑补充条件": "Edit additional details",
+    "你想找什么样的人或资源？": "Who or what resource are you looking for?",
+    "确认 AI 生成的草稿": "Review the AI-generated draft",
+    "还有什么条件需要说明吗？": "Any other details to add?",
+    "点击任意内容即可修改。": "Tap any item to edit.",
+    "以下内容均为选填。": "Everything below is optional.",
+    "以下内容均为选填，不填写也可预览。": "Everything below is optional. You can preview without filling it in.",
+    "点击补充内容": "Tap to add details",
+    "发送并整理": "Send and organize",
+    "发送需求描述并由 AI 整理": "Send your request for AI organization",
+    "打开语音输入": "Open voice input",
+    "需求类型": "Request type",
+    "自定义需求类型": "Custom request type",
+    "输入自定义需求类型，如：找宠物照护伙伴": "Enter a custom type, e.g. pet care partner",
+    "重新选择需求类型": "Choose request type again",
+    "需求标题": "Request title",
+    "背景说明": "Background",
+    "我想找谁 / 什么资源": "Who / what I am looking for",
+    "时间 / 节奏": "Time / cadence",
+    "地点 / 线上线下": "Location / remote or in person",
+    "预算 / 费用 / 回报": "Budget / fee / return",
+    "人数 / 名额": "People / spots",
+    "报名截止时间": "Application deadline",
+    "找人助手沟通时长": "Match assistant chat duration",
+    "暂不设置": "No limit",
+    "长期有效": "Ongoing",
+    "保存并更新": "Save changes",
+    "编辑需求": "Edit request",
+    "下一步：补充条件": "Next: add details",
+    "待发布": "Draft",
+    "恢复发布": "Resume publishing",
+    "暂停找人": "Pause request",
+    "确定暂停该需求？": "Pause this request?",
+    "确认暂停": "Confirm pause",
+    "找人助手训练状态": "Match assistant training",
+    "待训练": "Not trained",
+    "查看报名": "View applications",
+    "优化找人助手": "Improve match assistant",
+    "确定删除该需求？": "Delete this request?",
+    "需求将从列表移除": "This request will be removed from your list.",
+    "报名者将无法继续报名该需求": "Applicants will no longer be able to apply.",
+    "此操作不可撤销，请谨慎操作": "This cannot be undone.",
+    "确认删除": "Delete request",
+    "预览发布": "Preview and publish",
+    "找人卡片预览": "Request card preview",
+    "公开展示效果": "Public display preview",
+    "详情预览": "Detail preview",
+    "基础信息": "Basic details",
+    "时间与条件（选填）": "Time and conditions (optional)",
+    "未填写": "Not filled in",
+    "未填写，发布前可补充。": "Not filled in. You can add this before publishing.",
+    "请选择需求类型 / 场景": "Choose a request type / scenario",
+    "用一句话描述你的需求": "Describe your request in one sentence",
+    "生成需求草稿": "Generate request draft",
+    "AI 只生成草稿，下一步可直接点击任意输入框修改。": "AI only creates a draft. You can edit any field next.",
+    "正在聆听": "Listening",
+    "语音已暂停": "Voice paused",
+    "暂停录音": "Pause recording",
+    "继续录音": "Continue recording",
+    "开始说话，识别文字会实时显示在这里": "Start speaking. Transcribed text will appear here.",
+    "使用文字": "Use text",
+    "取消语音输入": "Cancel voice input",
+    "语音描述需求": "Describe your request by voice",
+    "AI 实时转写": "Live AI transcription",
+    "已暂停，点击继续": "Paused. Tap to continue.",
+    "说出你想找谁、一起做什么，以及参与条件": "Say who you are looking for, what you want to do, and the conditions.",
+    "温馨提示": "Safety note",
+    "我知道了，继续填写": "Got it, continue",
+    "绑定手机号码": "Link phone number",
+    "手机号码": "Phone number",
+    "短信验证码": "SMS code",
+    "获取验证码": "Get code",
+    "重新获取": "Resend",
+    "立即绑定": "Link now",
+    "验证码已发送，请输入短信中的验证码。": "Code sent. Enter the SMS verification code.",
+    "请完整填写必填项：": "Please complete required fields:",
+    "请先补充必填项：": "Please complete these required fields:",
+    "我的公开名片": "My public profile",
+    "未填写需求标题": "Untitled request",
+    "编辑关于我": "Edit about",
+    "新增关于我": "Add about",
+    "组织名称": "Organization name",
+    "组织简介": "Organization description",
+    "方向 / 行业": "Focus / industry",
+    "规模": "Size",
+    "融资阶段": "Funding stage",
+    "我的业务": "My services",
+    "关于我": "About",
+    "我的需求": "My requests",
+    "报名": "Applications",
+    "找人概述": "Request overview",
+    "已收到": "Received",
+    "人报名": "applications",
+    "高匹配": "High match",
+    "匹配度": "Match score",
+    "沟通中": "In chat",
+    "报告已生成": "Report ready",
+    "尚未与找人助手沟通": "No match assistant chat yet",
+    "暂无报名者": "No applicants yet",
+    "申请人": "Applicant",
+    "申请者": "Applicant",
+    "AI沟通策略": "AI chat strategy",
+    "最终匹配报告": "Final match report",
+    "匹配结果": "Match result",
+    "整体总结": "Summary",
+    "匹配优势": "Strengths",
+    "待进一步了解": "To confirm",
+    "查看反馈": "View feedback",
+    "查看报告": "View report",
+    "收起报告": "Hide report",
+    "我的 AI 分身": "My AI profile",
+    "系统": "System",
+    "确认沉淀": "Save insight",
+    "忽略": "Ignore",
+    "和你的 AI 分身聊聊…": "Chat with your AI profile…",
+    "内容由AI生成，请谨慎核实": "AI-generated content. Please verify before using.",
+    "写下你的想法…": "Write your thoughts…",
+    "说点什么…": "Say something…",
+    "全文完": "End of post",
+    "查看全文": "Read more",
+    "立即开聊": "Start chatting",
+    "+ 关注": "+ Follow",
+    "已关注": "Following",
+    "取消关注": "Unfollow",
+    "关注": "Follow",
+    "还没有发布笔记": "No posts yet",
+    "这还没有发布笔记": "No posts yet",
+    "笔记": "Posts",
+    "评论": "Comments",
+    "收藏": "Saved",
+    "点赞": "Like",
+    "回复": "Reply",
+    "分享": "Share",
+    "开聊": "Chat",
+    "查看全部动态": "View all activity",
+    "人生图书馆": "Life Library",
+    "人生章节": "Life chapters",
+    "谁为你书写人生之书": "Who writes your life story?",
+    "谁来为你书写人生之书": "Who writes your life story?",
+    "知识": "Knowledge",
+    "+ 创建知识": "+ Create knowledge",
+    "标题": "Title",
+    "副标题": "Subtitle",
+    "重命名": "Rename",
+    "训练": "Train",
+    "训练 →": "Train →",
+    "还没有知识，点击右上角创建一个": "No knowledge yet. Create one in the top right.",
+    "创建知识": "Create knowledge",
+    "创建咨询服务": "Create consultation service",
+    "附件训练": "Attachment training",
+    "对话访谈训练": "Conversation training",
+    "上传 PDF / Word / PPT / 图片，AI 会从文件中提取知识用于训练分身。": "Upload PDF, Word, PPT, or images. AI extracts knowledge to train your profile.",
+    "点击上传附件": "Upload attachment",
+    "支持 PDF / Word / PPT / 图片": "PDF / Word / PPT / images supported",
+    "附件管理": "Attachment management",
+    "还没有附件": "No attachments yet",
+    "通知设置": "Notification settings",
+    "AI 笔记消息": "AI post notifications",
+    "AI 笔记": "AI posts",
+    "总开关": "Main switch",
+    "子开关": "Sub-settings",
+    "默认开启": "On by default",
+    "默认关闭": "Off by default",
+    "开启": "On",
+    "关闭": "Off",
+    "密码设置": "Password settings",
+    "设置密码": "Set password",
+    "修改密码": "Change password",
+    "当前密码": "Current password",
+    "新密码": "New password",
+    "确认密码": "Confirm password",
+    "更新密码": "Update password",
+    "忘记密码": "Forgot password?",
+    "隐藏密码": "Hide password",
+    "显示密码": "Show password",
+    "青少年模式": "Youth mode",
+    "已开启": "On",
+    "未开启": "Off",
+    "开启青少年模式": "Turn on youth mode",
+    "关闭青少年模式": "Turn off youth mode",
+    "教育经历管理": "Education history",
+    "教育机构认证": "Education verification",
+    "教育经历": "Education history",
+    "暂无教育机构认证": "No education verification yet",
+    "完成大学认证后，可编辑教育经历": "Complete university verification to edit education history",
+    "暂无教育经历": "No education history yet",
+    "可重新认证北京大学": "Reverify Peking University",
+    "当前支持北京大学认证": "Peking University verification is currently supported",
+    "主页展示": "Show on profile",
+    "设为主页展示": "Set as profile highlight",
+    "可设为主页展示": "Can be shown on profile",
+    "添加教育经历": "Add education history",
+    "编辑教育经历": "Edit education history",
+    "学历类型": "Degree type",
+    "在校状态": "Enrollment status",
+    "学院": "School / department",
+    "专业": "Major",
+    "入学年份": "Start year",
+    "毕业年份": "Graduation year",
+    "学校": "School",
+    "学校邮箱": "School email",
+    "邮箱验证码": "Email verification code",
+    "完成认证": "Complete verification",
+    "常用快捷话术": "Quick replies",
+    "我的分身": "My AI profile",
+    "对外交流": "Public chats",
+    "我的分身助手": "My AI assistant",
+    "私人使用": "Personal use",
+    "+ 添加快捷语": "+ Add quick reply",
+    "添加快捷语": "Add quick reply",
+    "条款与隐私": "Terms and privacy",
+    "帮助与客服": "Help and support",
+    "客服邮箱": "Support email",
+    "用户协议": "User agreement",
+    "隐私政策": "Privacy policy",
+    "第三方信息共享": "Third-party sharing",
+    "账号与安全": "Account and security",
+    "个性化设置": "Personalization",
+    "隐私与保护": "Privacy and protection",
+    "应用设置": "App settings",
+    "退出登录": "Sign out",
+    "注销账户": "Delete account",
+    "确认注销": "Delete account",
+    "教育机构认证": "Education verification",
+    "北京大学已认证": "PKU verified",
+    "暂无教育认证": "No education verification",
+    "我的分身 / 我的AI助手": "My AI profile / assistant",
+    "跟随系统": "System default",
+    "浅色": "Light",
+    "深色": "Dark"
+  });
+  Object.assign(OWO_GLOBAL_EN_COPY, {
+    "大学": "University",
+    "求职": "Careers",
+    "创业": "Startups",
+    "科研": "Research",
+    "考研": "Graduate school",
+    "实习": "Internships",
+    "科普": "Science",
+    "搞笑": "Humor",
+    "精英": "Top talent",
+    "正在看": "viewing",
+    "全文": "Read more",
+    "推荐": "For you",
+    "牛人": "People",
+    "校友圈": "Alumni",
+    "社群": "Communities",
+    "未来独角兽": "Future Unicorns",
+    "官方分身": "Official assistant",
+    "社群成员": "Community members",
+    "可开聊": "Available to chat",
+    "官方社群": "Official community",
+    "申请后进入": "Join after approval",
+    "由公司发起的组织，申请后即可进入交流。": "Company-led organizations. Apply to join the conversation.",
+    "找到感兴趣的主题，申请后即可进入社群。": "Find a topic you like, then apply to join the community.",
+    "平台好友": "Platform friends",
+    "微信好友": "WeChat friends",
+    "朋友圈": "Moments",
+    "复制链接": "Copy link",
+    "生成分享图": "Create share image",
+    "已复制": "Copied",
+    "已打开分享": "Share opened",
+    "已分享": "Shared",
+    "搜索": "Search",
+    "刚刚": "Just now",
+    "今天": "Today",
+    "昨天": "Yesterday",
+    "上周": "Last week",
+    "查看我的": "View mine",
+    "还没有发布笔记": "No posts yet",
+    "这还没有发布笔记": "No posts yet",
+    "确认 AI 生成的草稿": "Review the AI-generated draft",
+    "点击任意内容即可修改。": "Tap any item to edit.",
+    "也可以直接输入，例如：校内 AI 社团招新，希望找到对产品、技术或运营感兴趣的同学": "Or type directly, for example: I am recruiting for a campus AI club and want to meet people interested in product, technology, or operations.",
+    "如：寻找 AI 产品共创伙伴 / 周末运动搭子": "e.g. Find an AI product co-creation partner / weekend sports partner",
+    "介绍你为什么发布这条需求、目前背景，以及希望一起推进的事情": "Explain why you are posting this request, your context, and what you would like to make happen together.",
+    "描述你想连接的人、资源、场地、活动参与者或合作对象": "Describe the people, resources, venues, attendees, or collaborators you want to connect with.",
+    "如：相关经验、兴趣方向、时间投入、沟通方式、可提供的资源": "e.g. relevant experience, interests, time commitment, communication style, resources to offer",
+    "如：线上沟通 / 线下见面 / 项目制共创 / 长期交流": "e.g. remote chat / in-person meeting / project co-creation / long-term exchange",
+    "如：每周末 / 两周内 / 长期": "e.g. every weekend / within two weeks / ongoing",
+    "如：上海 / 线上 / 不限城市": "e.g. Shanghai / remote / any city",
+    "如：面议 / 500元以内 / 股权合作": "e.g. negotiable / within RMB 500 / equity collaboration",
+    "如：1-3人 / 30人": "e.g. 1-3 people / 30 people",
+    "补充限制条件、偏好，或希望找人助手重点了解的问题": "Add constraints, preferences, or questions for the match assistant to focus on.",
+    "暂不设置 · 报名者可随时继续沟通": "No limit · applicants can continue anytime",
+    "分钟 · 每位报名者一次需求沟通机会": "min · one request chat session per applicant",
+    "未训练时使用需求类型默认沟通模板；训练后将展示发布者补充的沟通重点。": "Before training, the default request-type chat template is used. After training, the publisher's focus areas are shown.",
+    "该需求尚未发布，发布后其他用户可报名并与找人助手聊聊。": "This request is not published yet. Once published, others can apply and chat with the match assistant.",
+    "该需求已发布，找人助手还未训练。建议先补充匹配标准，让 AI 更准确沟通。": "This request is live but the match assistant is not trained. Add match criteria to help AI conduct a more accurate chat.",
+    "用一句话描述需求后，点击“AI整理成卡片”，这里会出现公开卡片和详情预览。": "Describe your request in one sentence, then tap “Generate request card” to see the public card and detail preview.",
+    "AI 会将内容整理为结构化草稿。": "AI will organize this into a structured draft.",
+    "检查 AI 整理的内容，只修改需要调整的部分。": "Review AI's draft and only edit what needs changing.",
+    "这是其他人在广场看到的最终效果。": "This is how others will see it in Explore.",
+    "根据《移动互联网应用程序信息服务管理规定》，发布公开需求前需完成手机号绑定。手机号仅用于账号安全验证，不会在需求或公开名片中展示。": "Before posting a public request, link a phone number as required by mobile information service regulations. It is used only for account security and is never shown on requests or public profiles.",
+    "本平台仅提供人际对接渠道，请保护个人隐私、财产安全，谨慎线下见面，谨防电信 / 交友诈骗。": "This platform only facilitates introductions. Protect your privacy and property, meet offline with care, and beware of scams.",
+    "平台不做身份核验，请自行甄别对方信息。": "The platform does not verify identities. Please assess other users' information independently.",
+    "你想找谁？想一起做什么？": "Who are you looking for? What would you like to do together?",
+    "先自然说清楚需求，AI 会整理成一张可发布的找人卡片。": "Describe your need naturally and AI will organize it into a publishable request card.",
+    "需求类型 / 场景": "Request type / scenario",
+    "手动编辑": "Edit manually",
+    "AI整理成卡片": "Generate request card",
+    "标题、背景说明、想找谁为必填；其它条件可先留空，发布后仍可编辑。": "Title, background, and who you are looking for are required. Other details can be left blank and edited after publishing.",
+    "给这条需求起个标题": "Give this request a title",
+    "编辑找人卡片": "Edit request card",
+    "描述需求": "Describe request",
+    "核对信息": "Review details",
+    "发布并上架": "Publish",
+    "返回修改": "Edit",
+    "上一步": "Back",
+    "继续": "Continue",
+    "预览": "Preview",
+    "需求类型 / 场景": "Request type / scenario",
+    "社团/社群招新": "Club recruitment",
+    "找合伙人": "Find a co-founder",
+    "找搭子": "Find a partner",
+    "遇见心动": "Meet someone special",
+    "活动招募": "Event recruitment",
+    "找场地": "Find a venue",
+    "其他": "Other",
+    "自定义需求": "Custom request",
+    "身份场景": "Identity scenario",
+    "输入身份场景，如：校友会": "Enter an identity scenario, e.g. alumni association",
+    "请选择身份场景": "Choose an identity scenario",
+    "请选择": "Choose",
+    "请选择工作地点": "Choose work location",
+    "选择省份": "Choose province",
+    "返回省份": "Back to provinces",
+    "返回城市": "Back to cities",
+    "全市 / 不限": "Any area",
+    "请选择截止日期（选填）": "Choose deadline (optional)",
+    "自由设置时长": "Set custom duration",
+    "请选择沟通时长": "Choose chat duration",
+    "选择找人助手沟通时长": "Choose match assistant chat duration",
+    "选择预设时长": "Choose a preset duration",
+    "请输入时长": "Enter duration",
+    "分钟数": "Minutes",
+    "确定": "Confirm",
+    "快速筛选": "Quick screen",
+    "标准沟通": "Standard chat",
+    "深度评估": "Deep assessment",
+    "推荐默认": "Recommended",
+    "全面考察": "Comprehensive review",
+    "绑定手机号": "Link phone number",
+    "验证码已发送": "Verification code sent",
+    "验证码已发送，请查收邮箱": "Verification code sent. Check your email.",
+    "请先发送验证码": "Send a verification code first",
+    "请输入6位验证码": "Enter the 6-digit code",
+    "重发": "Resend",
+    "认证并进入": "Verify and enter",
+    "暂不认证": "Not now",
+    "手机验证码登录": "Sign in with SMS code",
+    "手机密码登录": "Phone password sign-in",
+    "验证码登录": "Sign in with SMS code",
+    "密码登录": "Sign in with password",
+    "忘记密码？": "Forgot password?",
+    "请输入手机号": "Enter phone number",
+    "请输入验证码": "Enter verification code",
+    "请输入密码": "Enter password",
+    "登录": "Sign in",
+    "一键登录": "Quick sign in",
+    "其他登录方式": "Other sign-in methods",
+    "微信登录": "Sign in with WeChat",
+    "手机号登录": "Phone sign in",
+    "发送验证码": "Send code",
+    "重置密码": "Reset password",
+    "下一步": "Next",
+    "完成设置": "Finish setup",
+    "电话号验证": "Phone verification",
+    "个人简介": "Bio",
+    "介绍一下自己…": "Tell us about yourself…",
+    "编辑资料": "Edit profile",
+    "点击更换头像": "Tap to change photo",
+    "姓名": "Name",
+    "性别": "Gender",
+    "不设置": "Not set",
+    "最高学历": "Highest degree",
+    "院校": "School",
+    "行业": "Industry",
+    "标签": "Tags",
+    "添加": "Add",
+    "还没有添加标签": "No tags yet",
+    "AI 帮写": "AI write",
+    "AI 帮你润色": "AI polish",
+    "使用这段简介": "Use this bio",
+    "换一版": "Try another",
+    "关闭": "Close",
+    "浏览": "Browse",
+    "对话": "Chat",
+    "人生图书馆": "Life Library",
+    "知识": "Knowledge",
+    "创建知识": "Create knowledge",
+    "AI Literacy 入门课": "AI Literacy 101",
+    "对话访谈训练": "Conversation training",
+    "附件训练": "Attachment training",
+    "附件管理": "Attachment management",
+    "上传附件": "Upload attachments",
+    "点击上传附件": "Tap to upload attachments",
+    "制作管理": "Attachment management",
+    "还没有附件": "No attachments yet",
+    "训练 →": "Train →",
+    "训练": "Train",
+    "创建知识": "Create knowledge",
+    "开始新访谈": "Start new interview",
+    "评估得分": "Assessment score",
+    "定价建议": "Pricing suggestion",
+    "功能开发中，敬请期待": "Coming soon",
+    "AI笔记发布成功、收到评论、点赞、收藏时提醒": "Notifications for AI posts, comments, likes, and saves",
+    "今日经历回响": "Daily reflection",
+    "你的分身每日汇总你在鸥我上的足迹": "Your AI profile summarizes your activity each day",
+    "@提醒": "Mentions",
+    "有人 @你时通知": "Get notified when someone mentions you",
+    "分身收到对话": "AI profile chat",
+    "他人向你的分身发起对话时通知": "Get notified when someone starts a chat with your AI profile",
+    "新粉丝": "New followers",
+    "有新用户关注你时通知": "Get notified when a new user follows you",
+    "名片点赞": "Profile likes",
+    "你的名片收到点赞时通知": "Get notified when your profile receives a like",
+    "人生章节接收提醒": "Life chapter alerts",
+    "“人生图书馆”中有新的人生章节生成时提醒": "Get notified when a new life chapter is created in Life Library",
+    "消息推送需求文档说明：本页只展示可配置通知，今日经历回响为跨模块聚合，AI 笔记走二级设置页，通讯录和人生图书馆在本页直接开关。": "This page shows configurable notifications. Daily reflection is cross-feature aggregation, AI posts have a sub-settings page, and Contacts and Life Library are controlled here.",
+    "当前账号还没有登录密码，请先设置一个密码。": "This account has no sign-in password yet. Set one first.",
+    "请输入当前密码后设置新密码。": "Enter your current password, then set a new one.",
+    "输入绑定手机号，验证通过后即可重新设置密码。": "Enter your linked phone number. After verification, you can reset your password.",
+    "验证完成，请为账号设置新的登录密码。": "Verification complete. Set a new sign-in password.",
+    "青少年模式未开启": "Youth mode is off",
+    "精选教育类、知识类内容呈现在首页": "Curated educational and knowledge content appears on Home",
+    "无法进行打赏、充值等操作": "Tipping and top-ups are unavailable",
+    "每天使用时长可限制，夜间时段提醒休息": "Daily usage limits and night-time rest reminders are available",
+    "开启后可在设置中随时查看和管理": "You can view and manage this anytime in Settings",
+    "用户协议": "User agreement",
+    "查看平台服务条款、账号规则与内容发布规范。": "View platform terms, account rules, and posting standards.",
+    "隐私政策": "Privacy policy",
+    "了解个人信息收集、使用、存储与保护方式。": "Learn how personal data is collected, used, stored, and protected.",
+    "第三方信息共享": "Third-party sharing",
+    "查看合作服务与必要的数据共享说明。": "View partner services and necessary data-sharing details.",
+    "帮助与客服": "Help and support",
+    "客服邮箱": "Support email",
+    "从鸥我到深度洞察": "From Owo to deeper insight",
+    "从闲聊到深度洞察": "From casual chat to deeper insight",
+    "手机号一键登录": "One-tap phone sign in",
+    "我已阅读并同意": "I have read and agree to",
+    "自动发布授权": "Auto-publish authorization",
+    "授权后，系统将读取你的知识库，自动生成笔记并公开发布至平台。是否确认授权？": "After authorization, the system will read your knowledge base, generate posts, and publish them publicly. Continue?",
+    "暂不允许": "Not now",
+    "允许自动发布": "Allow auto-publish",
+    "圈内发布": "Community post",
+    "置顶": "Pin",
+    "置顶评论": "Pin comment",
+    "取消置顶": "Unpin",
+    "已取消置顶": "Comment unpinned",
+    "已更换置顶评论": "Pinned comment updated",
+    "删除评论": "Delete comment",
+    "全文完": "End of post",
+    "公共可见": "Public",
+    "公开可见": "Public",
+    "仅自己可见": "Only me",
+    "权限设置": "Visibility settings",
+    "权限设置 ›": "Visibility settings ›",
+    "进入北京大学学生服务总队校友圈需完成认证": "Verification is required to enter the Peking University Student Service Corps alumni community",
+    "支持 @pku.edu.cn、@stu.pku.edu.cn、@alumni.pku.edu.cn": "Supports @pku.edu.cn, @stu.pku.edu.cn, and @alumni.pku.edu.cn",
+    "6位数字": "6 digits",
+    "请输入北京大学校园邮箱": "Enter your Peking University email",
+    "去认证": "Verify",
+    "认证后申请进入": "Apply after verification",
+    "进入圈内交流前需先完成认证": "Complete verification before joining the community",
+    "申请加入": "Request to join",
+    "提交后将直接进入社群，查看成员名片并发起交流。": "After submission, you will enter the community to view member profiles and start conversations.",
+    "取消": "Cancel",
+    "本周": "This week",
+    "和这周的自己聊聊 →": "Chat with this week's self →",
+    "和这周的自己聊聊": "Chat with this week's self",
+    "有新内容": "New content",
+    "发布时间": "Published",
+    "报名已截止": "Applications closed",
+    "这条需求的报名已截止，暂时无法报名。你仍可与找人助手聊聊，了解需求相关信息。": "Applications for this request are closed. You can still chat with the match assistant to learn more.",
+    "继续补充训练要求…": "Add more training requirements…",
+    "回复找人助手…": "Reply to the match assistant…",
+    "我知道了": "Got it"
+  });
+  Object.assign(OWO_GLOBAL_EN_COPY, {
+    "遇见有趣的鸥灵": "Meet interesting Owo spirits",
+    "倾听另一个视角的答案": "Hear answers from another perspective",
+    "随时随地的灵感伙伴": "An inspiration companion, anywhere",
+    "来和鸥灵聊天吧": "Come chat with an Owo spirit",
+    "从闲聊到深度洞察": "From casual chat to deeper insight",
+    "随时在线的私人向导": "Your personal guide, always on",
+    "探索未知的经验与故事": "Explore new experiences and stories",
+    "与各个领域的鸥灵相遇": "Meet Owo spirits from every field",
+    "把经验变成轻松的对话": "Turn experience into easy conversations",
+    "《用户协议》": "User Agreement",
+    "《隐私政策》": "Privacy Policy",
+    "和": "and",
+    "请阅读并同意": "Please read and agree",
+    "继续表示你已阅读并同意": "By continuing, you agree to",
+    "同意并继续": "Agree and continue",
+    "分身获得赞数": "AI profile likes",
+    "笔记获得赞数": "Note likes",
+    "我的评论获赞数": "Comment likes",
+    "笔记获得收藏数": "Note saves",
+    "刚刚发布": "Just published",
+    "附件": "Attachments",
+    "新知识": "New knowledge",
+    "原价": "Regular price",
+    "校友价": "Alumni price",
+    "获赞与收藏": "Likes & saves",
+    "已实名": "Identity verified",
+    "· 已实名": "· Identity verified",
+    "职场": "Career",
+    "生活": "Lifestyle",
+    "生活方式": "Lifestyle",
+    "奇幻": "Fantasy",
+    "共 0 个附件 · 删除知识会一并删除全部附件": "Total 0 attachments · deleting this knowledge also deletes all attachments",
+    "共 1 个附件 · 删除知识会一并删除全部附件": "Total 1 attachment · deleting this knowledge also deletes all attachments",
+    "默认不限时，报名者可以随时进入并继续与找人助手沟通。": "No time limit by default. Applicants can return and continue chatting with the match assistant anytime.",
+    "和这周的自己说点什么…": "Say something to this week's self…",
+    "收起": "Collapse",
+    "... 更多": "... More",
+    "2026.3 第三周 人生章节": "Week 3, 2026.3 · Life chapters",
+    "2026.2 第二周 人生章节": "Week 2, 2026.2 · Life chapters",
+    "2026.2 第一周 人生章节": "Week 1, 2026.2 · Life chapters",
+    "需求": "Requests",
+    "大学": "University",
+    "求职": "Careers",
+    "创业": "Startups",
+    "科研": "Research",
+    "考研": "Graduate school",
+    "实习": "Internships",
+    "科普": "Science",
+    "搞笑": "Humor",
+    "手机号码一键登录": "One-tap phone sign in",
+    "已取消": "Cancelled",
+    "与TA聊聊": "Chat with them",
+    "找人助手 · 已训练": "Match assistant · Trained",
+    "找人助手 ·": "Match assistant ·",
+    "已训练": "Trained",
+    "· 全文完 ·": "· End of post ·",
+    "· 到此为止 ·": "· End ·",
+    "最高学历": "Highest degree",
+    "选择最高学历": "Select highest degree",
+    "选择学历": "Select degree",
+    "输入标签，如 AI产品经理": "Enter a tag, e.g. AI Product Manager",
+    "高中及以下": "High school or below",
+    "大专": "Associate degree",
+    "本科": "Bachelor's degree",
+    "本科（双学位）": "Bachelor's degree (dual degree)",
+    "硕士": "Master's degree",
+    "博士": "Doctorate",
+    "学历不限": "Any education level",
+    "大专以上": "Associate degree or above",
+    "本科以上": "Bachelor's degree or above",
+    "硕士以上": "Master's degree or above",
+    "在读": "Currently enrolled",
+    "已毕业": "Graduated",
+    "休学": "On leave",
+    "延期毕业": "Extended graduation",
+    "其他": "Other",
+    "经验不限": "Any experience level",
+    "在校/应届": "Student / recent graduate",
+    "1年以内": "Under 1 year",
+    "1-3年": "1-3 years",
+    "3-5年": "3-5 years",
+    "5-10年": "5-10 years",
+    "10年以上": "10+ years",
+    "面议": "Negotiable",
+    "100K以上": "100K+",
+    "未融资": "Not funded",
+    "天使轮": "Angel round",
+    "Pre-A轮": "Pre-A round",
+    "A轮": "Series A",
+    "B轮": "Series B",
+    "C轮": "Series C",
+    "D轮及以上": "Series D+",
+    "已上市": "Public company",
+    "不需要融资": "No funding needed",
+    "公司": "Company",
+    "社会组织": "Social organization",
+    "社团": "Club",
+    "创业社群": "Startup community",
+    "创业项目": "Startup project",
+    "活动": "Event",
+    "自定义": "Custom"
+  });
+  const originalOwoText = new WeakMap();
+  const originalOwoAttributes = new WeakMap();
   const translateOwoPage = () => {
-    if (T._language !== "English") return;
+    const english = document.documentElement.dataset.owoLanguage === "en";
     const dictionary = OWO_GLOBAL_EN_COPY;
-    const replace = value => dictionary[value] || value;
+    const replace = value => {
+      if (dictionary[value]) return dictionary[value];
+      // Reusable system states. These cover counts and timestamps without touching
+      // free-form messages or user-authored request content.
+      let match;
+      if ((match = value.match(/^今天\s*(\d{1,2}:\d{2})$/))) return `Today ${match[1]}`;
+      if ((match = value.match(/^昨天\s*(\d{1,2}:\d{2})?$/))) return `Yesterday${match[1] ? ` ${match[1]}` : ""}`;
+      if ((match = value.match(/^(\d+)分钟前$/))) return `${match[1]} min ago`;
+      if ((match = value.match(/^(\d+)小时前$/))) return `${match[1]}h ago`;
+      if ((match = value.match(/^(\d+)天前$/))) return `${match[1]}d ago`;
+      if ((match = value.match(/^(\d+)周前$/))) return `${match[1]}w ago`;
+      if ((match = value.match(/^([\d,.]+(?:k|K|万)?)\s*获赞与收藏$/))) return `${match[1]} likes & saves`;
+      if ((match = value.match(/^(.+?)\s*·\s*已实名$/))) return `${match[1]} · Identity verified`;
+      if ((match = value.match(/^找人助手\s*·\s*(已训练|待训练|优化中)$/))) {
+        const status = {"已训练": "Trained", "待训练": "Not trained", "优化中": "Improving"};
+        return `Match assistant · ${status[match[1]]}`;
+      }
+      if ((match = value.match(/^找人助手\s*·\s*(Trained|Not trained|Improving)$/))) return `Match assistant · ${match[1]}`;
+      if ((match = value.match(/^和\s*(.+?)\s*聊聊这部分知识…$/))) return `Chat with ${match[1]} about this knowledge…`;
+      if ((match = value.match(/^已取消\s*(\d+)$/))) return `Cancelled ${match[1]}`;
+      if ((match = value.match(/^(\d+)人正在看$/))) return `${match[1]} viewing`;
+      if ((match = value.match(/^(\d+(?:\.\d+)?k)人正在看$/i))) return `${match[1]} viewing`;
+      if ((match = value.match(/^已收到\s*(\d+)\s*人报名$/))) return `${match[1]} applications received`;
+      if ((match = value.match(/^(\d+)\s*人报名$/))) return `${match[1]} applications`;
+      if ((match = value.match(/^(\d+)\s*位成员$/))) return `${match[1]} members`;
+      if ((match = value.match(/^([\d,.]+)\s*位成员\s*·\s*(认证后申请进入|申请后进入|已加入)$/))) return `${match[1]} members · ${match[2] === "已加入" ? "Joined" : match[2] === "认证后申请进入" ? "Apply after verification" : "Join after approval"}`;
+      if ((match = value.match(/^申请加入(.+)$/))) return `Request to join ${match[1]}`;
+      if ((match = value.match(/^暂无「(.+)」需求$/))) {
+        const demandTypes = {"找合伙人": "partner", "遇见心动": "relationship", "找搭子": "buddy", "活动招募": "event", "找场地": "venue", "社团/社群招新": "club recruitment", "其他": "other"};
+        return `No ${demandTypes[match[1]] || match[1]} requests`;
+      }
+      if ((match = value.match(/^(\d{4})\.(\d{1,2})\s*第(\d+)周\s*人生章节$/))) return `Week ${match[3]}, ${match[1]}.${match[2]} · Life chapters`;
+      if ((match = value.match(/^(\d{4})\.(\d{1,2})\s*第([一二三四五六七八九十])周\s*人生章节$/))) {
+        const ordinal = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10};
+        return `Week ${ordinal[match[3]]}, ${match[1]}.${match[2]} · Life chapters`;
+      }
+      if ((match = value.match(/^(\d{4})\.(\d{1,2})\s*第([一二三四五六七八九十])周\s*·\s*人生章节$/))) {
+        const ordinal = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10};
+        return `Week ${ordinal[match[3]]}, ${match[1]}.${match[2]} · Life chapters`;
+      }
+      if ((match = value.match(/^(\d{4})\.(\d{1,2})\s*第([一二三四五六七八九十])周\s*Life chapters$/))) {
+        const ordinal = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10};
+        return `Week ${ordinal[match[3]]}, ${match[1]}.${match[2]} · Life chapters`;
+      }
+      if ((match = value.match(/^(\d{4})\.(\d{1,2})\s*第([一二三四五六七八九十])周\s*·\s*和这周的自己聊聊$/))) {
+        const ordinal = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10};
+        return `Week ${ordinal[match[3]]}, ${match[1]}.${match[2]} · Chat with this week's self`;
+      }
+      if ((match = value.match(/^发布于\s*(\d{4})年(\d{1,2})月(\d{1,2})日$/))) return `Posted ${match[1]}-${String(match[2]).padStart(2, "0")}-${String(match[3]).padStart(2, "0")}`;
+      if ((match = value.match(/^(\d{4})-(\d{2})-(\d{2})截止$/))) return `Deadline ${match[1]}-${match[2]}-${match[3]}`;
+      if ((match = value.match(/^原价\s*¥?\s*([\d,.]+)\s*\/\s*小时$/))) return `Regular ¥${match[1]} / hour`;
+      if ((match = value.match(/^校友价\s*¥?\s*([\d,.]+)\s*\/\s*小时$/))) return `Alumni ¥${match[1]} / hour`;
+      if ((match = value.match(/^原价\s*¥?\s*([\d,.]+)\s*\/\s*小时\s+校友价\s*¥?\s*([\d,.]+)\s*\/\s*小时$/))) return `Regular ¥${match[1]} / hour · Alumni ¥${match[2]} / hour`;
+      if ((match = value.match(/^(\d+)\s*分钟$/))) return `${match[1]} min`;
+      if ((match = value.match(/^(\d+)\s*小时$/))) return `${match[1]}h`;
+      if ((match = value.match(/^(\d+)\s*个附件$/))) return `${match[1]} attachments`;
+      if ((match = value.match(/^附件\s*(\d+)$/))) return `Attachments ${match[1]}`;
+      if ((match = value.match(/^(?:训练|Train)\s*(\d+(?:\.\d+)?)h\s*·\s*附件\s*(\d+)$/))) return `Train ${match[1]}h · Attachments ${match[2]}`;
+      if ((match = value.match(/^共\s*(\d+)\s*个附件\s*·\s*删除知识会一并删除全部附件$/))) return `Total ${match[1]} attachments · deleting this knowledge also deletes all attachments`;
+      if ((match = value.match(/^新知识\s*(\d+)$/))) return `New knowledge ${match[1]}`;
+      if ((match = value.match(/^(\d+)\s*个分身$/))) return `${match[1]} AI profiles`;
+      if ((match = value.match(/^(\d+)\s*位认证校友$/))) return `${match[1]} verified alumni`;
+      return value;
+    };
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(node => {
       const original = node.nodeValue;
+      if (!english) {
+        const source = originalOwoText.get(node);
+        if (source != null) {
+          node.nodeValue = source;
+          originalOwoText.delete(node);
+        }
+        return;
+      }
+      if (originalOwoText.has(node)) {
+        const saved = originalOwoText.get(node);
+        const savedTrimmed = saved.trim();
+        if (original === saved.replace(savedTrimmed, replace(savedTrimmed))) return;
+        originalOwoText.delete(node);
+      }
       const trimmed = original.trim();
       const translated = replace(trimmed);
-      if (translated !== trimmed) node.nodeValue = original.replace(trimmed, translated);
+      if (translated !== trimmed) {
+        originalOwoText.set(node, original);
+        node.nodeValue = original.replace(trimmed, translated);
+      }
     });
-    document.querySelectorAll("[placeholder],[aria-label]").forEach(element => {
-      ["placeholder", "aria-label"].forEach(attribute => {
+    document.querySelectorAll("[placeholder],[aria-label],[title]").forEach(element => {
+      ["placeholder", "aria-label", "title"].forEach(attribute => {
         const value = element.getAttribute(attribute);
-        if (value && replace(value) !== value) element.setAttribute(attribute, replace(value));
+        if (!value) return;
+        if (!english) {
+          const saved = originalOwoAttributes.get(element);
+          if (saved && saved[attribute] != null) {
+            element.setAttribute(attribute, saved[attribute]);
+            delete saved[attribute];
+          }
+          return;
+        }
+        if (replace(value) !== value) {
+          const saved = originalOwoAttributes.get(element) || {};
+          if (saved[attribute] === value) return;
+          saved[attribute] = value;
+          originalOwoAttributes.set(element, saved);
+          element.setAttribute(attribute, replace(value));
+        }
       });
     });
   };
@@ -71545,7 +72749,7 @@ function mountOwoApp() {
   if (!window.__owoLanguageObserver) {
     let translating = false;
     window.__owoLanguageObserver = new MutationObserver(() => {
-      if (translating || T._language !== "English") return;
+      if (translating) return;
       translating = true;
       translateOwoPage();
       translating = false;
@@ -71631,7 +72835,7 @@ function mountOwoApp() {
     const languageButtons = [];
     let activeLanguage = "简体中文";
     try {
-      activeLanguage = localStorage.getItem("owo_language_pref") === "English" ? "English" : "简体中文";
+      activeLanguage = window.owoGetLanguage ? window.owoGetLanguage() : localStorage.getItem("owo_language_pref") === "English" ? "English" : "简体中文";
     } catch (e) {}
     const syncLanguageButtons = language => languageButtons.forEach(item => {
       const active = item.dataset.language === language;
@@ -71645,16 +72849,17 @@ function mountOwoApp() {
       btn.dataset.language = language;
       btn.style.cssText = "border:none;cursor:pointer;border-radius:999px;padding:0 11px;min-height:36px;font:inherit;color:var(--owo-color-text-secondary);background:transparent;transition:all .2s;flex:0 0 auto";
       btn.onclick = () => {
-        applyOwoRuntimePreferences({
-          language
-        });
-        syncLanguageButtons(language);
-        renderCurrent();
+        window.owoSetLanguage(language);
       };
       languageButtons.push(btn);
       bar.appendChild(btn);
     });
     syncLanguageButtons(activeLanguage);
+    window.addEventListener("owo-language-change", event => {
+      const language = event.detail && event.detail.language || window.owoGetLanguage();
+      syncLanguageButtons(language);
+      renderCurrent();
+    });
     document.body.appendChild(bar);
   }
 }
@@ -71720,8 +72925,8 @@ function mountOwoDevRequirementNotes() {
               <li>入口路径：所有用户 → 我的 → 外表 → 我要找人 / 我的报名；广场顶部右侧提供“+ 发布找人”快捷入口。</li>
               <li>功能开放给所有用户。广场原“创业 CEO”个人名片流改为“正在找人”，直接展示进行中的需求卡片流，不展示用户名片，不限制发布者身份；主 tab 下方提供“全部 / 找合伙人 / 遇见心动 / 找搭子 / 活动招募 / 找场地 / 社团/社群招新 / 其他”二级筛选。“其他”仅归并自定义需求，可与关键词搜索叠加。二级筛选为纯文字，不使用胶囊、底色、边框或圆角；与一级频道留白分层，使用13px字号、20px横向间距，选中为品牌紫，未选中为灰色，以字重反馈选择。新增加的“创业 CEO”独立 tab 仅展示公司创建的组织。</li>
               <li>广场“校友圈”的北京大学学生服务总队入口在名称前直接展示内嵌的彩色官方 Logo，保持方形尺寸，不增加白底、描边、阴影或额外外框；北大米米在成员列表、介绍区和名片详情中统一使用内嵌的红色吉祥物 Logo。社群详情初始只保留返回键，组织名称在全宽沉浸式头图中展示；头图背景从状态栏延展至顶部，首屏导航透明，上滑后导航栏渐显名称。头图下使用圆角内容面轻微上浮衔接列表；头图内 Logo 与名称较常规列表更大并靠上对齐，成员数展示为灰黑（深色模式白灰）的“大号加粗数字 + 名社群成员”，不展示“活跃社群”。内容顺序为官方分身、核心成员、社群成员。核心成员在姓名下展示主理人或管理员对号认证，官方分身不展示群主认证。社群 Logo 使用项目内相对路径资源，确保上传 GitHub 后可独立运行。</li>
-              <li>广场在“社群”右侧增加“创业 CEO”tab：展示由公司创建的组织，复用社群列表、申请加入、组织头图、官方分身、核心成员、社群成员的同一套样式和交互，不维护第二套组织详情。</li>
-              <li>原型顶部全局控制栏在“外观”右侧提供“语言：中文 / English”快捷切换；任意页面均可切换，偏好统一写入 <code>owo_language_pref</code> 并用全局词典刷新当前页。</li>
+              <li>广场在“社群”右侧增加“未来独角兽”tab（英文 Future Unicorns）：展示由公司创建的组织，复用社群列表、申请加入、组织头图、官方分身、核心成员、社群成员的同一套样式和交互，不维护第二套组织详情。组织优先展示上传 Logo；未上传时，英文名称取首字母、中文名称取首个汉字生成稳定的文字 Logo。</li>
+              <li>设置页与原型顶部“外观”右侧的“语言：中文 / English”必须调用同一个 <code>setOwoLanguage</code>。中英文 UI 词典随 HTML 静态发布，不依赖本地缓存或在线翻译；链接语言使用 <code>?lang=zh-CN</code> 与 <code>?lang=en</code>，URL 优先于本地偏好，切换后同步更新 URL，复制链接即可分享对应语言版本。英文模式必须覆盖导航、表单、按钮、提示、空状态、动态时间人数、发布/报名/匹配、聊天、知识、教育认证和设置等所有系统文案；真实用户填写内容不自动翻译，原型演示内容提供英文示例。</li>
               <li>“关于我”和组织信息模块全部删除。发布者头像、姓名、简介和角色直接读取个人名片。</li>
               <li>产品统一使用“报名、沟通、找人助手”，不使用“申请、面试、AI面试官”。AI只辅助整理需求、沟通和匹配建议，最终连接由真人决定。</li>
             </ul>
@@ -71771,7 +72976,7 @@ function mountOwoDevRequirementNotes() {
               <li>管理页概述展示需求数、报名数、高匹配数及灰紫色辅助线；卡片报名人数使用绿色文字，不加胶囊、底色或边框；卡片主体进入详情，底部为“查看报名”和“训练/优化找人助手”，可显示新报名角标。</li>
               <li>发布者需求详情：展示全部非空发布字段、状态、截止时间、找人助手状态和AI策略摘要；底部提供编辑、暂停/恢复发布，暂停和删除均需二次确认。</li>
               <li>点击编辑复用发布第2、3步组件，显示为1/2“需求信息”、2/2“补充条件”；读取并写回同一需求对象，最终页“删除 / 保存并更新”，不得给空选填项补默认值。</li>
-              <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、需求类型、条件标签、两行概述，标题右侧显示绿色“进行中”。类型读取 <code>type</code>，自定义需求优先显示 <code>customDemandType</code>；类型独立成行，使用 18px Google Material Symbols Outlined 风格的线性语义图标与加粗类型名称，不增加图标底座、气囊或描边。社群招新/合伙人/搭子/活动/场地/心动/自定义依次使用多人、握手、双人、日历加号、定位、心形、四宫格图标。时间/地点/预算/人数等已填写条件在下一行使用紫色圆角标签。<code>aiDuration</code>、<code>durationMin</code>、<code>durationSec</code> 均不得出现在公开需求卡片。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片仅隐藏发布者信息，其他卡片视觉保持一致。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
+              <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、需求类型、条件标签、两行概述，标题右侧显示绿色“进行中”；截止后改为灰色“报名已截止”，但仍在广场呈现。类型读取 <code>type</code>，自定义需求优先显示 <code>customDemandType</code>；类型独立成行，使用 18px Google Material Symbols Outlined 风格的线性语义图标与加粗类型名称，不增加图标底座、气囊或描边。社群招新/合伙人/搭子/活动/场地/心动/自定义依次使用多人、握手、双人、日历加号、定位、心形、四宫格图标。时间/地点/预算/人数/截止时间等已填写条件在下一行使用紫色圆角标签：预算为“费用：{value}”、人数为“{value}人名额”、截止时间为“YYYY-MM-DD截止”。<code>aiDuration</code>、<code>durationMin</code>、<code>durationSec</code> 均不得出现在公开需求卡片。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片仅隐藏发布者信息，其他卡片视觉保持一致。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
               <li>公开详情直接映射五个字段：“需求说明”=<code>description</code>；“我找谁/什么资源”=<code>target</code>；“希望对方具备什么”=<code>matchingCriteria</code>；“参与方式”=<code>participationRequirements</code>；“补充说明”=<code>other</code>。</li>
               <li>公开详情标题下展示 <code>time/location/budget/count</code> 中全部有值的标签，“遇见心动”排除 <code>count</code>；首次发布时间 <code>publishedAt</code> 展示在需求元信息之后、发布者信息卡之前，编辑不更新。</li>
               <li>发布者区映射个人名片：头像、姓名；副标题优先 <code>role · company</code>，其次 <code>role · industry</code>、<code>company · industry</code>，最后单行截断 <code>bio</code>。点击整个发布者区进入个人名片详情。</li>
@@ -71802,7 +73007,7 @@ function mountOwoDevRequirementNotes() {
             <ul>
               <li>训练不是发布前置条件。未训练需求仍可公开和报名，卡片显示“训练找人助手”；训练配置完整后显示“优化找人助手”，并允许继续补充。</li>
               <li>未训练时采用“通用规则 + 需求类型模板 + 发布字段”；已训练时再叠加训练配置。训练对话与报名沟通使用不同提示词。</li>
-              <li>公开详情底部依次为“我要报名”和“与找人助手聊聊”。点击报名后留在详情页并提示报名成功；同一用户对同一需求仅一条有效报名。“我的报名”中已沟通需求点击“与找人助手聊聊”直接打开并续接该需求已有沟通记录，不重新展示沟通规则或创建新会话。用户可以随时取消报名；发布预览不展示这两个操作按钮。</li>
+              <li>公开详情底部依次为“我要报名”和“与找人助手聊聊”。点击报名后留在详情页并提示报名成功；同一用户对同一需求仅一条有效报名。截止后“我要报名”显示“报名已截止”，点击弹出不可报名说明；“与找人助手聊聊”仍可进入，但不创建报名记录、不计入报名数或正式匹配报告。“我的报名”中已沟通需求点击“与找人助手聊聊”直接打开并续接该需求已有沟通记录，不重新展示沟通规则或创建新会话。用户可以随时取消报名；发布预览不展示这两个操作按钮。</li>
               <li>设置时长时，每位报名者只有一次正式需求沟通机会。首次进入前弹窗明确时长和一次机会；确认后由服务端写入 <code>formalStartedAt/formalEndsAt</code> 并启动倒计时，退出页面、切到后台或换设备均不暂停。再次进入恢复同一会话和服务端剩余时间，不创建第二次机会。</li>
               <li>限时结束后消息流完整保留，输入框不隐藏，找人助手提示“已经收到您的报名信息，本次需求沟通已完成。接下来我们可以聊聊其他问题”。之后进入普通聊天，消息继续保存在同一会话，但不再改变本次需求的匹配度和正式报告。</li>
               <li>未设置时长时，不显示倒计时。报名者可随时进入同一需求会话，找人助手持续追问并保存消息；达到报告条件后匹配结果随新的有效信息更新，直至需求关闭、报名取消或发布者确认推进。</li>

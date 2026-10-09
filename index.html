@@ -34199,6 +34199,19 @@ function applyOwoTheme(props) {
 }
 const OWO_APPEARANCE_KEY = "owo_appearance_pref";
 const OWO_PLATFORM_KEY = "owo_platform_mode";
+const OWO_LANGUAGE_KEY = "owo_language_pref";
+function owoLanguageFromUrl() {
+  try {
+    const value = new URLSearchParams(window.location.search).get("lang");
+    if (!value) return null;
+    return /^(en|en-us|english)$/i.test(value) ? "English" : /^(zh|zh-cn|chinese)$/i.test(value) ? "简体中文" : null;
+  } catch (e) {
+    return null;
+  }
+}
+function normalizeOwoLanguage(value) {
+  return value === "English" || /^(en|en-us|english)$/i.test(String(value || "")) ? "English" : "简体中文";
+}
 function detectOwoPlatform() {
   if (typeof navigator === "undefined") return "ios";
   const ua = navigator.userAgent.toLowerCase();
@@ -34212,15 +34225,18 @@ function detectOwoPlatform() {
   return "ios";
 }
 function readOwoRuntimePreferences() {
+  const linkedLanguage = owoLanguageFromUrl();
   try {
     return {
       appearance: localStorage.getItem(OWO_APPEARANCE_KEY) || "跟随系统",
-      platform: localStorage.getItem(OWO_PLATFORM_KEY) || detectOwoPlatform()
+      platform: localStorage.getItem(OWO_PLATFORM_KEY) || detectOwoPlatform(),
+      language: linkedLanguage || localStorage.getItem(OWO_LANGUAGE_KEY) || "简体中文"
     };
   } catch (e) {
     return {
       appearance: "跟随系统",
-      platform: detectOwoPlatform()
+      platform: detectOwoPlatform(),
+      language: linkedLanguage || "简体中文"
     };
   }
 }
@@ -34240,6 +34256,7 @@ function applyOwoRuntimePreferences(next, options = {}) {
   };
   const theme = resolveOwoTheme(prefs.appearance);
   const platform = prefs.platform || detectOwoPlatform();
+  const language = normalizeOwoLanguage(prefs.language);
   const dark = theme === "dark";
   Object.assign(T, {
     bg: dark ? "#121212" : "#FFFFFF",
@@ -34265,7 +34282,8 @@ function applyOwoRuntimePreferences(next, options = {}) {
     shadowMd: dark ? "0 14px 38px rgba(0,0,0,.36)" : "0 8px 28px rgba(0,0,0,.07)",
     _theme: theme,
     _appearance: prefs.appearance,
-    _platform: platform
+    _platform: platform,
+    _language: language
   });
   if (typeof document !== "undefined") {
     const root = document.documentElement;
@@ -34273,15 +34291,38 @@ function applyOwoRuntimePreferences(next, options = {}) {
     root.dataset.owoResolvedTheme = theme;
     root.dataset.owoAppearance = prefs.appearance === "跟随系统" ? "system" : theme;
     root.dataset.owoPlatform = platform;
+    root.dataset.owoLanguage = language === "English" ? "en" : "zh-CN";
+    root.lang = language === "English" ? "en" : "zh-CN";
   }
   if (options.persist !== false) {
     try {
       localStorage.setItem(OWO_APPEARANCE_KEY, prefs.appearance);
       localStorage.setItem(OWO_PLATFORM_KEY, platform);
+      localStorage.setItem(OWO_LANGUAGE_KEY, language);
     } catch (e) {}
   }
   return prefs;
 }
+// Both the in-app setting and the prototype toolbar use this public bridge.
+function setOwoLanguage(value) {
+  const language = normalizeOwoLanguage(value);
+  const prefs = applyOwoRuntimePreferences({
+    language
+  });
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", language === "English" ? "en" : "zh-CN");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  } catch (e) {}
+  window.dispatchEvent(new CustomEvent("owo-language-change", {
+    detail: {
+      language
+    }
+  }));
+  return prefs;
+}
+window.owoSetLanguage = setOwoLanguage;
+window.owoGetLanguage = () => normalizeOwoLanguage(readOwoRuntimePreferences().language);
 function updateOwoAdaptiveRuntime() {
   if (typeof window === "undefined" || typeof document === "undefined") return;
   const root = document.documentElement;
@@ -34667,6 +34708,7 @@ const CEO_JOBS = {
     description: "我们正在发起一个面向年轻人的AI创新社群，通过主题分享、项目共创和线下活动，让成员持续交流并产出真实项目。",
     target: "对AI产品、技术、设计或运营感兴趣，愿意稳定参与社群共创的伙伴。",
     participationRequirements: "线上协作与上海线下活动结合，每周参与1-2次讨论或共创。",
+    other: "首次加入前会进行一次轻量沟通，确认彼此的参与期待；无需具备完整项目经历。",
     duties: "参与主题分享、项目共创、活动策划与社群日常协作。",
     requirements: "对AI方向有持续兴趣\n愿意稳定投入时间\n开放沟通并主动协作\n有相关经历优先但不强制",
     matchingCriteria: "参与动机\n可投入时间\n协作意识\n行动意愿",
@@ -34801,7 +34843,8 @@ const CEO_JOBS = {
     description: "我们计划举办一场小型 AI 青年共创夜，通过主题分享和分组讨论，一起探索 AI 社交产品的新场景。",
     target: "对 AI 产品、设计、内容或青年社群感兴趣，愿意参与讨论和共创的伙伴。",
     matchingCriteria: "有真实好奇心，愿意开放表达，并能尊重不同观点。",
-    participationRequirements: "上海线下参与，活动前完成一份简短兴趣问卷。"
+    participationRequirements: "上海线下参与，活动前完成一份简短兴趣问卷。",
+    other: "活动现场会按兴趣方向自由组队；如临时无法参加，请提前一天告知。"
   }],
   2: [{
     id: "sabrina-partner-1",
@@ -34814,7 +34857,8 @@ const CEO_JOBS = {
     description: "我正在验证一个连接文化内容与青年职业成长的品牌项目，已完成首轮用户访谈和内容方向梳理。",
     target: "有内容策划、品牌运营或商业化经验，并愿意参与早期项目验证的共创伙伴。",
     matchingCriteria: "内容判断力、行动力、长期投入意愿和坦诚沟通。",
-    participationRequirements: "前期远程协作，每周固定一次同步，关键节点可在北京线下共创。"
+    participationRequirements: "前期远程协作，每周固定一次同步，关键节点可在北京线下共创。",
+    other: "希望先围绕一个小的内容实验合作 4 周，再共同确认是否进入长期共创。"
   }],
   5: [{
     id: "wlf-buddy-1",
@@ -35521,7 +35565,7 @@ function StatusBar({
   }, "09:41"), React.createElement("div", {
     style: {
       display: "flex",
-      gap: 6,
+      gap: 8,
       alignItems: "center"
     }
   }, React.createElement("svg", {
@@ -41709,6 +41753,7 @@ function ExploreScreen({
   const [pkuCircleTab, setPkuCircleTab] = useState("pku-service");
   const [communityJoined, setCommunityJoined] = useState(() => new Set());
   const [selectedCommunity, setSelectedCommunity] = useState(initialSelectedCommunity);
+  const [communityHeaderCompact, setCommunityHeaderCompact] = useState(false);
   const [showCommunityJoin, setShowCommunityJoin] = useState(null);
   const [communitySuccessText, setCommunitySuccessText] = useState("");
   const [query, setQuery] = useState("");
@@ -41773,47 +41818,191 @@ function ExploreScreen({
       tags: ["AI创业", "共创", "产品"],
       role: "官方社群分身"
     },
-    users: [CEO_USERS[0], EXPLORE_USERS[0], EXPLORE_USERS[1]]
+    users: [CEO_USERS[0], EXPLORE_USERS[0], EXPLORE_USERS[1]],
+    coreMembers: [{
+      user: CEO_USERS[0],
+      role: "主理人"
+    }, {
+      user: EXPLORE_USERS[0],
+      role: "管理员"
+    }]
   }, {
-    id: "product-growth",
-    name: "产品增长共学社",
-    logoMark: "↗",
-    logoColor: "#12916C",
-    logoBg: "#EAF7F0",
-    description: "产品、增长与运营从业者的案例讨论和经验交流。",
-    memberCount: "836",
+    id: "global-business",
+    name: "环球商领袖俱乐部",
+    logoMark: "G",
+    logoSrc: "assets/community-logos/global-business-club.png",
+    logoColor: "#760000",
+    logoBg: "#F8E8E8",
+    description: "面向全球商业实践者的交流社群，分享商业洞察、合作机会与长期价值。",
+    memberCount: "2,145",
     official: {
-      id: "official-product-growth",
+      id: "official-global-business",
       communityOfficial: true,
-      name: "产品增长共学社",
-      bio: "官方社群 · 每周案例共学与主题讨论",
-      bioFull: "围绕产品、增长和运营案例进行每周共学，连接愿意认真交流方法与实践经验的从业者。",
-      seed: "OwoGrowthCommunity",
-      bg: "ffe1b8",
-      tags: ["产品", "增长", "运营"],
+      name: "环球商领袖俱乐部",
+      bio: "官方社群 · 商业洞察与跨界连接",
+      bioFull: "围绕商业创新、行业观察与跨界合作进行持续交流，连接愿意分享经验并共同探索新机会的成员。",
+      seed: "OwoGlobalBusinessCommunity",
+      bg: "f7d7d7",
+      tags: ["商业", "领袖", "全球视野"],
       role: "官方社群分身"
     },
-    users: [EXPLORE_USERS[2], CEO_USERS[1], EXPLORE_USERS[3]]
+    users: [EXPLORE_USERS[2], CEO_USERS[1], EXPLORE_USERS[3]],
+    coreMembers: [{
+      user: EXPLORE_USERS[2],
+      role: "主理人"
+    }, {
+      user: CEO_USERS[1],
+      role: "管理员"
+    }]
   }, {
-    id: "weekend-city",
-    name: "周末城市搭子",
-    logoMark: "⌖",
-    logoColor: "#E07B39",
-    logoBg: "#FFF1E6",
-    description: "一起发现展览、运动、徒步和城市里的新去处。",
+    id: "canva-surf",
+    name: "可画冲浪俱乐部",
+    logoMark: "≈",
+    logoSrc: "assets/community-logos/canva-surf-club.png",
+    logoColor: "#0F8393",
+    logoBg: "#E6F7F6",
+    description: "一起冲浪、交流技巧，分享海边运动和生活方式的真实时刻。",
     memberCount: "2,041",
     official: {
-      id: "official-weekend-city",
+      id: "official-canva-surf",
       communityOfficial: true,
-      name: "周末城市搭子",
-      bio: "官方社群 · 同城活动与兴趣连接",
-      bioFull: "分享展览、运动、徒步和城市活动，帮助同城伙伴找到节奏相近的周末搭子。",
-      seed: "OwoCityCommunity",
-      bg: "cfe9df",
-      tags: ["同城", "活动", "兴趣搭子"],
+      name: "可画冲浪俱乐部",
+      bio: "官方社群 · 冲浪活动与海边连接",
+      bioFull: "组织冲浪体验、技巧交流与海边活动，让不同水平的成员在安全、轻松的节奏里认识彼此。",
+      seed: "OwoCanvaSurfCommunity",
+      bg: "c8eef0",
+      tags: ["冲浪", "运动", "海边生活"],
       role: "官方社群分身"
     },
-    users: [EXPLORE_USERS[4], EXPLORE_USERS[5], PKU_ALUMNI_USERS[0]]
+    users: [EXPLORE_USERS[0], EXPLORE_USERS[1], PKU_ALUMNI_USERS[0]],
+    coreMembers: [{
+      user: EXPLORE_USERS[0],
+      role: "主理人"
+    }, {
+      user: EXPLORE_USERS[1],
+      role: "管理员"
+    }]
+  }, {
+    id: "niu-ren-tribe",
+    name: "牛人部落",
+    logoMark: "牛",
+    logoSrc: "assets/community-logos/niu-ren-tribe.png",
+    logoColor: "#D9281B",
+    logoBg: "#FFF0EE",
+    description: "连接正在做业务、品牌和增长实践的行动者，交换方法，也交换机会。",
+    memberCount: "3,286",
+    official: {
+      id: "official-niu-ren-tribe",
+      communityOfficial: true,
+      name: "牛人部落",
+      bio: "官方社群 · 企业增长与实战交流",
+      bioFull: "聚集企业营销、品牌、增长和经营实践者，以真实案例和高质量讨论形成长期连接。",
+      seed: "OwoNiuRenTribe",
+      bg: "ffd8d4",
+      tags: ["品牌", "增长", "实战"],
+      role: "官方社群分身"
+    },
+    users: [CEO_USERS[1], EXPLORE_USERS[1], EXPLORE_USERS[2]],
+    coreMembers: [{
+      user: CEO_USERS[1],
+      role: "主理人"
+    }, {
+      user: EXPLORE_USERS[1],
+      role: "管理员"
+    }]
+  }, {
+    id: "badminton-league",
+    name: "中国羽毛球俱乐部联赛",
+    logoMark: "羽",
+    logoSrc: "assets/community-logos/china-badminton-league.png",
+    logoColor: "#1869A6",
+    logoBg: "#EDF6FC",
+    description: "为羽毛球爱好者和俱乐部提供赛事信息、同城组队与长期交流。",
+    memberCount: "5,432",
+    official: {
+      id: "official-badminton-league",
+      communityOfficial: true,
+      name: "中国羽毛球俱乐部联赛",
+      bio: "官方社群 · 赛事、组队与同城交流",
+      bioFull: "汇集各地羽毛球俱乐部与爱好者，发布赛事信息、组织同城活动，并帮助成员找到长期搭档。",
+      seed: "OwoBadmintonLeague",
+      bg: "d7ebfb",
+      tags: ["羽毛球", "赛事", "同城组队"],
+      role: "官方社群分身"
+    },
+    users: [EXPLORE_USERS[0], PKU_ALUMNI_USERS[1], CEO_USERS[0]],
+    coreMembers: [{
+      user: EXPLORE_USERS[0],
+      role: "主理人"
+    }, {
+      user: PKU_ALUMNI_USERS[1],
+      role: "管理员"
+    }]
+  }];
+  // 公司发起的组织复用社群的申请、详情和成员交互，避免产生第二套组织页。
+  const companyCommunities = [{
+    id: "luna-ai-company",
+    name: "LUNA AI 共创社群",
+    logoMark: "L",
+    logoColor: "#5146B8",
+    logoBg: "#E9E6FF",
+    description: "由 LUNA AI 发起，连接产品、技术与设计伙伴，一起讨论真实的 AI 产品落地。",
+    memberCount: "3,842",
+    official: {
+      id: "official-luna-ai",
+      communityOfficial: true,
+      name: "LUNA AI 官方分身",
+      bio: "LUNA AI · 产品共创与伙伴连接",
+      bioFull: "这里分享 LUNA AI 的产品实践、共创机会和伙伴交流，欢迎正在做 AI 产品的人加入。",
+      seed: "LunaAiOfficial",
+      bg: "dcd7ff",
+      tags: ["AI", "产品共创", "技术"],
+      role: "官方分身"
+    },
+    users: [CEO_USERS[0], EXPLORE_USERS[0], EXPLORE_USERS[2]],
+    coreMembers: [{ user: CEO_USERS[0], role: "主理人" }, { user: EXPLORE_USERS[0], role: "管理员" }]
+  }, {
+    id: "flow-saas-company",
+    name: "FlowSaaS 出海伙伴社群",
+    logoMark: "F",
+    logoColor: "#087C6C",
+    logoBg: "#E4F6F1",
+    description: "由 FlowSaaS 发起，面向正在探索海外市场的创业者、增长负责人和服务伙伴。",
+    memberCount: "2,106",
+    official: {
+      id: "official-flow-saas",
+      communityOfficial: true,
+      name: "FlowSaaS 官方分身",
+      bio: "FlowSaaS · 出海增长与伙伴网络",
+      bioFull: "围绕产品出海、增长实践和本地化协作，连接愿意共享经验的创业者和服务伙伴。",
+      seed: "FlowSaasOfficial",
+      bg: "ccefe6",
+      tags: ["出海", "增长", "SaaS"],
+      role: "官方分身"
+    },
+    users: [CEO_USERS[1], EXPLORE_USERS[1], PKU_ALUMNI_USERS[0]],
+    coreMembers: [{ user: CEO_USERS[1], role: "主理人" }, { user: EXPLORE_USERS[1], role: "管理员" }]
+  }, {
+    id: "owo-creative-company",
+    name: "鸥我青年创作社群",
+    logoMark: "O",
+    logoColor: "#B64D7E",
+    logoBg: "#FCEAF1",
+    description: "由鸥我发起，面向内容、设计和创意项目的年轻创作者，发现合作与活动机会。",
+    memberCount: "1,756",
+    official: {
+      id: "official-owo-creative",
+      communityOfficial: true,
+      name: "鸥我青年创作官方分身",
+      bio: "鸥我 · 创作、活动与长期连接",
+      bioFull: "连接有表达欲和行动力的年轻创作者，在真实项目、活动与交流中相互认识。",
+      seed: "OwoCreativeOfficial",
+      bg: "f7d7e5",
+      tags: ["创作", "活动", "共创"],
+      role: "官方分身"
+    },
+    users: [EXPLORE_USERS[3], PKU_ALUMNI_USERS[1], EXPLORE_USERS[2]],
+    coreMembers: [{ user: EXPLORE_USERS[3], role: "主理人" }, { user: PKU_ALUMNI_USERS[1], role: "管理员" }]
   }];
   const CommunityLogo = ({
     community,
@@ -41824,7 +42013,7 @@ function ExploreScreen({
       width: size,
       height: size,
       borderRadius: Math.max(9, Math.round(size * .26)),
-      background: community.logoBg || "#EEEAFE",
+      background: community.logoSrc ? "#FFFFFF" : community.logoBg || "#EEEAFE",
       color: community.logoColor || T.purple,
       display: "flex",
       alignItems: "center",
@@ -41832,9 +42021,19 @@ function ExploreScreen({
       flexShrink: 0,
       fontSize: community.logoMark === "AI" ? Math.round(size * .37) : Math.round(size * .58),
       lineHeight: 1,
-      fontWeight: 900
+      fontWeight: 900,
+      overflow: "hidden"
     }
-  }, community.logoMark || "社");
+  }, community.logoSrc ? React.createElement("img", {
+    src: community.logoSrc,
+    alt: "",
+    style: {
+      width: "100%",
+      height: "100%",
+      display: "block",
+      objectFit: "contain"
+    }
+  }) : community.logoMark || "社");
   const allUsers = [...EXPLORE_USERS, ...PKU_ALUMNI_USERS, ...CEO_USERS];
   const publicDemands = allUsers.flatMap(owner => (owner.id === 101 && ceoJobs ? ceoJobs : CEO_JOBS[owner.id] || []).filter(job => job.listed !== false && !job.paused).map(job => ({
     job,
@@ -41843,8 +42042,10 @@ function ExploreScreen({
     const durationOf = item => Number(item.job.durationSec || (item.job.aiDuration || item.job.durationMin || 0) * 60) || 0;
     return Number(durationOf(b) > 0) - Number(durationOf(a) > 0);
   });
-  const demandTypeFilters = ["全部", "找合伙人", "遇见心动", "找搭子", "活动招募", "找场地", "其他"];
-  const list = tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : tab === "community" ? selectedCommunity ? selectedCommunity.users || [] : [] : allUsers;
+  const demandTypeFilters = ["全部", "找合伙人", "遇见心动", "找搭子", "活动招募", "找场地", "社团/社群招新", "其他"];
+  const isCommunityTab = tab === "community" || tab === "companyCommunity";
+  const activeCommunities = tab === "companyCommunity" ? companyCommunities : socialCommunities;
+  const list = tab === "talent" ? paidUsers : tab === "pku" ? pkuCircleJoined ? activePkuCircle?.users || [] : [] : isCommunityTab ? selectedCommunity ? selectedCommunity.users || [] : [] : allUsers;
   const visibleList = (list || []).filter(Boolean).filter(u => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -41853,7 +42054,7 @@ function ExploreScreen({
   const visibleDemands = publicDemands.filter(({job, owner}) => {
     const q = query.trim().toLowerCase();
     const type = demandTypeOf(job);
-    const typeMatched = demandTypeFilter === "全部" || (demandTypeFilter === "其他" ? type === "社团/社群招新" || type === "自定义需求" : type === demandTypeFilter);
+    const typeMatched = demandTypeFilter === "全部" || (demandTypeFilter === "其他" ? type === "自定义需求" : type === demandTypeFilter);
     if (!typeMatched) return false;
     if (!q) return true;
     return [job.title, demandTypeLabelOf(job), demandSummaryOf(job), demandTargetOf(job), owner.name, ...(demandPrimaryMeta(job) || [])].filter(Boolean).join(" ").toLowerCase().includes(q);
@@ -41883,6 +42084,7 @@ function ExploreScreen({
   const isPkuCertified = () => isPkuEducationCertified();
   const selectCommunity = community => {
     setSelectedCommunity(community);
+    setCommunityHeaderCompact(false);
     if (onSelectedCommunityChange) onSelectedCommunityChange(community);
   };
   const selectDemand = demand => {
@@ -41895,6 +42097,10 @@ function ExploreScreen({
   const openCommunityTab = () => {
     selectCommunity(null);
     setTab("community");
+  };
+  const openCompanyCommunityTab = () => {
+    selectCommunity(null);
+    setTab("companyCommunity");
   };
   const openPkuCircle = () => {
     if (!isPkuCertified()) {
@@ -41927,7 +42133,7 @@ function ExploreScreen({
     });
     setShowCommunityJoin(null);
     selectCommunity(community);
-    setTab("community");
+    setTab(tab === "companyCommunity" ? "companyCommunity" : "community");
     setCommunitySuccessText("申请通过，已进入" + community.name);
   };
   useEffect(() => {
@@ -42335,8 +42541,44 @@ function ExploreScreen({
       whiteSpace: "nowrap"
     }
   }, compactCount(INIT_CHATS[u.id] || 0), "\u4EBA\u6B63\u5728\u804A")));
+  const CommunityRoleMark = ({
+    role
+  }) => role ? React.createElement("span", {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      color: T.purple,
+      fontSize: 11.5,
+      fontWeight: 800,
+      whiteSpace: "nowrap"
+    }
+  }, role, React.createElement("span", {
+    "aria-label": role + "认证",
+    style: {
+      width: 14,
+      height: 14,
+      borderRadius: "50%",
+      background: "#7B73DA",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, React.createElement("svg", {
+    width: 8,
+    height: 8,
+    viewBox: "0 0 24 24",
+    fill: "none"
+  }, React.createElement("path", {
+    d: "M20 6L9 17l-5-5",
+    stroke: "#fff",
+    strokeWidth: "3.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  })))) : null;
   const PersonCard = ({
-    u
+    u,
+    communityRole = null
   }) => {
     const jobCount = CEO_JOBS[u.id] ? CEO_JOBS[u.id].filter(job => job.listed !== false && !job.paused).length : 0;
     const isPkuTab = tab === "pku";
@@ -42438,10 +42680,12 @@ function ExploreScreen({
       official: u.schoolOfficial
     })), React.createElement("div", {
       style: {
-        marginTop: u.schoolOfficial || u.communityOfficial || isPkuTab && isPkuAlumni && schoolMeta.length > 0 ? 4 : 0,
+        marginTop: communityRole || u.schoolOfficial || isPkuTab && isPkuAlumni && schoolMeta.length > 0 ? 4 : 0,
         minWidth: 0
       }
-    }, (u.schoolOfficial || u.communityOfficial) && React.createElement("div", {
+    }, communityRole ? React.createElement(CommunityRoleMark, {
+      role: communityRole
+    }) : u.schoolOfficial && React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -42459,7 +42703,7 @@ function ExploreScreen({
         overflow: "hidden",
         textOverflow: "ellipsis"
       }
-    }, u.isUniversityRep ? "北京大学学生服务总队官方分身" : u.communityOfficial ? "群主" : u.school || "官方机构"), React.createElement("span", {
+    }, u.isUniversityRep ? "北京大学学生服务总队官方分身" : u.school || "官方机构"), React.createElement("span", {
       "aria-label": "\u5B98\u65B9\u8BA4\u8BC1",
       style: {
         width: 13,
@@ -42959,7 +43203,7 @@ function ExploreScreen({
       color: META,
       margin: "1px 0 13px"
     }
-  }, "找到感兴趣的主题，申请后即可进入社群。"), socialCommunities.map(community => {
+  }, tab === "companyCommunity" ? "由公司发起的组织，申请后即可进入交流。" : "找到感兴趣的主题，申请后即可进入社群。"), activeCommunities.map(community => {
     const joined = communityJoined.has(community.id);
     const members = (community.users || []).filter(Boolean);
     const official = community.official || {};
@@ -43087,59 +43331,140 @@ function ExploreScreen({
       }
     }, official.bioFull || community.description)));
   }));
-  const CommunityOfficialCard = () => selectedCommunity ? React.createElement("div", {
+  const CommunityOfficialCard = () => selectedCommunity ? React.createElement("section", {
     style: {
-      background: T.bgCard,
-      border: `1px solid ${T.borderPurple}`,
-      borderRadius: 16,
-      padding: "14px",
-      marginBottom: 14,
-      boxShadow: SHADOW
+      position: "relative",
+      minHeight: 174,
+      padding: "9px 22px 30px",
+      overflow: "hidden",
+      background: "transparent"
     }
   }, React.createElement("div", {
+    "aria-hidden": "true",
     style: {
+      position: "absolute",
+      right: -22,
+      top: -32,
+      width: 178,
+      height: 178,
+      borderRadius: 46,
+      background: selectedCommunity.logoBg || "#EEEAFE",
+      color: selectedCommunity.logoColor || T.purple,
       display: "flex",
       alignItems: "center",
-      gap: 10,
-      marginBottom: 10
+      justifyContent: "center",
+      fontSize: selectedCommunity.logoMark === "AI" ? 58 : 88,
+      fontWeight: 950,
+      lineHeight: 1,
+      opacity: T._theme === "dark" ? .23 : .34,
+      transform: "rotate(-12deg)"
+    }
+  }, selectedCommunity.logoSrc ? React.createElement("img", {
+    src: selectedCommunity.logoSrc,
+    alt: "",
+    style: {
+      width: "100%",
+      height: "100%",
+      objectFit: "contain",
+      opacity: T._theme === "dark" ? .70 : .58,
+      filter: T._theme === "dark" ? "saturate(.65) brightness(1.45)" : "saturate(.78)"
+    }
+  }) : selectedCommunity.logoMark || "社"), React.createElement("div", {
+    style: {
+      position: "relative",
+      zIndex: 1,
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 13
     }
   }, React.createElement(CommunityLogo, {
     community: selectedCommunity,
-    size: 38
+    size: 54
   }), React.createElement("div", {
     style: {
-      color: INK,
-      fontSize: 16,
-      fontWeight: 850,
       minWidth: 0
-    }
-  }, selectedCommunity.name)), React.createElement("div", {
-    style: {
-      color: SUB,
-      fontSize: 13,
-      lineHeight: 1.65,
-      marginBottom: 9
-    }
-  }, selectedCommunity.description), React.createElement("div", {
-    style: {
-      color: META,
-      fontSize: 12
-    }
-  }, selectedCommunity.memberCount + " 位成员 · 申请后直接进入社群")) : null;
-  const CommunityOfficialPersonCard = () => selectedCommunity && selectedCommunity.official ? React.createElement("div", {
-    style: {
-      marginBottom: 14
     }
   }, React.createElement("div", {
     style: {
+      color: INK,
+      fontSize: 21,
+      fontWeight: 900,
+      lineHeight: 1.2,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }
+  }, selectedCommunity.name), React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 0,
+      marginTop: 7
+    }
+  }, React.createElement("span", {
+    style: {
+      color: T._theme === "dark" ? "#D4D4D8" : "#3F3F46",
       fontSize: 11,
+      fontWeight: 600,
+      lineHeight: 1.2
+    }
+  }, React.createElement("strong", {
+    style: {
+      fontSize: 16,
+      fontWeight: 900,
+      marginRight: 4,
+      letterSpacing: 0
+    }
+  }, selectedCommunity.memberCount), "名社群成员")))), React.createElement("div", {
+    style: {
+      position: "relative",
+      zIndex: 1,
+      maxWidth: "79%",
+      color: SUB,
+      fontSize: 13,
+      lineHeight: 1.65
+    }
+  }, selectedCommunity.description)) : null;
+  const CommunityOfficialPersonCard = () => selectedCommunity && selectedCommunity.official ? React.createElement("div", {
+    style: {
+      paddingTop: 18,
+      marginBottom: 18
+    }
+  }, React.createElement("div", {
+    style: {
+      fontSize: 12,
       color: T.purple,
       fontWeight: 800,
-      margin: "0 0 8px 2px"
+      margin: "0 0 9px 2px"
     }
-  }, "置顶 · 官方分身"), React.createElement(PersonCard, {
+  }, "官方分身"), React.createElement(PersonCard, {
     u: selectedCommunity.official
   })) : null;
+  const CommunityCoreMembers = () => {
+    const members = (selectedCommunity?.coreMembers || []).filter(item => item && item.user);
+    if (!members.length) return null;
+    return React.createElement(React.Fragment, null, React.createElement("div", {
+      style: {
+        paddingTop: 17,
+        borderTop: "1px solid " + T.hairline,
+        fontSize: 12,
+        color: META,
+        fontWeight: 800,
+        margin: "0 0 11px 2px"
+      }
+    }, "核心成员"), members.map((item, index) => React.createElement("div", {
+      key: item.user.id || item.user.name || index,
+      className: "owo-rise",
+      style: {
+        animationDelay: index * .06 + "s",
+        marginBottom: 14
+      }
+    }, React.createElement(PersonCard, {
+      u: item.user,
+      communityRole: item.role
+    }))));
+  };
   const pkuServiceTeamLogo = PKU_SERVICE_TEAM_LOGO_SRC;
   const pkuMimiLogo = PKU_MIMI_LOGO_SRC;
   const PkuCircleGate = () => tab === "pku" && !pkuCircleJoined ? React.createElement("div", {
@@ -43370,11 +43695,11 @@ function ExploreScreen({
   }, React.createElement(PersonCard, {
     u: member
   })))));
-  if (tab === "community" && selectedCommunity) return React.createElement("div", {
+  if (isCommunityTab && selectedCommunity) return React.createElement("div", {
     style: {
       position: "absolute",
       inset: 0,
-      background: T.bg,
+      background: T._theme === "dark" ? "linear-gradient(145deg,rgba(109,95,234,.30),rgba(32,31,43,.98) 58%,rgba(61,54,116,.48))" : "linear-gradient(145deg,#F2F0FF,#FBFAFF 58%,#ECE9FF)",
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
@@ -43385,8 +43710,10 @@ function ExploreScreen({
       padding: "var(--owo-safe-status-top) 18px 14px",
       display: "flex",
       alignItems: "center",
-      background: T.navBg,
-      borderBottom: `1px solid ${T.hairline}`,
+      background: communityHeaderCompact ? T.navBg : "transparent",
+      borderBottom: communityHeaderCompact ? `1px solid ${T.hairline}` : "none",
+      boxShadow: communityHeaderCompact ? (T._theme === "dark" ? "0 3px 12px rgba(0,0,0,.18)" : "0 3px 12px rgba(31,35,48,.05)") : "none",
+      transition: "background .22s ease, border-color .22s ease, box-shadow .22s ease",
       position: "relative",
       flexShrink: 0
     }
@@ -43403,22 +43730,37 @@ function ExploreScreen({
       color: INK,
       whiteSpace: "nowrap",
       overflow: "hidden",
-      textOverflow: "ellipsis"
+      textOverflow: "ellipsis",
+      opacity: communityHeaderCompact ? 1 : 0,
+      transform: communityHeaderCompact ? "translateY(0)" : "translateY(-4px)",
+      transition: "opacity .18s ease, transform .18s ease",
+      pointerEvents: "none"
     }
   }, selectedCommunity.name)), React.createElement("div", {
     style: {
       flex: 1,
       overflowY: "auto",
-      padding: "16px 16px 110px"
+      padding: "0"
+    },
+    onScroll: event => setCommunityHeaderCompact(event.currentTarget.scrollTop > 72)
+  }, React.createElement(CommunityOfficialCard, null), React.createElement("div", {
+    style: {
+      position: "relative",
+      zIndex: 1,
+      marginTop: -12,
+      padding: "20px 16px 110px",
+      borderRadius: "24px 24px 0 0",
+      background: T.bg,
+      boxShadow: T._theme === "dark" ? "0 -1px 0 rgba(255,255,255,.08)" : "0 -1px 0 rgba(31,35,48,.04)"
     }
-  }, React.createElement(CommunityOfficialCard, null), React.createElement(CommunityOfficialPersonCard, null), React.createElement("div", {
+  }, React.createElement(CommunityOfficialPersonCard, null), React.createElement(CommunityCoreMembers, null), React.createElement("div", {
     style: {
       fontSize: 12,
       color: META,
       fontWeight: 800,
       margin: "2px 0 10px 2px"
     }
-  }, "社群成员"), (selectedCommunity.users || []).filter(Boolean).map((member, index) => React.createElement("div", {
+  }, "社群成员"), (selectedCommunity.users || []).filter(member => member && !(selectedCommunity.coreMembers || []).some(item => item.user && item.user.id === member.id)).map((member, index) => React.createElement("div", {
     key: member.id || member.name || index,
     className: "owo-rise",
     style: {
@@ -43427,7 +43769,7 @@ function ExploreScreen({
     }
   }, React.createElement(PersonCard, {
     u: member
-  })))), React.createElement(BottomNav, {
+  }))))), React.createElement(BottomNav, {
     active: navActive,
     onChange: onNav,
     contactsUnread: contactsUnread,
@@ -43575,11 +43917,14 @@ function ExploreScreen({
   }, {
     id: "community",
     label: "社群"
+  }, {
+    id: "companyCommunity",
+    label: "创业 CEO"
   }].map(t => {
     const on = tab === t.id;
     return React.createElement("button", {
       key: t.id,
-      onClick: () => t.id === "pku" ? openPkuTab() : t.id === "community" ? openCommunityTab() : setTab(t.id),
+      onClick: () => t.id === "pku" ? openPkuTab() : t.id === "community" ? openCommunityTab() : t.id === "companyCommunity" ? openCompanyCommunityTab() : setTab(t.id),
       style: {
         flexShrink: 0,
         background: "none",
@@ -43675,7 +44020,7 @@ function ExploreScreen({
     publisher: owner,
     onViewDetail: () => selectDemand({job, owner}),
     onApply: () => setInterviewDemand({job, owner})
-  }))) : tab === "community" && !selectedCommunity ? CommunityList() : React.createElement(React.Fragment, null, tab === "community" && selectedCommunity && React.createElement("button", {
+  }))) : isCommunityTab && !selectedCommunity ? CommunityList() : React.createElement(React.Fragment, null, isCommunityTab && selectedCommunity && React.createElement("button", {
     onClick: () => selectCommunity(null),
     style: {
       border: "none",
@@ -43686,7 +44031,7 @@ function ExploreScreen({
       padding: "0 0 12px",
       cursor: "pointer"
     }
-  }, "‹ 社群列表"), tab === "community" && CommunityOfficialCard(), tab === "community" && CommunityOfficialPersonCard(), visibleList.map((u, idx) => React.createElement("div", {
+  }, tab === "companyCommunity" ? "‹ 公司组织" : "‹ 社群列表"), isCommunityTab && CommunityOfficialCard(), isCommunityTab && CommunityOfficialPersonCard(), visibleList.map((u, idx) => React.createElement("div", {
     key: u.id,
     className: "owo-rise",
     style: {
@@ -43695,14 +44040,14 @@ function ExploreScreen({
     }
   }, React.createElement(PersonCard, {
     u: u
-  })))), (tab === "ceo" ? visibleDemands.length === 0 : tab === "community" && !selectedCommunity ? false : visibleList.length === 0) && React.createElement("div", {
+  })))), (tab === "ceo" ? visibleDemands.length === 0 : isCommunityTab && !selectedCommunity ? false : visibleList.length === 0) && React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "70px 0",
       color: META,
       fontSize: 13
     }
-  }, tab === "pku" && !pkuCircleJoined ? "点击圈子卡片申请进入后查看名片列表" : tab === "community" ? "社群内暂时还没有成员" : tab === "ceo" ? query ? `没有找到「${query}」相关需求` : demandTypeFilter === "全部" ? "暂无进行中的需求" : `暂无「${demandTypeFilter}」需求` : `没有找到「${query}」`)), interviewDemand && React.createElement(InterviewRulesModal, {
+  }, tab === "pku" && !pkuCircleJoined ? "点击圈子卡片申请进入后查看名片列表" : isCommunityTab ? "组织内暂时还没有成员" : tab === "ceo" ? query ? `没有找到「${query}」相关需求` : demandTypeFilter === "全部" ? "暂无进行中的需求" : `暂无「${demandTypeFilter}」需求` : `没有找到「${query}」`)), interviewDemand && React.createElement(InterviewRulesModal, {
     job: interviewDemand.job,
     onConfirm: () => {
       if (onStartInterview) onStartInterview(interviewDemand.job, interviewDemand.owner);
@@ -44000,6 +44345,32 @@ function ShareModal({
     }
   }, "\u53D6\u6D88")));
 }
+function DemandTypeIcon({
+  type,
+  color,
+  size = 16
+}) {
+  const base = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: color,
+    strokeWidth: 1.9,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "data-icon-family": "material-symbols-outlined",
+    "aria-hidden": "true"
+  };
+  const path = d => React.createElement("path", { d });
+  if (type === "社团/社群招新") return React.createElement("svg", base, React.createElement("circle", { cx: 9, cy: 8, r: 3 }), React.createElement("path", { d: "M3.5 20v-1.5A4.5 4.5 0 0 1 8 14h2a4.5 4.5 0 0 1 4.5 4.5V20" }), React.createElement("path", { d: "M16 5.5a2.5 2.5 0 0 1 0 5M18.5 20v-1.5a4.5 4.5 0 0 0-2.7-4.1" }));
+  if (type === "找合伙人") return React.createElement("svg", base, path("M4 11.5 7.3 8l3.2 3.1M20 11.5 16.7 8l-3.2 3.1M7.7 13.2l2.1 2.1 2.2-2.2 2.2 2.2 2.1-2.1M9.8 15.3l1.5 1.5a1 1 0 0 0 1.4 0l1.4-1.4"));
+  if (type === "找搭子") return React.createElement("svg", base, React.createElement("circle", { cx: 8, cy: 8, r: 2.7 }), React.createElement("circle", { cx: 16, cy: 9, r: 2.7 }), React.createElement("path", { d: "M3.5 20v-1.2A4.8 4.8 0 0 1 8.3 14h.4a4.8 4.8 0 0 1 4.3 2.7M13 20v-1.1a4.8 4.8 0 0 1 4.8-4.8" }));
+  if (type === "活动招募") return React.createElement("svg", base, React.createElement("rect", { x: 4, y: 5, width: 16, height: 15, rx: 3 }), path("M8 3v4M16 3v4M4 10h16M12 13v4M10 15h4"));
+  if (type === "找场地") return React.createElement("svg", base, React.createElement("path", { d: "M20 10.2c0 5.2-8 10.3-8 10.3S4 15.4 4 10.2a8 8 0 1 1 16 0Z" }), React.createElement("circle", { cx: 12, cy: 10, r: 2.6 }));
+  if (type === "遇见心动") return React.createElement("svg", base, React.createElement("path", { d: "M20.8 8.7c0 5.4-8.8 10.6-8.8 10.6S3.2 14.1 3.2 8.7A4.7 4.7 0 0 1 12 6.4a4.7 4.7 0 0 1 8.8 2.3Z" }));
+  return React.createElement("svg", base, React.createElement("rect", { x: 4.5, y: 4.5, width: 6, height: 6, rx: 1.2 }), React.createElement("rect", { x: 13.5, y: 4.5, width: 6, height: 6, rx: 1.2 }), React.createElement("rect", { x: 4.5, y: 13.5, width: 6, height: 6, rx: 1.2 }), React.createElement("rect", { x: 13.5, y: 13.5, width: 6, height: 6, rx: 1.2 }));
+}
 function JobCard({
   job,
   publisher,
@@ -44007,7 +44378,37 @@ function JobCard({
 }) {
   const metas = demandPrimaryMeta(job);
   const typeLabel = demandTypeLabelOf(job);
-  const durationMinutes = Number(job.aiDuration || job.durationMin || (job.durationSec ? Math.round(job.durationSec / 60) : 0)) || 0;
+  const typeVisuals = {
+    "找合伙人": {
+      color: "#7568D8",
+      background: "rgba(159,151,235,.14)"
+    },
+    "遇见心动": {
+      color: "#C96086",
+      background: "rgba(201,96,134,.12)"
+    },
+    "找搭子": {
+      color: "#2486AC",
+      background: "rgba(36,134,172,.12)"
+    },
+    "活动招募": {
+      color: "#C97632",
+      background: "rgba(201,118,50,.12)"
+    },
+    "找场地": {
+      color: "#12916C",
+      background: "rgba(18,145,108,.12)"
+    },
+    "社团/社群招新": {
+      color: "#596FCB",
+      background: "rgba(89,111,203,.12)"
+    },
+    "自定义需求": {
+      color: "#737373",
+      background: "rgba(115,115,115,.10)"
+    }
+  };
+  const typeVisual = typeVisuals[demandTypeOf(job)] || typeVisuals["自定义需求"];
   const publisherName = publisher?.name || "发布者";
   const publisherMeta = publisherSubtitleOf(publisher || {});
   return React.createElement("div", {
@@ -44061,41 +44462,41 @@ function JobCard({
       color: "#059669",
       whiteSpace: "nowrap"
     }
-    }, "进行中")), React.createElement("div", {
+  }, "进行中")), React.createElement("div", {
     style: {
       display: "flex",
-      flexWrap: publisher ? "wrap" : "nowrap",
-      gap: publisher ? 8 : 12,
+      alignItems: "center",
+      gap: 8,
+      marginBottom: metas.length ? 8 : 10
+    }
+  }, React.createElement(DemandTypeIcon, {
+    type: demandTypeOf(job),
+    color: typeVisual.color,
+    size: 18
+  }), React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: typeVisual.color,
+      fontWeight: 800,
+      lineHeight: 1.2
+    }
+  }, typeLabel)), metas.length ? React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 8,
       marginBottom: 10
     }
-  }, React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: T.purple,
-      background: T._theme === "dark" ? "rgba(159,151,235,.22)" : "rgba(159,151,235,.13)",
-      borderRadius: 999,
-      padding: "5px 12px",
-      fontWeight: 700
-    }
-  }, typeLabel), durationMinutes > 0 && React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: T.purple,
-      background: T._theme === "dark" ? "rgba(159,151,235,.16)" : "rgba(159,151,235,.08)",
-      borderRadius: 999,
-      padding: "5px 12px",
-      fontWeight: 700
-    }
-  }, "沟通限时 ", durationMinutes, " 分钟"), metas.map(info => React.createElement("span", {
+  }, metas.map(info => React.createElement("span", {
     key: info,
     style: {
       fontSize: 12,
-      color: publisher ? T.text2 : T.text3,
-      background: publisher ? T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe" : "transparent",
-      borderRadius: publisher ? 999 : 0,
-      padding: publisher ? "5px 12px" : 0
+      color: T.text2,
+      background: T._theme === "dark" ? "rgba(159,151,235,.14)" : "#f5f4fe",
+      borderRadius: 999,
+      padding: "5px 12px"
     }
-  }, info))), React.createElement("div", {
+  }, info))) : null, React.createElement("div", {
     style: {
       fontSize: 12,
       color: T.text2,
@@ -44145,24 +44546,21 @@ function JobCard({
   }, publisherMeta))) : null);
 }
 function demandViewerSections(demand) {
-  const facts = entries => entries.filter(([, value]) => value).map(([label, value]) => label + "：" + value).join("；");
-  const context = facts([["参与方式", demandParticipationOf(demand)], ["时间 / 节奏", demand.time], ["地点 / 线上线下", demand.location]]);
-  const extras = facts([["预算 / 费用 / 回报", demand.budget], ["人数 / 名额", demandTypeOf(demand) === "遇见心动" ? "" : demand.count], ["报名截止时间", demand.deadline], ["补充说明", demand.other]]);
   return [{
-    title: "我想做什么",
+    title: "需求说明",
     content: demandDescriptionOf(demand)
   }, {
-    title: "我想找谁 / 什么资源",
+    title: "我找谁 / 什么资源",
     content: demandTargetOf(demand)
   }, {
-    title: "适合这样的你",
+    title: "希望对方具备什么",
     content: demandExpectationOf(demand)
   }, {
-    title: "时间、地点与方式",
-    content: context
+    title: "参与方式",
+    content: demandParticipationOf(demand)
   }, {
-    title: "预算、人数与补充",
-    content: extras
+    title: "补充说明",
+    content: demand.other
   }].filter(section => section.content);
 }
 function DemandPublicDetailPreview({
@@ -52085,7 +52483,7 @@ const demandTargetOf = demand => demand.target || demand.partnerType || demand.e
 const demandExpectationOf = demand => demand.matchingCriteria || demand.expectation || demand.ability || demand.requirements || "";
 const demandParticipationOf = demand => demand.participationRequirements || demand.cooperation || demand.learningMode || demand.team || "";
 const demandSummaryOf = demand => demandDescriptionOf(demand) || demandTargetOf(demand) || "发布者希望先由找人助手完成前期沟通与匹配判断。";
-const demandPrimaryMeta = demand => [demand.location, demand.time, demand.budget, demandTypeOf(demand) === "遇见心动" ? "" : demand.count].filter(Boolean).slice(0, 3);
+const demandPrimaryMeta = demand => [demand.time, demand.location, demand.budget, demandTypeOf(demand) === "遇见心动" ? "" : demand.count].filter(Boolean);
 const publisherSubtitleOf = publisher => {
   const role = String(publisher?.role || "").trim();
   const company = String(publisher?.company || "").trim();
@@ -52307,40 +52705,34 @@ function JobFormFields({
       fontFamily: "inherit"
     }
   }, "完成")) : null);
-  const facts = entries => entries.filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
   const previewMeta = demandPrimaryMeta(form);
   const sectionList = [{
     id: "description",
-    title: "我想做什么",
+    title: "需求说明",
     content: form.description,
     keys: ["description"],
     required: true
   }, {
     id: "target",
-    title: "我想找谁 / 什么资源",
+    title: "我找谁 / 什么资源",
     content: form.target,
     keys: ["target"],
     required: true
   }, {
     id: "matching",
-    title: "适合这样的你",
+    title: "希望对方具备什么",
     content: form.matchingCriteria,
     keys: ["matchingCriteria"]
   }, {
-    id: "context",
-    title: "时间、地点与方式",
-    content: facts([["参与方式", form.participationRequirements], ["时间 / 节奏", form.time], ["地点 / 线上线下", form.location]]),
-    keys: ["participationRequirements", "time", "location"]
+    id: "participation",
+    title: "参与方式",
+    content: form.participationRequirements,
+    keys: ["participationRequirements"]
   }, {
-    id: "extra",
-    title: "预算、人数与补充",
-    content: facts([["预算 / 费用 / 回报", form.budget], ["人数 / 名额", form.count], ["补充说明", form.other], ["报名截止时间", form.deadline]]),
-    keys: ["budget", "count", "other"],
-    children: React.createElement(React.Fragment, null, renderFields(["budget", "count", "other"]), React.createElement(DateField, {
-      label: "报名截止时间",
-      value: form.deadline,
-      onChange: v => update("deadline", v)
-    }))
+    id: "other",
+    title: "补充说明",
+    content: form.other,
+    keys: ["other"]
   }];
   return React.createElement(React.Fragment, null, React.createElement('div', {
     style: {
@@ -52799,10 +53191,10 @@ function DemandPublishWizard({
     }
   }, item))) : null);
   const detailRows = [{
-    label: "我想做什么",
+    label: "需求说明",
     value: form.description
   }, {
-    label: "我想找谁 / 什么资源",
+    label: "我找谁 / 什么资源",
     value: form.target
   }, {
     label: "希望对方具备什么",
@@ -52811,26 +53203,8 @@ function DemandPublishWizard({
     label: "参与方式",
     value: form.participationRequirements
   }, {
-    label: "时间 / 节奏",
-    value: form.time
-  }, {
-    label: "地点 / 线上线下",
-    value: form.location
-  }, {
-    label: "预算 / 费用 / 回报",
-    value: form.budget
-  }, {
-    label: "人数 / 名额",
-    value: type === "遇见心动" ? "" : form.count
-  }, {
     label: "补充说明",
     value: form.other
-  }, {
-    label: "报名截止时间",
-    value: form.deadline || "长期有效"
-  }, {
-    label: "找人助手沟通时长",
-    value: Number(form.aiDuration) > 0 ? form.aiDuration + " 分钟" : "暂不设置"
   }].filter(row => row.value);
   const detailPreview = React.createElement("div", {
     style: {
@@ -53853,10 +54227,10 @@ function DemandPublishWizardV2({
     }
   }, item))) : null);
   const detailRows = [{
-    label: "背景说明",
+    label: "需求说明",
     value: form.description
   }, {
-    label: "我想找谁 / 什么资源",
+    label: "我找谁 / 什么资源",
     value: form.target
   }, {
     label: "希望对方具备什么",
@@ -53865,23 +54239,8 @@ function DemandPublishWizardV2({
     label: "参与方式",
     value: form.participationRequirements
   }, {
-    label: "时间 / 节奏",
-    value: form.time
-  }, {
-    label: "地点 / 线上线下",
-    value: form.location
-  }, {
-    label: "预算 / 费用 / 回报",
-    value: form.budget
-  }, {
-    label: "人数 / 名额",
-    value: form.count
-  }, {
     label: "补充说明",
     value: form.other
-  }, {
-    label: "报名截止时间",
-    value: form.deadline || "长期有效"
   }].filter(row => row.value);
   const detailPreview = React.createElement("div", {
     style: {
@@ -56356,7 +56715,7 @@ function JobPublishScreen({
       alignItems: "center",
       gap: 10
     }
-  }, step === 4 ? React.createElement('button', {
+  }, step >= 2 ? React.createElement('button', {
     type: "button",
     onClick: () => {
       setErr("");
@@ -56373,7 +56732,7 @@ function JobPublishScreen({
       fontWeight: 750,
       cursor: "pointer"
     }
-  }, "返回修改") : null, React.createElement('div', {
+  }, step === 4 ? "返回修改" : "上一步") : null, React.createElement('div', {
     style: {
       flex: 1
     }
@@ -60191,8 +60550,20 @@ function SettingsScreen({
   const [accountAction, setAccountAction] = useState(null);
   const [appearance, setAppearance] = useState(() => readOwoRuntimePreferences().appearance);
   const [themeRevision, setThemeRevision] = useState(0);
-  const [lang, setLang] = useState("简体中文");
+  const [lang, setLang] = useState(() => readOwoRuntimePreferences().language || "简体中文");
   const [toast, setToast] = useState(null);
+  const isEnglish = lang === "English";
+  const changeLanguage = next => {
+    try {
+      localStorage.setItem(OWO_LANGUAGE_KEY, next);
+    } catch (e) {}
+    applyOwoRuntimePreferences({
+      language: next
+    });
+    setLang(next);
+    setToast(next === "English" ? "Language updated to English" : "已切换为简体中文");
+    setTimeout(() => setToast(null), 1500);
+  };
   const [hasPassword, setHasPassword] = useState(() => {
     try {
       return localStorage.getItem("owo_has_password") === "1";
@@ -63305,7 +63676,7 @@ function SettingsScreen({
       textAlign: "center",
       margin: "0 0 16px"
     }
-  }, sheet === "appearance" ? "外观" : "语言"), sheet === "appearance" ? React.createElement(React.Fragment, null, ["跟随系统", "浅色", "深色"].map(opt => React.createElement("button", {
+  }, sheet === "appearance" ? isEnglish ? "Appearance" : "外观" : isEnglish ? "Language" : "语言"), sheet === "appearance" ? React.createElement(React.Fragment, null, ["跟随系统", "浅色", "深色"].map(opt => React.createElement("button", {
     key: opt,
     onClick: () => setAppearance(opt),
     style: {
@@ -63325,7 +63696,7 @@ function SettingsScreen({
     }
   }, React.createElement("span", null, opt), React.createElement("span", null, appearance === opt ? "✓" : "")))) : ["简体中文", "English"].map(opt => React.createElement("button", {
     key: opt,
-    onClick: () => setLang(opt),
+    onClick: () => changeLanguage(opt),
     style: {
       width: "100%",
       display: "flex",
@@ -63432,7 +63803,7 @@ function SettingsScreen({
       flexDirection: "column"
     }
   }, React.createElement(Header, {
-    title: "\u8BBE\u7F6E"
+    title: isEnglish ? "Settings" : "\u8BBE\u7F6E"
   }), React.createElement("div", {
     style: {
       flex: 1,
@@ -63447,13 +63818,13 @@ function SettingsScreen({
       margin: "2px 0 8px",
       paddingLeft: 4
     }
-  }, "AI \u4E0E\u901A\u77E5"), React.createElement(Row, {
+  }, isEnglish ? "AI & NOTIFICATIONS" : "AI \u4E0E\u901A\u77E5"), React.createElement(Row, {
     icon: React.createElement(SettingIcon, {
       name: "auto"
     }),
     bg: "rgba(159,151,235,.12)",
-    label: "AI \u667A\u5E93\u81EA\u52A8\u53D1\u6587",
-    desc: "AI \u4F9D\u636E\u77E5\u8BC6\u5E93\u81EA\u52A8\u521B\u4F5C\u3001\u5B9A\u65F6\u53D1\u5E03\u5185\u5BB9",
+    label: isEnglish ? "AI auto publishing" : "AI \u667A\u5E93\u81EA\u52A8\u53D1\u6587",
+    desc: isEnglish ? "Create and schedule content from your knowledge base" : "AI \u4F9D\u636E\u77E5\u8BC6\u5E93\u81EA\u52A8\u521B\u4F5C\u3001\u5B9A\u65F6\u53D1\u5E03\u5185\u5BB9",
     right: React.createElement(Toggle, {
       on: aiAuto,
       onChange: () => setAiAuto(v => !v)
@@ -63463,7 +63834,7 @@ function SettingsScreen({
       name: "bell"
     }),
     bg: "rgba(245,158,11,.14)",
-    label: "\u901A\u77E5\u8BBE\u7F6E",
+    label: isEnglish ? "Notifications" : "\u901A\u77E5\u8BBE\u7F6E",
     onClick: () => setPage("notification_settings")
   }), React.createElement("div", {
     style: {
@@ -63473,13 +63844,13 @@ function SettingsScreen({
       margin: "16px 0 8px",
       paddingLeft: 4
     }
-  }, "\u8D26\u53F7\u4E0E\u5B89\u5168"), React.createElement(Row, {
+  }, isEnglish ? "ACCOUNT & SECURITY" : "\u8D26\u53F7\u4E0E\u5B89\u5168"), React.createElement(Row, {
     icon: React.createElement(SettingIcon, {
       name: "key"
     }),
     bg: "rgba(16,185,129,.12)",
-    label: "\u5BC6\u7801\u8BBE\u7F6E",
-    desc: hasPassword ? "修改、找回登录密码" : "设置登录密码",
+    label: isEnglish ? "Password" : "\u5BC6\u7801\u8BBE\u7F6E",
+    desc: isEnglish ? hasPassword ? "Change or recover your password" : "Set a sign-in password" : hasPassword ? "修改、找回登录密码" : "设置登录密码",
     onClick: openPasswordSettings
   }), React.createElement("div", {
     style: {
@@ -63513,20 +63884,20 @@ function SettingsScreen({
       margin: "16px 0 8px",
       paddingLeft: 4
     }
-  }, "\u9690\u79C1\u4E0E\u4FDD\u62A4"), React.createElement(Row, {
+  }, isEnglish ? "PRIVACY" : "\u9690\u79C1\u4E0E\u4FDD\u62A4"), React.createElement(Row, {
     icon: React.createElement(SettingIcon, {
       name: "shield"
     }),
     bg: "rgba(159,151,235,.12)",
-    label: "\u9752\u5C11\u5E74\u6A21\u5F0F",
-    desc: minor ? "已开启" : "未开启",
+    label: isEnglish ? "Minor mode" : "\u9752\u5C11\u5E74\u6A21\u5F0F",
+    desc: isEnglish ? minor ? "On" : "Off" : minor ? "已开启" : "未开启",
     onClick: () => setPage("minor")
   }), React.createElement(Row, {
     icon: React.createElement(SettingIcon, {
       name: "doc"
     }),
     bg: "rgba(159,151,235,.12)",
-    label: "\u6761\u6B3E\u4E0E\u9690\u79C1",
+    label: isEnglish ? "Terms & privacy" : "\u6761\u6B3E\u4E0E\u9690\u79C1",
     onClick: () => setPage("terms")
   }), React.createElement("div", {
     style: {
@@ -63536,12 +63907,12 @@ function SettingsScreen({
       margin: "16px 0 8px",
       paddingLeft: 4
     }
-  }, "\u5E94\u7528\u8BBE\u7F6E"), React.createElement(Row, {
+  }, isEnglish ? "APP SETTINGS" : "\u5E94\u7528\u8BBE\u7F6E"), React.createElement(Row, {
     icon: React.createElement(SettingIcon, {
       name: "palette"
     }),
     bg: "rgba(59,130,246,.12)",
-    label: "\u5916\u89C2",
+    label: isEnglish ? "Appearance" : "\u5916\u89C2",
     desc: appearance,
     onClick: () => setSheet("appearance")
   }), React.createElement(Row, {
@@ -63549,7 +63920,7 @@ function SettingsScreen({
       name: "language"
     }),
     bg: "rgba(14,165,233,.12)",
-    label: "\u8BED\u8A00",
+    label: isEnglish ? "Language" : "\u8BED\u8A00",
     desc: lang,
     onClick: () => setSheet("language")
   }), React.createElement(Row, {
@@ -63557,7 +63928,7 @@ function SettingsScreen({
       name: "help"
     }),
     bg: "rgba(16,185,129,.12)",
-    label: "\u5E2E\u52A9\u4E0E\u5BA2\u670D",
+    label: isEnglish ? "Help & support" : "\u5E2E\u52A9\u4E0E\u5BA2\u670D",
     onClick: () => setPage("help")
   }), React.createElement("div", {
     style: {
@@ -63569,11 +63940,11 @@ function SettingsScreen({
       overflow: "hidden"
     }
   }, React.createElement(AccountTextRow, {
-    label: "退出登录",
+    label: isEnglish ? "Log out" : "退出登录",
     color: T.text1,
     onClick: () => onLogout && onLogout()
   }), React.createElement(AccountTextRow, {
-    label: "注销账户",
+    label: isEnglish ? "Delete account" : "注销账户",
     onClick: () => setAccountAction("delete"),
     last: true
   }))), React.createElement(Sheet, null), React.createElement(AccountConfirm, null), toast && React.createElement("div", {
@@ -71103,11 +71474,88 @@ function mountOwoApp() {
   window.__owoRoot = root;
   window.__CEO = false;
   window.__START = "home";
-  const renderCurrent = () => root.render(React.createElement(window.OwoApp, {
-    isCeoView: window.__CEO,
-    start: window.__START
-  }));
+  const OWO_GLOBAL_EN_COPY = {
+    "首页": "Home",
+    "登录页": "Sign in",
+    "CEO Tracy聊天": "Chat with CEO Tracy",
+    "授权弹窗": "Authorization",
+    "CEO用户": "CEO profile",
+    "外观": "Appearance",
+    "浅色": "Light",
+    "暗黑": "Dark",
+    "语言": "Language",
+    "广场": "Explore",
+    "通讯录": "Contacts",
+    "消息": "Messages",
+    "我的": "Me",
+    "推荐": "For you",
+    "牛人": "People",
+    "正在找人": "Looking for people",
+    "校友圈": "Alumni",
+    "社群": "Communities",
+    "创业 CEO": "Startup CEOs",
+    "搜索需求、类型或发布者": "Search requests, types, or publishers",
+    "申请加入": "Request to join",
+    "进入社群": "Enter community",
+    "官方分身": "Official assistant",
+    "核心成员": "Core members",
+    "社群成员": "Community members",
+    "主理人": "Host",
+    "管理员": "Admin",
+    "发布找人": "Post a request",
+    "上一步": "Back",
+    "继续": "Continue",
+    "预览": "Preview",
+    "返回修改": "Edit",
+    "发布并上架": "Publish",
+    "需求信息": "Request details",
+    "补充条件": "Additional details",
+    "设置": "Settings",
+    "简体中文": "Chinese",
+    "English": "English"
+  };
+  const translateOwoPage = () => {
+    if (T._language !== "English") return;
+    const dictionary = OWO_GLOBAL_EN_COPY;
+    const replace = value => dictionary[value] || value;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      const original = node.nodeValue;
+      const trimmed = original.trim();
+      const translated = replace(trimmed);
+      if (translated !== trimmed) node.nodeValue = original.replace(trimmed, translated);
+    });
+    document.querySelectorAll("[placeholder],[aria-label]").forEach(element => {
+      ["placeholder", "aria-label"].forEach(attribute => {
+        const value = element.getAttribute(attribute);
+        if (value && replace(value) !== value) element.setAttribute(attribute, replace(value));
+      });
+    });
+  };
+  const renderCurrent = () => {
+    root.render(React.createElement(window.OwoApp, {
+      isCeoView: window.__CEO,
+      start: window.__START
+    }));
+    requestAnimationFrame(translateOwoPage);
+  };
   renderCurrent();
+  if (!window.__owoLanguageObserver) {
+    let translating = false;
+    window.__owoLanguageObserver = new MutationObserver(() => {
+      if (translating || T._language !== "English") return;
+      translating = true;
+      translateOwoPage();
+      translating = false;
+    });
+    window.__owoLanguageObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
   if (status) status.remove();
   if (!document.getElementById("__roleSwitch")) {
     const bar = document.createElement("div");
@@ -71173,6 +71621,40 @@ function mountOwoApp() {
       item.style.color = active ? "var(--owo-color-brand)" : "var(--owo-color-text-secondary)";
       item.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    const languageDivider = document.createElement("span");
+    languageDivider.style.cssText = "width:1px;height:20px;background:var(--owo-color-border);margin:8px 4px;flex:0 0 auto";
+    bar.appendChild(languageDivider);
+    const languageLabel = document.createElement("span");
+    languageLabel.textContent = "语言";
+    languageLabel.style.cssText = "display:inline-flex;align-items:center;padding:0 5px;color:var(--owo-color-text-tertiary);flex:0 0 auto";
+    bar.appendChild(languageLabel);
+    const languageButtons = [];
+    let activeLanguage = "简体中文";
+    try {
+      activeLanguage = localStorage.getItem("owo_language_pref") === "English" ? "English" : "简体中文";
+    } catch (e) {}
+    const syncLanguageButtons = language => languageButtons.forEach(item => {
+      const active = item.dataset.language === language;
+      item.style.background = active ? "rgba(159,151,235,.16)" : "transparent";
+      item.style.color = active ? "var(--owo-color-brand)" : "var(--owo-color-text-secondary)";
+      item.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    [["中文", "简体中文"], ["English", "English"]].forEach(([label, language]) => {
+      const btn = document.createElement("button");
+      btn.textContent = label;
+      btn.dataset.language = language;
+      btn.style.cssText = "border:none;cursor:pointer;border-radius:999px;padding:0 11px;min-height:36px;font:inherit;color:var(--owo-color-text-secondary);background:transparent;transition:all .2s;flex:0 0 auto";
+      btn.onclick = () => {
+        applyOwoRuntimePreferences({
+          language
+        });
+        syncLanguageButtons(language);
+        renderCurrent();
+      };
+      languageButtons.push(btn);
+      bar.appendChild(btn);
+    });
+    syncLanguageButtons(activeLanguage);
     document.body.appendChild(bar);
   }
 }
@@ -71236,8 +71718,10 @@ function mountOwoDevRequirementNotes() {
             <h3>产品边界</h3>
             <ul>
               <li>入口路径：所有用户 → 我的 → 外表 → 我要找人 / 我的报名；广场顶部右侧提供“+ 发布找人”快捷入口。</li>
-              <li>功能开放给所有用户。广场原“创业 CEO”改为“正在找人”，直接展示进行中的需求卡片流，不展示用户名片，不限制发布者身份；主 tab 下方提供“全部 / 找合伙人 / 遇见心动 / 找搭子 / 活动招募 / 找场地 / 其他”二级筛选。“其他”归并社团/社群招新和自定义需求，可与关键词搜索叠加。二级筛选为纯文字，不使用胶囊、底色、边框或圆角；与一级频道留白分层，使用13px字号、20px横向间距，选中为品牌紫，未选中为灰色，以字重反馈选择。</li>
-              <li>广场“校友圈”的北京大学学生服务总队入口在名称前直接展示内嵌的彩色官方 Logo，保持方形尺寸，不增加白底、描边、阴影或额外外框；北大米米在成员列表、介绍区和名片详情中统一使用内嵌的红色吉祥物 Logo。广场“社群”展示社群列表，用户申请加入后直接进入成员名片页，顶部置顶官方社群名片。单独发布 HTML 时不得依赖本地图片路径。</li>
+              <li>功能开放给所有用户。广场原“创业 CEO”个人名片流改为“正在找人”，直接展示进行中的需求卡片流，不展示用户名片，不限制发布者身份；主 tab 下方提供“全部 / 找合伙人 / 遇见心动 / 找搭子 / 活动招募 / 找场地 / 社团/社群招新 / 其他”二级筛选。“其他”仅归并自定义需求，可与关键词搜索叠加。二级筛选为纯文字，不使用胶囊、底色、边框或圆角；与一级频道留白分层，使用13px字号、20px横向间距，选中为品牌紫，未选中为灰色，以字重反馈选择。新增加的“创业 CEO”独立 tab 仅展示公司创建的组织。</li>
+              <li>广场“校友圈”的北京大学学生服务总队入口在名称前直接展示内嵌的彩色官方 Logo，保持方形尺寸，不增加白底、描边、阴影或额外外框；北大米米在成员列表、介绍区和名片详情中统一使用内嵌的红色吉祥物 Logo。社群详情初始只保留返回键，组织名称在全宽沉浸式头图中展示；头图背景从状态栏延展至顶部，首屏导航透明，上滑后导航栏渐显名称。头图下使用圆角内容面轻微上浮衔接列表；头图内 Logo 与名称较常规列表更大并靠上对齐，成员数展示为灰黑（深色模式白灰）的“大号加粗数字 + 名社群成员”，不展示“活跃社群”。内容顺序为官方分身、核心成员、社群成员。核心成员在姓名下展示主理人或管理员对号认证，官方分身不展示群主认证。社群 Logo 使用项目内相对路径资源，确保上传 GitHub 后可独立运行。</li>
+              <li>广场在“社群”右侧增加“创业 CEO”tab：展示由公司创建的组织，复用社群列表、申请加入、组织头图、官方分身、核心成员、社群成员的同一套样式和交互，不维护第二套组织详情。</li>
+              <li>原型顶部全局控制栏在“外观”右侧提供“语言：中文 / English”快捷切换；任意页面均可切换，偏好统一写入 <code>owo_language_pref</code> 并用全局词典刷新当前页。</li>
               <li>“关于我”和组织信息模块全部删除。发布者头像、姓名、简介和角色直接读取个人名片。</li>
               <li>产品统一使用“报名、沟通、找人助手”，不使用“申请、面试、AI面试官”。AI只辅助整理需求、沟通和匹配建议，最终连接由真人决定。</li>
             </ul>
@@ -71268,9 +71752,9 @@ function mountOwoDevRequirementNotes() {
               <li>任一发布入口先读取账号级手机号状态。未绑定进入绑定页；绑定成功自动进入第1步。返回不创建草稿，手机号不写入需求且不公开展示。</li>
               <li>第1步“描述需求”：选择类型后用文字或语音自然描述。输入框右下角使用发送图标触发 AI 整理，不展示“AI整理”文字按钮；输入框下方展示紧凑的实心紫色圆形麦克风按钮，点击后打开覆盖当前手机页面的深色沉浸式语音浮层。</li>
               <li>语音浮层主视觉为占据内容区主要宽度的三层横向紫色流动波形，不使用中心放射状声纹；波形中央叠加低透明度品牌紫能量云，录音时轻微呼吸，暂停后静止并降低亮度；页面背景由顶部深紫黑自然过渡到底部品牌紫。同时展示录音时长和实时转写，支持暂停 / 继续、取消和完成。完成后回填原输入框并允许继续编辑，不支持原生语音识别时使用模拟文案完成原型流程。</li>
-              <li>第2步“确认草稿”：五张可编辑摘要卡片为标题、背景说明、目标对象/资源、匹配标准、参与方式；点击内容直接编辑，不显示编辑图标或局部完成按钮。“找人助手沟通时长”紧接参与方式，以同规格完整卡片承载标题、说明和整行下拉控件。</li>
+              <li>第2步“确认草稿”：五张可编辑摘要卡片为标题、背景说明、目标对象/资源、匹配标准、参与方式；点击内容直接编辑，不显示编辑图标或局部完成按钮。“找人助手沟通时长”紧接参与方式，以同规格完整卡片承载标题、说明和整行下拉控件。底部提供“上一步”和“继续”。</li>
               <li>沟通时长默认“暂不设置”，预设项为15、30、45分钟和自定义。选择自定义后，下拉框原位切换为数字输入，右侧固定显示“分钟”并保留选择箭头；点击外部或按回车保存。仅接受5-120的整数，非法值显示错误且不得写入需求。切回预设项立即保存。</li>
-              <li>第3步“补充条件”：时间、地点、预算、人数、截止时间、补充说明全部选填，未填写也可点击唯一主按钮“预览”。“遇见心动”不展示人数；AI只提取用户第1步明确说出的条件，不自动补默认值。</li>
+              <li>第3步“补充条件”：时间、地点、预算、人数、截止时间、补充说明全部选填，未填写也可进入预览。底部提供“上一步”和唯一主按钮“预览”。“遇见心动”不展示人数；AI只提取用户第1步明确说出的条件，不自动补默认值。</li>
               <li>第4步“预览发布”：只展示真实公开需求详情效果，使用与线上详情相同组件和映射；空字段不展示。底部为“返回修改 / 发布并上架”。</li>
               <li>发布成功后状态直接为进行中，返回管理页并将新需求置顶；不强制进入训练页。截止时间为空表示长期有效。</li>
             </ul>
@@ -71283,13 +71767,13 @@ function mountOwoDevRequirementNotes() {
             </div>
             <h3>管理、编辑、公开展示</h3>
             <ul>
-              <li>管理卡片：标题=<code>title</code>；概述优先 <code>description</code>，为空时用 <code>target</code>；辅助标签从 <code>location/time/budget/count</code> 中按顺序取有值的前三项；类型显示自定义类型或 <code>type</code>。</li>
+              <li>管理卡片：标题=<code>title</code>；概述优先 <code>description</code>，为空时用 <code>target</code>；辅助标签从 <code>time/location/budget/count</code> 中按顺序展示所有有值项；类型显示自定义类型或 <code>type</code>。</li>
               <li>管理页概述展示需求数、报名数、高匹配数及灰紫色辅助线；卡片报名人数使用绿色文字，不加胶囊、底色或边框；卡片主体进入详情，底部为“查看报名”和“训练/优化找人助手”，可显示新报名角标。</li>
               <li>发布者需求详情：展示全部非空发布字段、状态、截止时间、找人助手状态和AI策略摘要；底部提供编辑、暂停/恢复发布，暂停和删除均需二次确认。</li>
               <li>点击编辑复用发布第2、3步组件，显示为1/2“需求信息”、2/2“补充条件”；读取并写回同一需求对象，最终页“删除 / 保存并更新”，不得给空选填项补默认值。</li>
-              <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、紫色需求类型气囊、两行概述、最多三个辅助字段，标题右侧显示绿色“进行中”。类型读取 <code>type</code>，自定义需求优先显示 <code>customDemandType</code>。广场卡片的辅助字段使用与公开详情一致的圆角标签；用户名片卡片保持简洁文本。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片不展示发布者信息。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
-              <li>公开详情：“我想做什么”=<code>description</code>；“我想找谁/什么资源”=<code>target</code>；“适合这样的你”=<code>matchingCriteria</code>；“时间、地点与方式”组合 <code>participationRequirements/time/location</code>；“预算、人数与补充”组合 <code>budget/count/deadline/other</code>。</li>
-              <li>公开详情顶部从 <code>location/time/budget/count</code> 取有值的前三项，“遇见心动”排除 <code>count</code>；首次发布时间 <code>publishedAt</code> 展示在需求元信息之后、发布者信息卡之前，编辑不更新。</li>
+              <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、需求类型、条件标签、两行概述，标题右侧显示绿色“进行中”。类型读取 <code>type</code>，自定义需求优先显示 <code>customDemandType</code>；类型独立成行，使用 18px Google Material Symbols Outlined 风格的线性语义图标与加粗类型名称，不增加图标底座、气囊或描边。社群招新/合伙人/搭子/活动/场地/心动/自定义依次使用多人、握手、双人、日历加号、定位、心形、四宫格图标。时间/地点/预算/人数等已填写条件在下一行使用紫色圆角标签。<code>aiDuration</code>、<code>durationMin</code>、<code>durationSec</code> 均不得出现在公开需求卡片。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片仅隐藏发布者信息，其他卡片视觉保持一致。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
+              <li>公开详情直接映射五个字段：“需求说明”=<code>description</code>；“我找谁/什么资源”=<code>target</code>；“希望对方具备什么”=<code>matchingCriteria</code>；“参与方式”=<code>participationRequirements</code>；“补充说明”=<code>other</code>。</li>
+              <li>公开详情标题下展示 <code>time/location/budget/count</code> 中全部有值的标签，“遇见心动”排除 <code>count</code>；首次发布时间 <code>publishedAt</code> 展示在需求元信息之后、发布者信息卡之前，编辑不更新。</li>
               <li>发布者区映射个人名片：头像、姓名；副标题优先 <code>role · company</code>，其次 <code>role · industry</code>、<code>company · industry</code>，最后单行截断 <code>bio</code>。点击整个发布者区进入个人名片详情。</li>
               <li>AI沟通策略只在发布者自己的需求详情展示，不在广场公开详情或报名者端展示。</li>
               <li>第4步预览、广场公开详情、管理详情和编辑页必须读取同一字段源；预览中确认的内容发布后逐字保持一致，不维护第二套演示文案。</li>

@@ -51433,7 +51433,8 @@ function DemandTypeField({
   label = "需求类型"
 }) {
   const [open, setOpen] = useState(false);
-  const type = demandTypeOf(form);
+  const rawType = form.type || form.demandType || "";
+  const type = rawType ? demandTypeOf(form) : "";
   const isCustom = type === "自定义需求";
   const selectType = value => {
     update("type", value);
@@ -51512,7 +51513,11 @@ function DemandTypeField({
       justifyContent: "space-between",
       fontFamily: "inherit"
     }
-  }, React.createElement('span', null, type), React.createElement('span', {
+  }, React.createElement('span', {
+    style: {
+      color: type ? T.text1 : T.text3
+    }
+  }, type || "请选择需求类型"), React.createElement('span', {
     style: {
       color: "#c4b8f0",
       fontSize: 11
@@ -56821,7 +56826,7 @@ function JobPublishScreen({
 }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    type: "社团/社群招新",
+    type: "",
     customDemandType: "",
     title: "",
     description: "",
@@ -72051,6 +72056,7 @@ function mountOwoApp() {
     "发送需求描述并由 AI 整理": "Send your request for AI organization",
     "打开语音输入": "Open voice input",
     "需求类型": "Request type",
+    "请选择需求类型": "Choose request type",
     "自定义需求类型": "Custom request type",
     "输入自定义需求类型，如：找宠物照护伙伴": "Enter a custom type, e.g. pet care partner",
     "重新选择需求类型": "Choose request type again",

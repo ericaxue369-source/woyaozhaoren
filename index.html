@@ -44642,7 +44642,7 @@ function JobCard({
 }
 function demandViewerSections(demand) {
   return [{
-    title: "需求说明",
+    title: "背景说明",
     content: demandDescriptionOf(demand)
   }, {
     title: "我找谁 / 什么资源",
@@ -52974,7 +52974,7 @@ function JobFormFields({
   const previewMeta = demandPrimaryMeta(form);
   const sectionList = [{
     id: "description",
-    title: "需求说明",
+    title: "背景说明",
     content: form.description,
     keys: ["description"],
     required: true
@@ -53457,7 +53457,7 @@ function DemandPublishWizard({
     }
   }, item))) : null);
   const detailRows = [{
-    label: "需求说明",
+    label: "背景说明",
     value: form.description
   }, {
     label: "我找谁 / 什么资源",
@@ -54493,7 +54493,7 @@ function DemandPublishWizardV2({
     }
   }, item))) : null);
   const detailRows = [{
-    label: "需求说明",
+    label: "背景说明",
     value: form.description
   }, {
     label: "我找谁 / 什么资源",
@@ -72009,7 +72009,6 @@ function mountOwoApp() {
     "官方认证": "Officially verified",
     "免费问北大": "Ask PKU for free",
     "需求详情": "Request details",
-    "需求说明": "Request description",
     "我找谁 / 什么资源": "Who / what I am looking for",
     "希望对方具备什么": "What they should bring",
     "参与方式": "How to participate",

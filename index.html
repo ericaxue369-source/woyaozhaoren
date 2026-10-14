@@ -34797,6 +34797,45 @@ const CEO_JOBS = {
       ai: "AI 会了解你的运动习惯、周末时间、活动偏好和期待的相处方式，帮助双方先确认基础安排是否合适。"
     },
     questions: ["你好，我是这项需求的找人助手。你平时喜欢哪些运动？", "周末的时间安排通常怎样？", "你期待怎样的运动搭子关系？"]
+  }, {
+    id: "d5-other-design",
+    type: "自定义需求",
+    customDemandType: "产品体验内测",
+    title: "招募 AI 日记产品内测用户",
+    publishedAt: "2026-10-14",
+    location: "线上",
+    time: "连续体验 7 天",
+    count: "12",
+    applyCount: 5,
+    completedCount: 2,
+    highMatchCount: 1,
+    aiStatus: "已训练",
+    summary: "邀请愿意认真记录生活、提供真实反馈的用户，共同完善一款 AI 日记产品。",
+    description: "我们正在测试一款帮助用户整理日常片段、回看情绪和建立个人记忆库的 AI 日记产品，希望邀请首批内测用户参与体验。",
+    target: "平时有记录习惯，愿意连续体验并分享真实使用感受的学生或年轻职场人。",
+    matchingCriteria: "愿意连续使用 7 天；能清楚描述使用场景与问题；愿意参与一次 30 分钟线上回访。",
+    participationRequirements: "线上参与，每天使用约 5 分钟；体验结束后填写反馈问卷并参加线上访谈。",
+    other: "内测名额有限，优先邀请对个人记录、情绪管理或 AI 工具有兴趣的用户。"
+  }, {
+    id: "d6-other-skill",
+    type: "自定义需求",
+    customDemandType: "技能交换",
+    title: "用品牌设计交换 AI 自动化搭建",
+    publishedAt: "2026-10-13",
+    location: "线上 / 上海",
+    time: "两周内完成一次交换",
+    budget: "技能互换",
+    count: "1",
+    applyCount: 3,
+    completedCount: 1,
+    highMatchCount: 1,
+    aiStatus: "已训练",
+    summary: "希望找到熟悉 AI 自动化流程的伙伴，用一套完整品牌视觉设计交换一次落地搭建支持。",
+    description: "我正在为一个个人创作项目完善工作流，希望将素材整理、内容生成和任务提醒串联起来；可提供品牌定位、视觉方向和基础设计支持作为交换。",
+    target: "熟悉 Notion、Make、Zapier 或脚本自动化，愿意一起拆解并搭建轻量工作流的伙伴。",
+    matchingCriteria: "有真实自动化搭建经验；能够清晰说明方案边界；重视互相交付与沟通节奏。",
+    participationRequirements: "先线上沟通目标和可交付内容；确认范围后在两周内完成一次协作交换。",
+    other: "如双方合作顺畅，可继续交流后续内容自动化与品牌迭代需求。"
   }],
   102: [{
     id: "j4",
@@ -37376,8 +37415,8 @@ function HomeScreen({
     setLikeCountMap(prev => ({
       ...prev,
       [postId]: (prev[postId] ?? baseLikes) + (wasLiked ? -1 : 1)
-    }));
-  };
+  }));
+};
   const toggleSave = (postId, baseCount) => {
     const wasSaved = savedPosts.has(postId);
     setSavedPosts(prev => {
@@ -44460,8 +44499,8 @@ function JobCard({
       background: "rgba(89,111,203,.12)"
     },
     "自定义需求": {
-      color: "#737373",
-      background: "rgba(115,115,115,.10)"
+      color: "#0F8FA8",
+      background: "rgba(15,143,168,.12)"
     }
   };
   const typeVisual = typeVisuals[demandTypeOf(job)] || typeVisuals["自定义需求"];
@@ -45196,7 +45235,7 @@ function MyApplicationsScreen({
       "活动招募": { color: "#C97632" },
       "找场地": { color: "#12916C" },
       "社团/社群招新": { color: "#596FCB" },
-      "自定义需求": { color: "#737373" }
+      "自定义需求": { color: "#0F8FA8" }
     };
     const typeVisual = typeVisuals[demandTypeOf(job)] || typeVisuals["自定义需求"];
     return React.createElement("div", {
@@ -55066,7 +55105,6 @@ function RecruitmentJobDetailScreen({
   const listed = !!job.listed;
   const isPaused = !!job.paused;
   const deadlineClosed = demandIsDeadlineClosed(job);
-  const demandType = demandTypeOf(job);
   const statusText = !listed ? "待发布" : isPaused ? "已暂停" : deadlineClosed ? "报名已截止" : "进行中";
   const statusBg = !listed ? "rgba(245,158,11,.12)" : isPaused ? "rgba(0,0,0,.06)" : deadlineClosed ? "rgba(148,163,184,.14)" : "rgba(16,185,129,.1)";
   const statusColor = !listed ? "#d97706" : isPaused ? T.text3 : deadlineClosed ? (T._theme === "dark" ? "#CBD5E1" : "#64748B") : "#059669";
@@ -55075,12 +55113,12 @@ function RecruitmentJobDetailScreen({
     content
   }) => React.createElement('div', {
     style: {
-      marginBottom: 18
+      marginBottom: 20
     }
   }, React.createElement('div', {
     style: {
       fontSize: 14,
-      fontWeight: 800,
+      fontWeight: 700,
       color: T.text1,
       marginBottom: 8
     }
@@ -55102,32 +55140,8 @@ function RecruitmentJobDetailScreen({
       setConfirmPause(true);
     }
   };
-  const valueForField = field => {
-    if (field.k === "description") return demandDescriptionOf(job);
-    if (field.k === "target") return demandTargetOf(job);
-    if (field.k === "matchingCriteria") return demandExpectationOf(job);
-    if (field.k === "participationRequirements") return demandParticipationOf(job);
-    return job[field.k];
-  };
-  const detailSections = [{
-    title: "需求类型",
-    content: demandTypeLabelOf(job)
-  }, {
-    title: "报名截止时间",
-    content: demandDeadlineLabel(job.deadline) || "长期有效"
-  }, {
-    title: "找人助手沟通时长",
-    content: Number(job.aiDuration || job.durationMin) > 0 ? Number(job.aiDuration || job.durationMin) + " 分钟 · 每位报名者一次需求沟通机会" : "暂不设置 · 报名者可随时继续沟通"
-  }].concat(demandFieldsOf(demandType).filter(field => field.k !== "title").map(field => ({
-    title: field.label.replace(/[？?]/g, ""),
-    content: valueForField(field)
-  })).filter(section => section.content)).concat([{
-    title: "找人助手训练状态",
-    content: job.hasAiInterviewer ? job.aiStatus || "已训练" : "待训练"
-  }, {
-    title: "AI沟通策略",
-    content: job.flow || "未训练时使用需求类型默认沟通模板；训练后将展示发布者补充的沟通重点。"
-  }]);
+  // Reuse the public-detail sequence: explanation, target, criteria, participation, notes.
+  const detailSections = demandViewerSections(job);
   return React.createElement('div', {
     style: {
       position: "absolute",
@@ -55162,16 +55176,16 @@ function RecruitmentJobDetailScreen({
     style: {
       flex: 1,
       overflowY: "auto",
-      padding: "16px 18px 120px"
+      padding: "0 18px 120px"
     }
   }, React.createElement('div', {
     style: {
       background: T.bgCard,
       borderRadius: T.radius,
-      padding: "18px",
+      padding: "20px",
       border: `1px solid ${T.border}`,
-      boxShadow: T.shadowCard,
-      marginBottom: 12
+      boxShadow: "0 2px 16px rgba(159,151,235,.07)",
+      marginBottom: 14
     }
   }, React.createElement('div', {
     style: {
@@ -55223,9 +55237,9 @@ function RecruitmentJobDetailScreen({
     style: {
       background: T.bgCard,
       borderRadius: T.radius,
-      padding: "18px",
+      padding: "20px",
       border: `1px solid ${T.border}`,
-      boxShadow: T.shadowCard
+      boxShadow: "0 2px 12px rgba(159,151,235,.05)"
     }
   }, detailSections.map((section, idx) => React.createElement(React.Fragment, {
     key: section.title
@@ -55236,7 +55250,7 @@ function RecruitmentJobDetailScreen({
     style: {
       height: 1,
       background: T.hairline,
-      marginBottom: 18
+      marginBottom: 20
     }
   }) : null)))), React.createElement('div', {
     style: {
@@ -56459,8 +56473,8 @@ function RecruitmentScreen({
         "活动招募": "#C97632",
         "找场地": "#12916C",
         "社团/社群招新": "#596FCB",
-        "自定义需求": "#737373"
-      })[demandTypeOf(job)] || "#737373";
+        "自定义需求": "#0F8FA8"
+      })[demandTypeOf(job)] || "#0F8FA8";
       return React.createElement('div', {
         key: job.id,
         onClick: () => setDetailJob(job),
@@ -67045,6 +67059,30 @@ function ProfileScreen({
     sentTime: "20:30",
     styleId: "observer"
   }, {
+    week: "2026.3 第二周",
+    summary: "完成个人陈述第一版重写，复盘模拟面试并补充科研项目的量化成果。",
+    startDate: "2026-03-09",
+    endDate: "2026-03-15",
+    dateRange: "March 9–15, 2026",
+    sentTime: "20:10",
+    styleId: "self_first"
+  }, {
+    week: "2026.3 第一周",
+    summary: "梳理申请方向与时间线，完成三位导师的研究匹配笔记。",
+    startDate: "2026-03-02",
+    endDate: "2026-03-08",
+    dateRange: "March 2–8, 2026",
+    sentTime: "21:05",
+    styleId: "narrative_avatar"
+  }, {
+    week: "2026.2 第三周",
+    summary: "完成英语口语录音练习，整理实验室阅读材料并复盘一周节奏。",
+    startDate: "2026-02-16",
+    endDate: "2026-02-22",
+    dateRange: "February 16–22, 2026",
+    sentTime: "20:15",
+    styleId: "observer"
+  }, {
     week: "2026.2 第二周",
     summary: "完成考研数学强化训练15题，与物理博士讨论量子力学基础，阅读3篇SCI论文。",
     startDate: "2026-02-09",
@@ -67063,6 +67101,9 @@ function ProfileScreen({
   }];
   const [weeklyUnreadMap, setWeeklyUnreadMap] = useState(() => ({
     "2026.3 第三周": 1,
+    "2026.3 第二周": 1,
+    "2026.3 第一周": 1,
+    "2026.2 第三周": 1,
     "2026.2 第二周": 1,
     "2026.2 第一周": 1
   }));
@@ -69319,92 +69360,210 @@ function ProfileScreen({
         fontWeight: 800,
         whiteSpace: "nowrap"
       }
-    }, weeklyReportStyle.listTitle || weeklyReportStyle.title))), weeklyReports.map((r, i) => {
+    }, weeklyReportStyle.listTitle || weeklyReportStyle.title))), React.createElement("div", {
+    style: {
+      height: 112,
+      margin: "2px 0 14px",
+      borderRadius: "18px 18px 10px 10px",
+      background: T._theme === "dark" ? "linear-gradient(160deg,#1d2723,#101513)" : "linear-gradient(155deg,#fffaf1,#f1e7d7)",
+      border: `1px solid ${T._theme === "dark" ? "rgba(255,255,255,.09)" : "#e5d8c6"}`,
+      position: "relative",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      paddingBottom: 11,
+      boxShadow: T._theme === "dark" ? "inset 0 1px rgba(255,255,255,.05)" : "0 7px 17px rgba(93,61,129,.08)"
+    }
+  }, React.createElement("div", {
+    style: {
+      position: "absolute",
+      top: 12,
+      width: 106,
+      height: 68,
+      border: "3px solid #245646",
+      borderBottom: "none",
+      borderRadius: "8px 8px 0 0",
+      background: "linear-gradient(180deg,#f19aa5 0 38%,#f6c4c6 39% 100%)",
+      boxShadow: "0 2px 0 rgba(0,0,0,.12)"
+    }
+  }, React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 12,
+      right: 12,
+      top: 19,
+      height: 30,
+      border: "3px solid #245646",
+      borderRadius: "3px 3px 0 0",
+      borderBottom: "none",
+      background: "#fff8e9"
+    }
+  }), React.createElement("div", {
+    style: {
+      position: "absolute",
+      left: 20,
+      right: 20,
+      bottom: 0,
+      height: 28,
+      display: "flex",
+      gap: 4,
+      alignItems: "flex-end",
+      justifyContent: "center"
+    }
+  }, ["#6b3d2e", "#2e5a75", "#7b5734", "#263f57", "#9a5c2d"].map((color, n) => React.createElement("span", {
+    key: n,
+    style: { width: 9, height: 17 + n % 2 * 6, background: color, borderRadius: "1px 1px 0 0" }
+  })))), React.createElement("div", {
+    style: {
+      position: "relative",
+      zIndex: 2,
+      padding: "4px 12px",
+      background: "#245646",
+      borderRadius: 3,
+      color: "#fff7e8",
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: ".08em",
+      boxShadow: "0 2px 0 rgba(0,0,0,.18)"
+    }
+  }, "鸥我 · OWO LIBRARY"), React.createElement("div", {
+    style: { color: T._theme === "dark" ? "#ddd4bf" : "#8e7d63", fontSize: 10, marginTop: 6, fontStyle: "italic" }
+  }, "每周一本，收藏人生")), React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 0,
+      padding: "19px 10px 22px",
+      marginBottom: 3,
+      borderRadius: 12,
+      background: T._theme === "dark" ? "rgba(255,255,255,.025)" : "linear-gradient(180deg,#fffdf9,#f7f1e8)",
+      borderBottom: T._theme === "dark" ? "7px solid #5b544c" : "7px solid #c6af8d",
+      boxShadow: T._theme === "dark" ? "0 4px 0 #302f2c" : "0 4px 0 #a98f6c,0 7px 12px rgba(92,65,41,.14)"
+    }
+  }, ["2026.3", "2026.2"].map((monthKey, shelfIndex) => React.createElement(React.Fragment, {
+    key: monthKey
+  }, React.createElement("div", {
+    style: {
+      width: "100%",
+      fontSize: 12,
+      fontWeight: 800,
+      color: T._theme === "dark" ? "#f3eee2" : "#5c4939",
+      margin: shelfIndex === 0 ? "0 0 7px" : "18px 0 7px",
+      paddingLeft: 2
+    }
+  }, monthKey + " · 人生书架"), React.createElement("div", {
+    style: {
+      width: "100%",
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 0,
+      padding: "14px 10px 18px",
+      boxSizing: "border-box",
+      borderRadius: 10,
+      background: T._theme === "dark" ? "rgba(255,255,255,.02)" : "linear-gradient(180deg,#fffdf9,#f7f1e8)",
+      borderBottom: T._theme === "dark" ? "7px solid #5b544c" : "7px solid #c6af8d",
+      boxShadow: T._theme === "dark" ? "0 4px 0 #302f2c" : "0 4px 0 #a98f6c,0 7px 12px rgba(92,65,41,.14)"
+    }
+  }, weeklyReports.filter(report => report.week.indexOf(monthKey) === 0).map((r, i) => {
     const itemStyle = getWeeklyReportStyle(r.styleId);
     return React.createElement("div", {
     key: i,
     onClick: () => openWeeklyReport(r),
     style: {
-      background: T.bgCard,
-      borderRadius: T.radius,
-      padding: "16px",
-      marginBottom: 10,
-      border: `1px solid ${T.border}`,
-      boxShadow: T.shadowCard,
+      display: "inline-flex",
+      verticalAlign: "bottom",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      width: "calc((100% - 28px) / 3)",
+      minWidth: 0,
+      height: [126, 136, 118][i % 3],
+      boxSizing: "border-box",
+      margin: "0",
+      padding: "12px 7px 13px",
+      overflow: "visible",
+      background: i === 0 ? "#090909" : `linear-gradient(90deg,rgba(0,0,0,.22) 0 8%,${["#5d6f20", "#1a0d20", "#5d3d81", "#5b3298", "#a59bb6"][i % 5]} 9% 87%,rgba(255,255,255,.17) 88% 100%)`,
+      border: "none",
+      borderRadius: "5px 7px 3px 3px",
+      boxShadow: "inset 2px 0 0 rgba(0,0,0,.15),inset -1px 0 0 rgba(255,255,255,.18),2px 3px 6px rgba(0,0,0,.22)",
       cursor: "pointer",
-      position: "relative"
+      position: "relative",
+      color: "#fff",
+      transition: "transform .18s ease,filter .18s ease"
+    },
+    onMouseEnter: e => {
+      e.currentTarget.style.transform = "translateY(-7px)";
+      e.currentTarget.style.filter = "brightness(1.08)";
+    },
+    onMouseLeave: e => {
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.filter = "none";
     }
-  }, React.createElement(CountBadge, {
+  }, i === 0 && React.createElement("img", {
+    src: "assets/owo-life-book-cover.png",
+    alt: "雷军的人生之书封面",
+    style: {
+      position: "absolute",
+      inset: 0,
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      borderRadius: "5px 7px 3px 3px"
+    }
+  }), React.createElement(CountBadge, {
     count: weeklyUnreadMap[r.week] || 0,
     style: {
-      top: 8,
-      right: 8
+      top: -7,
+      right: -7,
+      zIndex: 2
     }
   }), React.createElement("div", {
     style: {
       display: "flex",
-      justifyContent: "space-between",
+      justifyContent: "center",
       alignItems: "center",
-      marginBottom: 8
+      marginBottom: 0
     }
   }, React.createElement("span", {
     style: {
-      fontSize: 14,
+      fontSize: i === 0 ? 10.5 : 10,
       fontWeight: 700,
-      color: T.text1
+      lineHeight: 1.3,
+      color: "#fff",
+      textAlign: "center",
+      position: "static",
+      whiteSpace: "normal"
     }
-  }, r.week + " \u4EBA\u751F\u7AE0\u8282"), React.createElement("div", {
+  }, i === 0 ? "" : r.week.slice(-3)), React.createElement("div", {
     style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6
+      fontSize: 9,
+      color: "rgba(255,255,255,.88)",
+      lineHeight: 1.35,
+      textAlign: "center",
+      overflow: "hidden",
+      display: "-webkit-box",
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: "vertical"
     }
-  }, i === 0 && React.createElement("span", {
-    style: {
-      fontSize: 12,
-      background: "rgba(159,151,235,.1)",
-      color: "#9F97EB",
-      borderRadius: 999,
-      padding: "2px 8px",
-      fontWeight: 600
-    }
-  }, "\u672C\u5468"))), React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: T.text2,
-      lineHeight: 1.6,
-      marginBottom: 10
-    }
-  }, r.summary), React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12
-    }
-  }, React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: T.text3,
-      whiteSpace: "nowrap"
-    }
-  }, r.sentTime), React.createElement("button", {
+  }, i === 0 ? "" : r.summary), React.createElement("button", {
     onClick: e => {
       e.stopPropagation();
       openWeeklyReport(r);
     },
     style: {
-      padding: "8px 18px",
-      borderRadius: 999,
-      background: "rgba(159,151,235,.08)",
-      border: `1px solid rgba(159,151,235,.2)`,
-      fontSize: 12,
-      color: "#9F97EB",
+      padding: "0",
+      borderRadius: 0,
+      background: "transparent",
+      border: "none",
+      fontSize: 9,
+      color: "rgba(255,255,255,.9)",
       fontWeight: 600,
-      cursor: "pointer"
+      cursor: "pointer",
+      opacity: .9
     }
-  }, "\u548C\u8FD9\u5468\u7684\u81EA\u5DF1\u804A\u804A \u2192")));
-  }))), brainTab === "知识" && React.createElement(React.Fragment, null, React.createElement("div", {
+  }, i === 0 ? "" : "打开章节")));
+  }))))))), brainTab === "知识" && React.createElement(React.Fragment, null, React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "flex-end",
@@ -72983,6 +73142,7 @@ function mountOwoDevRequirementNotes() {
               <li>发布者需求详情：展示全部非空发布字段、状态、截止时间、找人助手状态和AI策略摘要；底部提供编辑、暂停/恢复发布，暂停和删除均需二次确认。</li>
               <li>点击编辑复用发布第2、3步组件，显示为1/2“需求信息”、2/2“补充条件”；读取并写回同一需求对象，最终页“删除 / 保存并更新”，不得给空选填项补默认值。</li>
               <li>广场“正在找人”和用户名片“我在找人”复用公开需求卡片：标题、需求类型、条件标签、两行概述，标题右侧显示绿色“进行中”；截止后改为灰色“报名已截止”，但仍在广场呈现。类型读取 <code>type</code>，自定义需求优先显示 <code>customDemandType</code>；类型独立成行，使用 18px Google Material Symbols Outlined 风格的线性语义图标与加粗类型名称，不增加图标底座、气囊或描边。社群招新/合伙人/搭子/活动/场地/心动/自定义依次使用多人、握手、双人、日历加号、定位、心形、四宫格图标。时间/地点/预算/人数/截止时间等已填写条件在下一行使用紫色圆角标签：预算为“费用：{value}”、人数为“{value}人名额”、截止时间为“YYYY-MM-DD截止”。<code>aiDuration</code>、<code>durationMin</code>、<code>durationSec</code> 均不得出现在公开需求卡片。广场卡片底部展示无分隔线的发布者头像、昵称和单行身份摘要；用户名片卡片仅隐藏发布者信息，其他卡片视觉保持一致。两处均不展示报名数、训练状态和操作按钮，点击整张卡片进入详情。</li>
+              <li>需求类型颜色规范：找合伙人使用紫色 <code>#7568D8</code>（浅底 <code>rgba(159,151,235,.14)</code>）；遇见心动使用玫红 <code>#C96086</code>（浅底 <code>rgba(201,96,134,.12)</code>）；找搭子使用蓝色 <code>#2486AC</code>（浅底 <code>rgba(36,134,172,.12)</code>）；活动招募使用橙色 <code>#C97632</code>（浅底 <code>rgba(201,118,50,.12)</code>）；找场地使用绿色 <code>#12916C</code>（浅底 <code>rgba(18,145,108,.12)</code>）；社团/社群招新使用靛蓝 <code>#596FCB</code>（浅底 <code>rgba(89,111,203,.12)</code>）；其他/自定义需求使用青蓝 <code>#0F8FA8</code>（浅底 <code>rgba(15,143,168,.12)</code>）。以上颜色用于类型图标与名称，并在所有需求卡片、报名卡片及管理卡片中保持一致。</li>
               <li>公开详情直接映射五个字段：“需求说明”=<code>description</code>；“我找谁/什么资源”=<code>target</code>；“希望对方具备什么”=<code>matchingCriteria</code>；“参与方式”=<code>participationRequirements</code>；“补充说明”=<code>other</code>。</li>
               <li>公开详情标题下展示 <code>time/location/budget/count</code> 中全部有值的标签，“遇见心动”排除 <code>count</code>；首次发布时间 <code>publishedAt</code> 展示在需求元信息之后、发布者信息卡之前，编辑不更新。</li>
               <li>发布者区映射个人名片：头像、姓名；副标题优先 <code>role · company</code>，其次 <code>role · industry</code>、<code>company · industry</code>，最后单行截断 <code>bio</code>。点击整个发布者区进入个人名片详情。</li>

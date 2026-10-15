@@ -47940,6 +47940,18 @@ function CandidateChatScreen({
   const [liveMsgs, setLiveMsgs] = useState([]);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState("ai");
+  const realAtPrefix = interviewerView ? `@${candidate.name} ` : `@${ceoName} `;
+  const switchMode = nextMode => {
+    setMode(nextMode);
+    setInput(currentInput => {
+      if (nextMode === "real") {
+        const text = currentInput.trim();
+        if (!text) return realAtPrefix;
+        return text.startsWith(realAtPrefix) ? currentInput : realAtPrefix + text;
+      }
+      return currentInput === realAtPrefix ? "" : currentInput;
+    });
+  };
   const [collapsedCards, setCollapsedCards] = useState({
     [userKey]: true,
     [ceoKey]: scrollTo !== "report"
@@ -47963,20 +47975,23 @@ function CandidateChatScreen({
   }, []);
   const send = () => {
     if (!input.trim()) return;
-    const outgoingText = input.trim();
+    const rawText = input.trim();
+    // In "find a person" mode, make the real recipient explicit in the
+    // visible message — consistent with the contacts-thread convention.
+    const outgoingText = mode === "real" && !rawText.startsWith(realAtPrefix) ? realAtPrefix + rawText : rawText;
     const mine = interviewerView ? {
       id: Date.now(),
       side: "me",
       who: "ceo",
-      text: input
+      text: outgoingText
     } : {
       id: Date.now(),
       side: "me",
       who: "real",
-      text: input
+      text: outgoingText
     };
     setLiveMsgs(prev => [...prev, mine]);
-    setInput("");
+    setInput(mode === "real" ? realAtPrefix : "");
     if (onReplied) onReplied();
     if (onThreadAction) {
       onThreadAction({
@@ -48499,11 +48514,13 @@ function CandidateChatScreen({
     let onRight, avatar, bs;
     if (interviewerView) {
       if (msg.who === "ai") {
-        onRight = true;
+        // Match the contacts conversation convention: the match assistant is
+        // the receiving-side AI, so its avatar and bubble stay on the left.
+        onRight = false;
         avatar = React.createElement(MyAvatarWithBadge, {
           size: 30
         });
-        bs = BUBBLE.interviewer;
+        bs = BUBBLE.them_ai;
       } else if (msg.who === "ceo") {
         onRight = true;
         avatar = React.createElement(MyAv, {
@@ -48629,7 +48646,7 @@ function CandidateChatScreen({
     const on = mode === m.id;
     return React.createElement("button", {
       key: m.id,
-      onClick: () => setMode(m.id),
+      onClick: () => switchMode(m.id),
       style: {
         height: 22,
         padding: "0 11px",

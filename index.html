@@ -47932,7 +47932,9 @@ function CandidateChatScreen({
   };
   const report = buildCeoReport(candidate);
   const isEnglish = document.documentElement.dataset.owoLanguage === "en";
-  const reportTitle = candidate.evaluationStatus === "in_progress" ? isEnglish ? "Live assessment" : "实时阶段分析" : isEnglish ? "Final match report" : "最终匹配报告";
+  const isLiveAssessment = candidate.evaluationStatus === "in_progress";
+  const reportShortTitle = isLiveAssessment ? isEnglish ? "Live assessment" : "实时阶段分析" : isEnglish ? "Match report" : "匹配报告";
+  const reportTitle = isLiveAssessment ? reportShortTitle : `${reportShortTitle} · ${candidate.job}`;
   const reportCompleteness = Number(candidate.completeness) || (candidate.communicated === false ? 0 : 100);
   const reportMeta = isEnglish ? `Only you can view · Match score ${report.total}% · Information completeness ${reportCompleteness}%` : `仅你可见 · 匹配度 ${report.total}% · 信息完整度 ${reportCompleteness}%`;
   const userKey = candidate.id;
@@ -48123,7 +48125,10 @@ function CandidateChatScreen({
     style: {
       fontSize: 13,
       fontWeight: 700,
-      color: T.text1
+      color: T.text1,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
     }
   }, reportTitle), React.createElement("span", {
     style: {
@@ -48132,7 +48137,8 @@ function CandidateChatScreen({
       color: "#fff",
       borderRadius: 999,
       padding: "1px 6px",
-      fontWeight: 800
+      fontWeight: 800,
+      flexShrink: 0
     }
   }, isEnglish ? "Owner" : "发布者")), React.createElement("div", {
     style: {
@@ -48178,29 +48184,50 @@ function CandidateChatScreen({
   }, React.createElement("div", {
     style: {
       display: "flex",
-      alignItems: "center",
-      gap: 8
+      alignItems: "flex-start",
+      gap: 8,
+      minWidth: 0
     }
   }, React.createElement("span", {
     style: {
-      fontSize: 18
+      fontSize: 18,
+      marginTop: 1,
+      flexShrink: 0
     }
   }, "\uD83D\uDCCB"), React.createElement("div", {
+    style: {
+      minWidth: 0
+    }
+  }, React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, React.createElement("div", {
     style: {
       fontSize: 15,
       fontWeight: 800,
       color: T._theme === "dark" ? "#d8d4ff" : "#312e81"
     }
-  }, reportTitle), React.createElement("span", {
+  }, reportShortTitle), React.createElement("span", {
     style: {
       fontSize: 9,
       background: T.grad,
       color: "#fff",
       borderRadius: 999,
       padding: "2px 7px",
-      fontWeight: 800
+      fontWeight: 800,
+      flexShrink: 0
     }
-  }, isEnglish ? "Owner" : "发布者")), React.createElement("button", {
+  }, isEnglish ? "Owner" : "发布者")), !isLiveAssessment && React.createElement("div", {
+    style: {
+      marginTop: 3,
+      fontSize: 12,
+      lineHeight: 1.35,
+      color: T._theme === "dark" ? "#c9c5ed" : "#5b5680"
+    }
+  }, candidate.job))), React.createElement("button", {
     onClick: () => setCollapsedCards(p => ({
       ...p,
       [ceoKey]: true
